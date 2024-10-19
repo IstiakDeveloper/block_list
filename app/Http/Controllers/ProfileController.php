@@ -7,9 +7,12 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Str;
 
 class ProfileController extends Controller
 {
@@ -29,16 +32,64 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        try {
+            $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            if ($request->hasFile('photo')) {
+                Log::info('Photo file received', ['file' => $request->file('photo')]);
+
+                // Delete the old photo if it exists
+                if ($user->photo) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+
+                $file = $request->file('photo');
+                $extension = $file->getClientOriginalExtension();
+                $filename = Str::uuid() . '.' . $extension;
+
+                // Store the file and get the path
+                $path = $file->storeAs('photos', $filename, 'public');
+                Log::info('New photo stored', ['path' => $path]);
+
+                // Update the user's photo field with the new path
+                $user->photo = $path;
+            }
+
+            // Update other fields
+            $user->fill($request->safe()->only(['name', 'email']));
+
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
+
+            $user->save();
+
+            Log::info('User updated', ['user' => $user->toArray()]);
+
+            return Redirect::route('profile.edit')->with('status', 'Profile updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error updating profile', ['error' => $e->getMessage()]);
+            return Redirect::route('profile.edit')->with('error', 'An error occurred while updating your profile.');
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
     }
+
+
+
+    public function index()
+    {
+        // Get the authenticated user
+        $user = auth()->user();
+
+        // Return the view with the user data
+        return Inertia::render('Component', [
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'photo' => $user->profile_photo_path, // Adjust as necessary
+            ],
+        ]);
+    }
+
 
     /**
      * Delete the user's account.

@@ -9,13 +9,14 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <script src="https://kit.fontawesome.com/66fc7fbbb5.js" crossorigin="anonymous"></script>
 
         <!-- Scripts -->
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white">
         @inertia
     </body>
 </html>
