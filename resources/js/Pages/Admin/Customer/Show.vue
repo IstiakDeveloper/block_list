@@ -4,7 +4,6 @@
     <AdminLayout>
       <div class="container mx-auto py-8">
         <div class="bg-white dark:bg-gray-900 shadow-xl rounded-lg p-8 space-y-8">
-
           <!-- Customer Name -->
           <div class="border-b pb-4">
             <h1 v-if="customer" class="text-4xl font-bold text-gray-900 dark:text-gray-100">{{ customer.name }}</h1>
@@ -12,163 +11,197 @@
           </div>
 
           <!-- Customer Details -->
-          <div class="space-y-6">
+          <div class="space-y-8">
+  <div class="flex gap-6 items-center">
+    <div class="flex-1">
+      <p class="font-semibold text-gray-800 dark:text-gray-200 text-lg">NID Part 1:</p>
+      <img v-if="customer.nid_part_1" :src="'/storage/' + customer.nid_part_1" alt="NID Part 1" class="w-full rounded-lg mt-2 shadow-lg"/>
+    </div>
+    <div class="flex-1">
+      <p class="font-semibold text-gray-800 dark:text-gray-200 text-lg">NID Part 2:</p>
+      <img v-if="customer.nid_part_2" :src="'/storage/' + customer.nid_part_2" alt="NID Part 2" class="w-full rounded-lg mt-2 shadow-lg"/>
+    </div>
+  </div>
 
-            <!-- NID Images -->
-            <div class="flex gap-6 items-center">
-              <div class="flex-1">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">NID Part 1:</p>
-                <img v-if="customer.nid_part_1" :src="'/storage/' + customer.nid_part_1" alt="NID Part 1" class="w-full rounded-lg mt-2 shadow-lg"/>
-              </div>
-              <div class="flex-1">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">NID Part 2:</p>
-                <img v-if="customer.nid_part_2" :src="'/storage/' + customer.nid_part_2" alt="NID Part 2" class="w-full rounded-lg mt-2 shadow-lg"/>
-              </div>
-            </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Name (Bangla):</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.name_bn || 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Father's Name:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.father_name || 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Mother's Name:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.mother_name || 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Date of Birth:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.dob ? new Date(customer.dob).toLocaleDateString() : 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">NID Number:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.nid_number }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Address:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.address || 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Details:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.details || 'N/A' }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Branch:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.branch.branch_name }}</p>
+    </div>
+    <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+      <p class="font-semibold text-gray-800 dark:text-gray-200">Created By:</p>
+      <p class="text-gray-600 dark:text-gray-400">{{ customer.user.name }}</p>
+    </div>
+  </div>
+</div>
 
-            <!-- Details Section -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Name (Bangla):</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.name_bn || 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Father's Name:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.father_name || 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Mother's Name:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.mother_name || 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Date of Birth:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.dob ? new Date(customer.dob).toLocaleDateString() : 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">NID Number:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.nid_number }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Address:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.address || 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Details:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.details || 'N/A' }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Branch:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.branch.branch_name }}</p>
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-semibold text-gray-700 dark:text-gray-400">Created By:</p>
-                <p class="text-gray-600 dark:text-gray-400">{{ customer.user.name }}</p>
-              </div>
-            </div>
 
-          </div>
-
-          <!-- Print Button -->
+          <!-- View Details Button -->
           <div class="mt-6 flex justify-end">
-            <button @click="printPage" class="btn-primary">
-              Print
+            <button @click="openProfileModal" class="btn-primary">
+              View Profile
             </button>
           </div>
-
         </div>
+      </div>
 
-        <!-- Confirmation Dialog -->
-        <ConfirmationDialog
-          :show="isDialogVisible"
-          @update:show="isDialogVisible = $event"
-          @confirm="deleteCustomer"
-        />
+      <!-- Modal for Customer Profile -->
+      <div v-if="isProfileModalVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75">
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 w-full max-w-4xl">
+          <h2 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200 text-center">Customer Profile</h2>
+
+          <div class="space-y-4">
+            <div class="flex justify-between mb-4">
+              <div class="flex-1 text-center">
+                <p class="font-semibold">NID Part 1:</p>
+                <img
+                  v-if="customer.nid_part_1"
+                  :src="'/storage/' + customer.nid_part_1"
+                  alt="Customer NID Part 1"
+                  class="w-32 h-auto rounded-lg object-cover"
+                />
+              </div>
+              <div class="flex-1 text-center">
+                <p class="font-semibold">NID Part 2:</p>
+                <img
+                  v-if="customer.nid_part_2"
+                  :src="'/storage/' + customer.nid_part_2"
+                  alt="Customer NID Part 2"
+                  class="w-32 h-auto rounded-lg object-cover"
+                />
+              </div>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Name (Bangla):</strong> {{ customer.name_bn || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Father's Name:</strong> {{ customer.father_name || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Mother's Name:</strong> {{ customer.mother_name || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Date of Birth:</strong> {{ customer.dob ? new Date(customer.dob).toLocaleDateString() : 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>NID Number:</strong> {{ customer.nid_number }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Address:</strong> {{ customer.address || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Details:</strong> {{ customer.details || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Branch:</strong> {{ customer.branch.branch_name }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Created By:</strong> {{ customer.user.name }}</p>
+          </div>
+
+          <div class="flex justify-center mt-6 space-x-4">
+            <button @click="printProfile" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">Print Profile</button>
+            <button @click="closeProfileModal" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow">Close</button>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   </template>
 
   <script setup>
   import { ref } from 'vue';
-  import { Head, Link, useForm } from '@inertiajs/vue3';
+  import { Head } from '@inertiajs/vue3';
   import AdminLayout from '@/Layouts/AdminLayout.vue';
-  import ConfirmationDialog from '@/Components/ConfirmationDialog.vue';
 
   const props = defineProps({
     customer: Object,
   });
 
-  const isDialogVisible = ref(false);
-  const form = useForm({});
+  const isProfileModalVisible = ref(false);
 
-  function confirmDelete(customerId) {
-    isDialogVisible.value = true;
+  function openProfileModal() {
+    isProfileModalVisible.value = true;
   }
 
-  function deleteCustomer() {
-    form.delete(route('admin.customers.destroy', props.customer.id), {
-      onSuccess: () => {
-        isDialogVisible.value = false;
-        window.location.href = route('admin.customers.index');
-      },
-    });
+  function closeProfileModal() {
+    isProfileModalVisible.value = false;
   }
 
-  function printPage() {
-    window.print();
+  function printProfile() {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Profile</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 12px;
+              line-height: 1.5;
+              margin: 0;
+              padding: 20px;
+            }
+            img {
+              max-width: 50%; /* Reduced image size for printing */
+              height: auto;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>Customer Profile</h2>
+          <p><strong>Name (Bangla):</strong> ${props.customer.name_bn || 'N/A'}</p>
+          <p><strong>Father's Name:</strong> ${props.customer.father_name || 'N/A'}</p>
+          <p><strong>Mother's Name:</strong> ${props.customer.mother_name || 'N/A'}</p>
+          <p><strong>Date of Birth:</strong> ${props.customer.dob ? new Date(props.customer.dob).toLocaleDateString() : 'N/A'}</p>
+          <p><strong>NID Number:</strong> ${props.customer.nid_number}</p>
+          <p><strong>Address:</strong> ${props.customer.address || 'N/A'}</p>
+          <p><strong>Details:</strong> ${props.customer.details || 'N/A'}</p>
+          <p><strong>Branch:</strong> ${props.customer.branch.branch_name}</p>
+          <p><strong>Created By:</strong> ${props.customer.user.name}</p>
+          <img src="/storage/${props.customer.nid_part_1}" alt="Customer NID Part 1" />
+          <img src="/storage/${props.customer.nid_part_2}" alt="Customer NID Part 2" />
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
   }
   </script>
 
   <style scoped>
-  /* Buttons */
   .btn-primary {
     @apply bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-200 ease-in-out;
   }
 
-  .btn-secondary {
-    @apply bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition duration-200 ease-in-out;
+  /* Modal Styles */
+  .fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* Image Styling */
-  img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Print-Style Overrides */
-  @media print {
-    body {
-      font-size: 12px;
-      line-height: 1.5;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 100%;
-      padding: 0;
-    }
-    .bg-white, .dark\:bg-gray-900 {
-      background: none;
-    }
-    .shadow-xl {
-      box-shadow: none;
-    }
-    .btn-primary, .btn-secondary {
-      display: none; /* Hide buttons on print */
-    }
-    .border-b {
-      border-bottom: none; /* Remove border for cleaner print */
-    }
-    .space-y-6, .space-y-8 {
-      margin-bottom: 0;
-    }
-    img {
-      width: 100%;
-      max-width: none; /* Remove restrictions for print */
-    }
-    .text-lg, .text-xl, .text-4xl {
-      font-size: 14px; /* Adjust font sizes for printing */
-    }
+  .modal-content {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
   }
   </style>

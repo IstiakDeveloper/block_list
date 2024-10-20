@@ -7,6 +7,7 @@
                 <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Create Customer</h1>
                 <form @submit.prevent="createCustomer">
                     <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <!-- NID Part 1 -->
                         <div class="sm:col-span-3">
                             <label for="nid_part_1" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 1</label>
                             <input
@@ -17,8 +18,11 @@
                                 required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Upload the first part of your NID.</p>
+                            <img v-if="form.nid_part_1_url" :src="form.nid_part_1_url" alt="NID Part 1 Preview" class="mt-2 w-32 h-32 object-cover rounded">
                         </div>
 
+                        <!-- NID Part 2 -->
                         <div class="sm:col-span-3">
                             <label for="nid_part_2" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 2</label>
                             <input
@@ -29,8 +33,11 @@
                                 required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Upload the second part of your NID.</p>
+                            <img v-if="form.nid_part_2_url" :src="form.nid_part_2_url" alt="NID Part 2 Preview" class="mt-2 w-32 h-32 object-cover rounded">
                         </div>
 
+                        <!-- Customer Name -->
                         <div class="sm:col-span-3">
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
                             <input
@@ -40,8 +47,10 @@
                                 required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter the customer's full name.</p>
                         </div>
 
+                        <!-- Other Fields -->
                         <div class="sm:col-span-3">
                             <label for="name_bn" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name (Bangla)</label>
                             <input
@@ -93,6 +102,17 @@
                             >
                         </div>
 
+                        <div class="sm:col-span-3">
+                            <label for="phone_number" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Phone Number</label>
+                            <input
+                                type="text"
+                                id="phone_number"
+                                v-model="form.phone_number"
+                                required
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
+                            >
+                        </div>
+
                         <div class="sm:col-span-6">
                             <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Address</label>
                             <textarea
@@ -115,8 +135,9 @@
                     </div>
 
                     <div class="flex justify-end mt-6">
-                        <button type="submit" class="btn-primary inline-flex items-center">
-                            Create Customer
+                        <button type="submit" class="btn-primary inline-flex items-center" :disabled="loading">
+                            <span v-if="loading">Creating...</span>
+                            <span v-else>Create Customer</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M10 2a1 1 0 00-1 1v6H3a1 1 0 100 2h6v6a1 1 0 002 0v-6h6a1 1 0 100-2h-6V3a1 1 0 00-1-1z" />
                             </svg>
@@ -141,34 +162,55 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 const form = useForm({
     nid_part_1: null,
     nid_part_2: null,
+    nid_part_1_url: '', // URL for the image preview
+    nid_part_2_url: '', // URL for the image preview
     name: '',
     name_bn: '',
     father_name: '',
     mother_name: '',
     dob: '',
     nid_number: '',
+    phone_number: '',
     address: '',
     details: '',
 });
 
 const successMessage = ref('');
 const errorMessage = ref('');
+const loading = ref(false); // New loading state
 
 function handleFileUpload(field, event) {
-    form[field] = event.target.files[0];
+    const file = event.target.files[0];
+    form[field] = file;
+
+    // Create a URL for the image preview
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (field === 'nid_part_1') {
+                form.nid_part_1_url = e.target.result;
+            } else if (field === 'nid_part_2') {
+                form.nid_part_2_url = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 function createCustomer() {
+    loading.value = true; // Start loading
     form.post(route('admin.customers.store'), {
         forceFormData: true,
         onSuccess: () => {
             successMessage.value = 'Customer created successfully!';
             errorMessage.value = ''; // Clear any previous error messages
             form.reset(); // Reset form fields
+            loading.value = false; // Stop loading
         },
         onError: () => {
             errorMessage.value = 'Error creating customer. Please try again.';
             successMessage.value = ''; // Clear any previous success messages
+            loading.value = false; // Stop loading
         },
     });
 }
@@ -181,5 +223,9 @@ function createCustomer() {
 
 .btn-secondary {
     @apply bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow hover:bg-gray-400 transition duration-200;
+}
+
+img {
+    border: 1px solid #ccc; /* Optional styling for the image */
 }
 </style>

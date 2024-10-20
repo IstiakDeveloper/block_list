@@ -16,14 +16,28 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with('branch')
-            ->latest()
-            ->paginate(10);
+        $user = auth()->user(); // Get the authenticated user
 
+        // Check if the authenticated user is "Super Admin"
+        if ($user->name === 'Super Admin') {
+            // If "Super Admin", show all customers
+            $customers = Customer::with('branch')
+                ->latest()
+                ->paginate(10);
+        } else {
+            // If not "Super Admin", only show customers from the same branch as the user
+            $customers = Customer::where('branch_id', $user->branch_id)
+                ->with('branch')
+                ->latest()
+                ->paginate(10);
+        }
+
+        // Return data to the Vue component using Inertia
         return Inertia::render('Admin/Customer/Index', [
-            'customers' => $customers
+            'customers' => $customers,
         ]);
     }
+
 
 
         // Display the form for creating a new customer
@@ -43,7 +57,8 @@ class CustomerController extends Controller
             'father_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
             'dob' => 'nullable|date',
-            'nid_number' => 'required|string|unique:customers',
+            'nid_number' => 'nullable|string|unique:customers',
+            'phone_number' => 'nullable|string',
             'address' => 'nullable|string',
             'details' => 'nullable|string',
         ]);
@@ -65,6 +80,7 @@ class CustomerController extends Controller
         // Use extracted info if available, otherwise use manually entered data
         $customer->name = $extracted_info['name'] ?? $validated['name'];
         $customer->nid_number = $extracted_info['nid_number'] ?? $validated['nid_number'];
+        $customer->phone_number = $validated['phone_number'];
 
         $customer->save();
 

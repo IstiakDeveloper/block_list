@@ -1,22 +1,36 @@
-<script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import { Link } from '@inertiajs/vue3';
-</script>
-
 <template>
-    <div
-        class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0"
-    >
-        <div>
-            <Link href="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
-            </Link>
+    <div class="flex flex-col min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-800 dark:to-purple-900">
+      <!-- Header -->
+      <header class="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow-md">
+        <h1 class="text-xl font-bold text-gray-800 dark:text-white">Mousumi</h1>
+        <div class="flex items-center">
+          <button @click="switchTheme" class="text-gray-500 dark:text-white hover:text-gray-600">
+            <i class="fa-solid fa-circle-half-stroke"></i>
+          </button>
         </div>
+      </header>
 
-        <div
-            class="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
-        >
-            <slot />
+      <!-- Main Content -->
+      <main class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full overflow-hidden bg-white dark:bg-gray-900 px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
+          <slot></slot>
         </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="p-4 text-center bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200">
+        <p>&copy; {{ new Date().getFullYear() }} Mousumi NGO. All rights reserved.</p>
+      </footer>
     </div>
-</template>
+  </template>
+
+  <script setup>
+  import { ref } from 'vue';
+  import { switchTheme } from '@/theme'; // Assume the same theme switching function
+
+  // Additional setup logic can be placed here
+  </script>
+
+  <style scoped>
+  /* Add any specific styles for the GuestLayout here */
+  </style>

@@ -22,7 +22,8 @@ return new class extends Migration
             $table->string('father_name')->nullable();
             $table->string('mother_name')->nullable();
             $table->date('dob')->nullable(); // Date of birth
-            $table->string('nid_number')->unique(); // Full NID number
+            $table->string('nid_number')->unique()->nullable(); // Full NID number
+            $table->string('phone_number')->nullable(); // Full NID number
             $table->text('address')->nullable();
             $table->text('details')->nullable();
             $table->timestamps();

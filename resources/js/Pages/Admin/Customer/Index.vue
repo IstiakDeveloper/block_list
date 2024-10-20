@@ -2,11 +2,15 @@
     <Head title="Customers" />
 
     <AdminLayout>
-        <div class="container mx-auto py-8">
+        <div class="container mx-auto py-4 sm:py-8 px-4">
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-300">Customers</h1>
-                    <Link href="/admin/customers/create" class="btn-primary flex items-center">
+                    <Link
+                        v-if="user.name !== 'Super Admin'"
+                        href="/admin/customers/create"
+                        class="btn-primary flex items-center"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M10 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z" />
                         </svg>
@@ -32,47 +36,63 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ customer.branch.branch_name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(customer.created_at) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <!-- Show Button -->
-                                <Link
-                                    :href="route('admin.customers.show', customer.id)"
-                                    class="inline-flex items-center text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 dark:bg-green-600 dark:text-white dark:hover:bg-green-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M9.049 2.927C9.469 2.607 10 2.903 10 3.5v13c0 .597-.531.893-.951.573l-7.902-6.5a.75.75 0 010-1.146l7.902-6.5z" />
-                                    </svg>
-                                    Show
-                                </Link>
+                                    <Link
+                                        :href="route('admin.customers.show', customer.id)"
+                                        class="inline-flex items-center text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 dark:bg-green-600 dark:text-white dark:hover:bg-green-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927C9.469 2.607 10 2.903 10 3.5v13c0 .597-.531.893-.951.573l-7.902-6.5a.75.75 0 010-1.146l7.902-6.5z" />
+                                        </svg>
+                                        Show
+                                    </Link>
 
-                                <!-- Edit Button -->
-                                <Link
-                                    :href="route('admin.customers.edit', customer.id)"
-                                    class="inline-flex items-center text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200 ml-4"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M12.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-9 9a1 1 0 01-.353.213l-3 1a1 1 0 01-1.293-1.293l1-3a1 1 0 01.213-.353l9-9z" />
-                                    </svg>
-                                    Edit
-                                </Link>
+                                    <Link
+                                        v-if="user.name !== 'Super Admin'"
+                                        :href="route('admin.customers.edit', customer.id)"
+                                        class="inline-flex items-center text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200 ml-4"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M12.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-9 9a1 1 0 01-.353.213l-3 1a1 1 0 01-1.293-1.293l1-3a1 1 0 01.213-.353l9-9z" />
+                                        </svg>
+                                        Edit
+                                    </Link>
 
-                                <!-- Delete Button -->
-                                <button
-                                    @click="confirmDelete(customer.id)"
-                                    class="inline-flex items-center text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200 ml-4"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M6 2a1 1 0 00-1 1v1h12V3a1 1 0 00-1-1H6z" />
-                                    <path fill-rule="evenodd" d="M5 4h10a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zm1 1v13h8V5H6z" clip-rule="evenodd" />
-                                    </svg>
-                                    Delete
-                                </button>
+                                    <button
+                                        @click="confirmDelete(customer.id)"
+                                        class="inline-flex items-center text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 dark:hover:text-gray-100 px-3 py-2 rounded transition duration-200 ml-4"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M6 2a1 1 0 00-1 1v1h12V3a1 1 0 00-1-1H6z" />
+                                            <path fill-rule="evenodd" d="M5 4h10a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zm1 1v13h8V5H6z" clip-rule="evenodd" />
+                                        </svg>
+                                        Delete
+                                    </button>
                                 </td>
-
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <Pagination :links="customers.links" class="mt-6" />
+                <!-- Pagination -->
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="flex justify-center items-center">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                            Showing {{ customers.from }} to {{ customers.to }} of {{ customers.total }} customers
+                        </span>
+                    </div>
+                    <div class="flex justify-center items-center">
+                        <button @click="previousPage" :disabled="!customers.prev_page_url"
+                                class="btn-secondary px-4 py-2"
+                                :class="{'opacity-50 cursor-not-allowed': !customers.prev_page_url}">
+                            Previous
+                        </button>
+                        <button @click="nextPage" :disabled="!customers.next_page_url"
+                                class="btn-secondary px-4 py-2 ml-2"
+                                :class="{'opacity-50 cursor-not-allowed': !customers.next_page_url}">
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -85,29 +105,37 @@
 </template>
 
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import Pagination from '@/Components/Pagination.vue';
 import ConfirmationDialog from '@/Components/ConfirmationDialog.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
+// Props: receiving customers and auth (for user data)
 const props = defineProps({
     customers: Object,
+    auth: Object, // Added auth for user data
 });
 
+// State variables
 const isDialogVisible = ref(false);
 const customerToDelete = ref(null);
 const form = useForm({});
 
+// Computed: extract user data from props
+const user = computed(() => props.auth.user);
+
+// Helper functions
 function formatDate(date) {
     return new Date(date).toLocaleDateString();
 }
 
+// Handle deletion confirmation dialog
 function confirmDelete(customerId) {
     customerToDelete.value = customerId;
     isDialogVisible.value = true;
 }
 
+// Perform the deletion via Inertia's form handling
 function deleteCustomer() {
     if (customerToDelete.value) {
         form.delete(route('admin.customers.destroy', customerToDelete.value), {
@@ -117,6 +145,22 @@ function deleteCustomer() {
         });
     }
 }
+
+// Pagination: navigate to previous and next pages
+function previousPage() {
+    if (props.customers.prev_page_url) {
+        router.get(props.customers.prev_page_url);
+    }
+}
+
+function nextPage() {
+    if (props.customers.next_page_url) {
+        router.get(props.customers.next_page_url);
+    }
+}
+
+// Conditionally render elements based on the user name
+const isSuperAdmin = computed(() => user.value.name === 'Super Admin');
 </script>
 
 <style scoped>
