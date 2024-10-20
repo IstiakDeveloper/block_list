@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +20,13 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+
+Route::resource('/admin/branches', BranchController::class)->names('admin.branches');
+Route::resource('admin/users', UserController::class)->names('admin.users');
+Route::resource('admin/customers', CustomerController::class)->names('admin.customers');
+
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

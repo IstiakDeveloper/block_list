@@ -19,8 +19,9 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'photo',  
+        'photo',
         'email',
+        'branch_id',
         'password',
     ];
 
@@ -45,5 +46,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
     }
 }
