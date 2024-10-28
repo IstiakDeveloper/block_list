@@ -15,7 +15,6 @@
                                 id="nid_part_1"
                                 @input="handleFileUpload('nid_part_1', $event)"
                                 accept="image/*"
-                                required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
                             <p class="text-sm text-gray-500 dark:text-gray-400">Upload the first part of your NID.</p>
@@ -30,7 +29,6 @@
                                 id="nid_part_2"
                                 @input="handleFileUpload('nid_part_2', $event)"
                                 accept="image/*"
-                                required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
                             <p class="text-sm text-gray-500 dark:text-gray-400">Upload the second part of your NID.</p>
@@ -77,6 +75,16 @@
                                 type="text"
                                 id="mother_name"
                                 v-model="form.mother_name"
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
+                            >
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="rejected_by" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Rejected By</label>
+                            <input
+                                type="text"
+                                id="rejected_by"
+                                v-model="form.rejected_by"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
                         </div>
@@ -168,6 +176,7 @@ const form = useForm({
     name_bn: '',
     father_name: '',
     mother_name: '',
+    rejected_by: '',
     dob: '',
     nid_number: '',
     phone_number: '',

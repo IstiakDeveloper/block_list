@@ -11,7 +11,7 @@ class Customer extends Model
 
     protected $fillable = [
         'user_id', 'branch_id', 'nid_part_1', 'nid_part_2', 'name', 'name_bn',
-        'father_name', 'mother_name', 'dob', 'nid_number', 'address', 'details','phone_number',
+        'father_name', 'mother_name', 'dob', 'nid_number', 'address', 'details','phone_number', 'rejected_by',
     ];
 
     public function user()

@@ -14,31 +14,28 @@ use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user(); // Get the authenticated user
+        $user = auth()->user();
+        $query = Customer::with('branch');
 
-        // Check if the authenticated user is "Super Admin"
-        if ($user->name === 'Super Admin') {
-            // If "Super Admin", show all customers
-            $customers = Customer::with('branch')
-                ->latest()
-                ->paginate(10);
-        } else {
-            // If not "Super Admin", only show customers from the same branch as the user
-            $customers = Customer::where('branch_id', $user->branch_id)
-                ->with('branch')
-                ->latest()
-                ->paginate(10);
+        // If Super Admin and branch filter is applied
+        if ($user->name === 'Super Admin' && $request->has('branch')) {
+            $query->where('branch_id', $request->branch);
+        }
+        // If not Super Admin, only show customers from their branch
+        elseif ($user->name !== 'Super Admin') {
+            $query->where('branch_id', $user->branch_id);
         }
 
-        // Return data to the Vue component using Inertia
+        $customers = $query->latest()->paginate(10);
+        $branches = Branch::all(); // Get all branches for the filter dropdown
+
         return Inertia::render('Admin/Customer/Index', [
             'customers' => $customers,
+            'branches' => $branches,
         ]);
     }
-
-
 
         // Display the form for creating a new customer
 
@@ -50,12 +47,13 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nid_part_1' => 'required|file|image|max:2048',
-            'nid_part_2' => 'required|file|image|max:2048',
+            'nid_part_1' => 'nullable|file|image|max:2048',
+            'nid_part_2' => 'nullable|file|image|max:2048',
             'name' => 'required|string|max:255',
             'name_bn' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
+            'rejected_by' => 'nullable|string|max:255',
             'dob' => 'nullable|date',
             'nid_number' => 'nullable|string|unique:customers',
             'phone_number' => 'nullable|string',
@@ -63,12 +61,15 @@ class CustomerController extends Controller
             'details' => 'nullable|string',
         ]);
 
-        // Handle file uploads
-        $nid_part_1_path = $request->file('nid_part_1')->store('nid_images', 'public');
-        $nid_part_2_path = $request->file('nid_part_2')->store('nid_images', 'public');
+        // Initialize file paths
+        $nid_part_1_path = $request->file('nid_part_1') ? $request->file('nid_part_1')->store('nid_images', 'public') : null;
+        $nid_part_2_path = $request->file('nid_part_2') ? $request->file('nid_part_2')->store('nid_images', 'public') : null;
 
-        // Attempt to extract information from images
-        $extracted_info = $this->extractInfoFromImages($nid_part_1_path, $nid_part_2_path);
+        // Attempt to extract information from images only if they exist
+        $extracted_info = [];
+        if ($nid_part_1_path || $nid_part_2_path) {
+            $extracted_info = $this->extractInfoFromImages($nid_part_1_path, $nid_part_2_path);
+        }
 
         // Create new customer
         $customer = new Customer($validated);
@@ -86,6 +87,7 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.index')->with('success', 'Customer created successfully.');
     }
+
 
     private function extractInfoFromImages($part1_path, $part2_path)
     {
@@ -134,28 +136,16 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'nid_part_1' => 'nullable|file|image|max:2048',
-            'nid_part_2' => 'nullable|file|image|max:2048',
             'name' => 'required|string|max:255',
             'name_bn' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
+            'rejected_by' => 'nullable|string|max:255',
             'dob' => 'nullable|date',
             'nid_number' => 'required|string|unique:customers,nid_number,' . $customer->id,
             'address' => 'nullable|string',
             'details' => 'nullable|string',
         ]);
-
-        // Handle file uploads if provided
-        if ($request->hasFile('nid_part_1')) {
-            $nid_part_1_path = $request->file('nid_part_1')->store('nid_images', 'public');
-            $customer->nid_part_1 = $nid_part_1_path;
-        }
-
-        if ($request->hasFile('nid_part_2')) {
-            $nid_part_2_path = $request->file('nid_part_2')->store('nid_images', 'public');
-            $customer->nid_part_2 = $nid_part_2_path;
-        }
 
         // Update customer data
         $customer->update($validated);
@@ -172,8 +162,6 @@ class CustomerController extends Controller
             'customer' => $customer,
         ]);
     }
-
-
 
     // Remove the specified customer from storage
     public function destroy(Customer $customer)

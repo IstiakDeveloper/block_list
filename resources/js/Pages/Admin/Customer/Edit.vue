@@ -7,7 +7,7 @@
                 <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Edit Customer</h1>
                 <form @submit.prevent="updateCustomer">
                     <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div class="sm:col-span-3">
+                        <!-- <div class="sm:col-span-3">
                             <label for="nid_part_1" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 1</label>
                             <input
                                 type="file"
@@ -29,7 +29,7 @@
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
                             <p v-if="form.nid_part_2">Current File: {{ form.nid_part_2 }}</p>
-                        </div>
+                        </div> -->
 
                         <div class="sm:col-span-3">
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
@@ -68,6 +68,16 @@
                                 type="text"
                                 id="mother_name"
                                 v-model="form.mother_name"
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
+                            >
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="rejected_by" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Rejected By</label>
+                            <input
+                                type="text"
+                                id="rejected_by"
+                                v-model="form.rejected_by"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"
                             >
                         </div>
