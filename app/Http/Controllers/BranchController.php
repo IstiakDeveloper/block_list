@@ -11,14 +11,23 @@ class BranchController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Fetch all branches
-        $branches = Branch::all();
+        $perPage = $request->input('per_page', 10);
 
-        // Return the Inertia view with the list of branches
+        $branches = Branch::query()
+            ->when($request->search, fn($q, $search) => $q->search($search))
+            ->when($request->sort, fn($q) => $q->sort(
+                $request->sort,
+                $request->input('direction', 'asc')
+            ))
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
         return Inertia::render('Admin/Branch/Index', [
             'branches' => $branches,
+            'filters' => $request->only(['search', 'sort', 'direction', 'per_page']),
         ]);
     }
 

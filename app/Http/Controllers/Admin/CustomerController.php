@@ -15,38 +15,68 @@ use thiagoalessio\TesseractOCR\TesseractOCR;
 class CustomerController extends Controller
 {
     public function index(Request $request)
-    {
-        $user = auth()->user();
-        $query = Customer::with('branch');
+{
+    $user = auth()->user();
+    $query = Customer::with('branch');
 
-        // If Super Admin and branch filter is applied
-        if ($user->name === 'Super Admin' && $request->has('branch')) {
+    // If Super Admin and branch filter is applied
+    if ($user->name === 'Super Admin') {
+        if ($request->has('branch')) {
             $query->where('branch_id', $request->branch);
         }
-        // If not Super Admin, only show customers from their branch
-        elseif ($user->name !== 'Super Admin') {
-            $query->where('branch_id', $user->branch_id);
-        }
-
-        $customers = $query->latest()->paginate(10);
-        $branches = Branch::all(); // Get all branches for the filter dropdown
-
-        return Inertia::render('Admin/Customer/Index', [
-            'customers' => $customers,
-            'branches' => $branches,
-        ]);
     }
+    // If user has multiple branches
+    elseif ($user->branches()->count() > 0) {
+        $userBranchIds = $user->branches()->pluck('branch_id');
+        $query->whereIn('branch_id', $userBranchIds);
+
+        // Apply branch filter if requested and user has access
+        if ($request->has('branch') && $userBranchIds->contains($request->branch)) {
+            $query->where('branch_id', $request->branch);
+        }
+    }
+    // If user has single branch
+    else {
+        $query->where('branch_id', $user->branch_id);
+    }
+
+    $customers = $query->latest()->paginate(10);
+
+    // Get branches based on user type
+    $branches = match(true) {
+        $user->name === 'Super Admin' => Branch::all(),
+        $user->branches()->count() > 0 => $user->branches,
+        default => Branch::where('id', $user->branch_id)->get()
+    };
+
+    return Inertia::render('Admin/Customer/Index', [
+        'customers' => $customers,
+        'branches' => $branches,
+        'filters' => [
+            'branch' => $request->branch,
+        ],
+    ]);
+}
 
         // Display the form for creating a new customer
 
-    public function create()
-    {
-        return Inertia::render('Admin/Customer/Create');
-    }
+        public function create()
+        {
+            // Fetch branches for the authenticated user through the pivot table
+            $branches = Branch::whereHas('users', function ($query) {
+                $query->where('users.id', auth()->id()); // Specify 'users.id' to avoid ambiguity
+            })->get();
+
+            return Inertia::render('Admin/Customer/Create', [
+                'branches' => $branches,
+            ]);
+        }
+
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'branch_id' => 'nullable|exists:branches,id',
             'nid_part_1' => 'nullable|file|image|max:2048',
             'nid_part_2' => 'nullable|file|image|max:2048',
             'name' => 'required|string|max:255',
@@ -74,7 +104,7 @@ class CustomerController extends Controller
         // Create new customer
         $customer = new Customer($validated);
         $customer->user_id = auth()->id();
-        $customer->branch_id = auth()->user()->branch_id;
+        $customer->branch_id = auth()->user()->branch_id ?? $validated['branch_id'];
         $customer->nid_part_1 = $nid_part_1_path;
         $customer->nid_part_2 = $nid_part_2_path;
 
@@ -124,31 +154,31 @@ class CustomerController extends Controller
     // Show the form for editing the specified customer
     public function edit($id)
     {
-        // Retrieve the customer by ID
         $customer = Customer::findOrFail($id);
+        $branches = Branch::whereHas('users', function ($query) {
+            $query->where('users.id', auth()->id());
+        })->get();
 
-        // Return the Inertia view (Edit.vue) with the customer data
         return Inertia::render('Admin/Customer/Edit', [
             'customer' => $customer,
+            'branches' => $branches,
         ]);
     }
-
     public function update(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'name_bn' => 'nullable|string|max:255',
-            'father_name' => 'nullable|string|max:255',
-            'mother_name' => 'nullable|string|max:255',
-            'rejected_by' => 'nullable|string|max:255',
-            'dob' => 'nullable|date',
-            'nid_number' => 'required|string|unique:customers,nid_number,' . $customer->id,
-            'address' => 'nullable|string',
-            'details' => 'nullable|string',
-        ]);
+        $data = $request->except(['nid_part_1', 'nid_part_2']);
 
-        // Update customer data
-        $customer->update($validated);
+        // Handle file uploads
+        if ($request->hasFile('nid_part_1')) {
+            $data['nid_part_1'] = $request->file('nid_part_1')->store('nid_images', 'public');
+        }
+
+        if ($request->hasFile('nid_part_2')) {
+            $data['nid_part_2'] = $request->file('nid_part_2')->store('nid_images', 'public');
+        }
+
+        // Update the customer with all the data from the request
+        $customer->update($data);
 
         return redirect()->route('admin.customers.index')->with('success', 'Customer updated successfully.');
     }
