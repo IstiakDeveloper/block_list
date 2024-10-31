@@ -139,7 +139,10 @@
                 </div>
             </header>
 
-            <main class="flex-1 p-6 mt-16 overflow-auto">
+            <main class="flex-1 p-6 mt-16 overflow-y-auto h-[calc(100vh-4rem)]">
+
+
+
                 <div class="mx-auto">
                     <div v-if="showFlashSuccess"
                         class="mb-4 p-4 bg-green-100 text-green-700 rounded border-l-4 border-green-500 transition-transform transform duration-300 ease-in-out">
@@ -149,10 +152,12 @@
                         class="mb-4 p-4 bg-red-100 text-red-700 rounded border-l-4 border-red-500 transition-transform transform duration-300 ease-in-out">
                         {{ flash.error }}
                     </div>
+                    <LoadingProgress />
                     <slot></slot>
                 </div>
             </main>
         </div>
+        <ScrollToTopButton />
     </div>
 </template>
 
@@ -160,6 +165,8 @@
 import { ref, onMounted, watch } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import { switchTheme } from '@/theme';
+import LoadingProgress from '@/Components/LoadingProgress.vue';
+import ScrollToTopButton from '@/Components/ScrollToTopButton.vue';
 
 const { props } = usePage();
 const flash = props.flash;

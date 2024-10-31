@@ -12,6 +12,7 @@
 
       <!-- Main Content -->
       <main class="flex-1 flex items-center justify-center p-6">
+        <LoadingProgress />
         <div class="w-full overflow-hidden bg-white dark:bg-gray-900 px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
           <slot></slot>
         </div>
@@ -27,6 +28,7 @@
   <script setup>
   import { ref } from 'vue';
   import { switchTheme } from '@/theme'; // Assume the same theme switching function
+import LoadingProgress from '@/Components/LoadingProgress.vue';
 
   // Additional setup logic can be placed here
   </script>
