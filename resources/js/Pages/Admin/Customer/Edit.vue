@@ -1,4 +1,5 @@
 <template>
+
     <Head title="Edit Customer" />
 
     <AdminLayout>
@@ -24,27 +25,36 @@
 
                         <!-- NID Part 1 -->
                         <div class="sm:col-span-3">
-                            <label for="nid_part_1" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 1</label>
-                            <input type="file" id="nid_part_1" @input="handleFileUpload('nid_part_1', $event)" accept="image/*"
+                            <label for="nid_part_1"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 1</label>
+                            <input type="file" id="nid_part_1" @input="handleFileUpload('nid_part_1', $event)"
+                                accept="image/*"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Upload the first part of your NID.</p>
-                            <img v-if="form.nid_part_1_url" :src="form.nid_part_1_url" alt="NID Part 1 Preview" class="mt-2 w-32 h-32 object-cover rounded">
-                            <p v-else-if="customer.nid_part_1" class="text-sm text-gray-500 dark:text-gray-400">Current file: {{ customer.nid_part_1 }}</p>
+                            <img v-if="form.nid_part_1_url" :src="form.nid_part_1_url" alt="NID Part 1 Preview"
+                                class="mt-2 w-32 h-32 object-cover rounded">
+                            <p v-else-if="customer.nid_part_1" class="text-sm text-gray-500 dark:text-gray-400">Current
+                                file: {{ customer.nid_part_1 }}</p>
                         </div>
 
                         <!-- NID Part 2 -->
                         <div class="sm:col-span-3">
-                            <label for="nid_part_2" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 2</label>
-                            <input type="file" id="nid_part_2" @input="handleFileUpload('nid_part_2', $event)" accept="image/*"
+                            <label for="nid_part_2"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 2</label>
+                            <input type="file" id="nid_part_2" @input="handleFileUpload('nid_part_2', $event)"
+                                accept="image/*"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Upload the second part of your NID.</p>
-                            <img v-if="form.nid_part_2_url" :src="form.nid_part_2_url" alt="NID Part 2 Preview" class="mt-2 w-32 h-32 object-cover rounded">
-                            <p v-else-if="customer.nid_part_2" class="text-sm text-gray-500 dark:text-gray-400">Current file: {{ customer.nid_part_2 }}</p>
+                            <img v-if="form.nid_part_2_url" :src="form.nid_part_2_url" alt="NID Part 2 Preview"
+                                class="mt-2 w-32 h-32 object-cover rounded">
+                            <p v-else-if="customer.nid_part_2" class="text-sm text-gray-500 dark:text-gray-400">Current
+                                file: {{ customer.nid_part_2 }}</p>
                         </div>
 
                         <!-- Customer Name -->
                         <div class="sm:col-span-3">
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
+                            <label for="name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
                             <input type="text" id="name" v-model="form.name" required
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Enter the customer's full name.</p>
@@ -52,63 +62,80 @@
 
                         <!-- Name (Bangla) -->
                         <div class="sm:col-span-3">
-                            <label for="name_bn" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name (Bangla)</label>
+                            <label for="name_bn" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name
+                                (Bangla)</label>
                             <input type="text" id="name_bn" v-model="form.name_bn"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Father's Name -->
                         <div class="sm:col-span-3">
-                            <label for="father_name" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Father's Name</label>
+                            <label for="father_name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Father's Name</label>
                             <input type="text" id="father_name" v-model="form.father_name"
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
+                        </div>
+
+                        <!-- Spouse's Name -->
+                        <div class="sm:col-span-3">
+                            <label for="spouse_name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Spouse's Name</label>
+                            <input type="text" id="spouse_name" v-model="form.spouse_name"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Mother's Name -->
                         <div class="sm:col-span-3">
-                            <label for="mother_name" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Mother's Name</label>
+                            <label for="mother_name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Mother's Name</label>
                             <input type="text" id="mother_name" v-model="form.mother_name"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Rejected By -->
                         <div class="sm:col-span-3">
-                            <label for="rejected_by" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Rejected By</label>
+                            <label for="rejected_by"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Rejected By</label>
                             <input type="text" id="rejected_by" v-model="form.rejected_by"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Date of Birth -->
                         <div class="sm:col-span-3">
-                            <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Date of Birth</label>
+                            <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Date of
+                                Birth</label>
                             <input type="date" id="dob" v-model="form.dob"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- NID Number -->
                         <div class="sm:col-span-3">
-                            <label for="nid_number" class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Number</label>
-                            <input type="text" id="nid_number" v-model="form.nid_number" required
+                            <label for="nid_number"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Number</label>
+                            <input type="text" id="nid_number" v-model="form.nid_number"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Phone Number -->
                         <div class="sm:col-span-3">
-                            <label for="phone_number" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Phone Number</label>
-                            <input type="text" id="phone_number" v-model="form.phone_number" required
+                            <label for="phone_number"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Phone Number</label>
+                            <input type="text" id="phone_number" v-model="form.phone_number"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <!-- Address -->
                         <div class="sm:col-span-6">
-                            <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Address</label>
+                            <label for="address"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Address</label>
                             <textarea id="address" v-model="form.address" rows="3"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"></textarea>
                         </div>
 
                         <!-- Details -->
                         <div class="sm:col-span-6">
-                            <label for="details" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Details</label>
+                            <label for="details"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Details</label>
                             <textarea id="details" v-model="form.details" rows="3"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"></textarea>
                         </div>
@@ -118,12 +145,16 @@
                         <button type="submit" class="btn-primary inline-flex items-center" :disabled="loading">
                             <span v-if="loading">Updating...</span>
                             <span v-else>Update Customer</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <Link :href="route('admin.customers.index')" class="btn-secondary inline-flex items-center ml-4">
-                            Back to Customers
+                        <Link :href="route('admin.customers.index')"
+                            class="btn-secondary inline-flex items-center ml-4">
+                        Back to Customers
                         </Link>
                     </div>
                 </form>
@@ -149,6 +180,7 @@ const form = useForm({
     name: props.customer.name,
     name_bn: props.customer.name_bn,
     father_name: props.customer.father_name,
+    spouse_name: props.customer.spouse_name,
     mother_name: props.customer.mother_name,
     rejected_by: props.customer.rejected_by,
     dob: props.customer.dob,

@@ -45,6 +45,10 @@
                 <p class="text-gray-600 dark:text-gray-400">{{ customer.father_name || 'N/A' }}</p>
               </div>
               <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+                <p class="font-semibold text-gray-800 dark:text-gray-200">Spouse's Name:</p>
+                <p class="text-gray-600 dark:text-gray-400">{{ customer.spouse_name || 'N/A' }}</p>
+              </div>
+              <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
                 <p class="font-semibold text-gray-800 dark:text-gray-200">Mother's Name:</p>
                 <p class="text-gray-600 dark:text-gray-400">{{ customer.mother_name || 'N/A' }}</p>
               </div>
@@ -55,6 +59,10 @@
               <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
                 <p class="font-semibold text-gray-800 dark:text-gray-200">NID Number:</p>
                 <p class="text-gray-600 dark:text-gray-400">{{ customer.nid_number }}</p>
+              </div>
+              <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
+                <p class="font-semibold text-gray-800 dark:text-gray-200">Phone Number:</p>
+                <p class="text-gray-600 dark:text-gray-400">{{ customer.phone_number}}</p>
               </div>
               <div class="flex justify-between items-center p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-800">
                 <p class="font-semibold text-gray-800 dark:text-gray-200">Address:</p>
@@ -115,9 +123,11 @@
             </div>
             <p class="text-gray-700 dark:text-gray-300"><strong>Name (Bangla):</strong> {{ customer.name_bn || 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Father's Name:</strong> {{ customer.father_name || 'N/A' }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>Spouse's Name:</strong> {{ customer.spouse_name || 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Mother's Name:</strong> {{ customer.mother_name || 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Date of Birth:</strong> {{ customer.dob ? new Date(customer.dob).toLocaleDateString() : 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>NID Number:</strong> {{ customer.nid_number }}</p>
+            <p class="text-gray-700 dark:text-gray-300"><strong>NID Number:</strong> {{ customer.phone_number }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Address:</strong> {{ customer.address || 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Details:</strong> {{ customer.details || 'N/A' }}</p>
             <p class="text-gray-700 dark:text-gray-300"><strong>Branch:</strong> {{ customer.branch?.branch_name || 'N/A' }}</p>
@@ -176,9 +186,11 @@ function printProfile() {
         <h2>Customer Profile</h2>
         <p><strong>Name (Bangla):</strong> ${props.customer.name_bn || 'N/A'}</p>
         <p><strong>Father's Name:</strong> ${props.customer.father_name || 'N/A'}</p>
+        <p><strong>Father's Name:</strong> ${props.customer.spouse_name || 'N/A'}</p>
         <p><strong>Mother's Name:</strong> ${props.customer.mother_name || 'N/A'}</p>
         <p><strong>Date of Birth:</strong> ${props.customer.dob ? new Date(props.customer.dob).toLocaleDateString() : 'N/A'}</p>
         <p><strong>NID Number:</strong> ${props.customer.nid_number}</p>
+        <p><strong>NID Number:</strong> ${props.customer.phone_number}</p>
         <p><strong>Address:</strong> ${props.customer.address || 'N/A'}</p>
         <p><strong>Details:</strong> ${props.customer.details || 'N/A'}</p>
         <p><strong>Branch:</strong> ${props.customer.branch?.branch_name || 'N/A'}</p>

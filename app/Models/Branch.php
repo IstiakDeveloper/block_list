@@ -19,6 +19,16 @@ class Branch extends Model
         return $this->belongsToMany(User::class, 'branch_user', 'branch_id', 'user_id');
     }
 
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function branchUsers()
+    {
+        return $this->belongsToMany(User::class, 'branch_user');
+    }
+
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {

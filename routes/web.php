@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerSearchController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('admin/customers', CustomerController::class)->names('admin.customers');
 
     Route::get('/customer-search', [CustomerSearchController::class, 'search'])->name('customer.search');
+
+    Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/download', [ReportController::class, 'downloadPdf'])->name('admin.reports.download');
+
 });
 
 

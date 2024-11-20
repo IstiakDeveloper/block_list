@@ -2,7 +2,9 @@
     <div class="flex flex-col min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-800 dark:to-purple-900">
       <!-- Header -->
       <header class="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow-md">
-        <h1 class="text-xl font-bold text-gray-800 dark:text-white">Mousumi</h1>
+        <Link href="/customer-search">
+            <h1 class="text-xl font-bold text-gray-800 dark:text-white">Mousumi</h1>
+        </Link>
         <div class="flex items-center">
           <button @click="switchTheme" class="text-gray-500 dark:text-white hover:text-gray-600">
             <i class="fa-solid fa-circle-half-stroke"></i>
@@ -26,9 +28,10 @@
   </template>
 
   <script setup>
-  import { ref } from 'vue';
-  import { switchTheme } from '@/theme'; // Assume the same theme switching function
-import LoadingProgress from '@/Components/LoadingProgress.vue';
+    import { ref } from 'vue';
+    import { Link } from '@inertiajs/vue3';
+    import { switchTheme } from '@/theme'; // Assume the same theme switching function
+    import LoadingProgress from '@/Components/LoadingProgress.vue';
 
   // Additional setup logic can be placed here
   </script>

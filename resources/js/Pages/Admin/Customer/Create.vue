@@ -75,6 +75,13 @@
                         </div>
 
                         <div class="sm:col-span-3">
+                            <label for="spouse_name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Spouse Name</label>
+                            <input type="text" id="spouse_name" v-model="form.spouse_name"
+                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
+                        </div>
+
+                        <div class="sm:col-span-3">
                             <label for="mother_name"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-400">Mother's Name</label>
                             <input type="text" id="mother_name" v-model="form.mother_name"
@@ -98,14 +105,14 @@
                         <div class="sm:col-span-3">
                             <label for="nid_number"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Number</label>
-                            <input type="text" id="nid_number" v-model="form.nid_number" required
+                            <input type="text" id="nid_number" v-model="form.nid_number"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
                         <div class="sm:col-span-3">
                             <label for="phone_number"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-400">Phone Number</label>
-                            <input type="text" id="phone_number" v-model="form.phone_number" required
+                            <input type="text" id="phone_number" v-model="form.phone_number"
                                 class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
                         </div>
 
@@ -165,6 +172,7 @@ const form = useForm({
     name: '',
     name_bn: '',
     father_name: '',
+    spouse_name: '',
     mother_name: '',
     rejected_by: '',
     dob: '',
