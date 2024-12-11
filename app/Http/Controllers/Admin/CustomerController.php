@@ -19,39 +19,45 @@ class CustomerController extends Controller
         $user = auth()->user();
         $query = Customer::with('branch');
 
-        // If Super Admin and branch filter is applied
-        if ($user->name === 'Super Admin') {
-            if ($request->has('branch')) {
-                $query->where('branch_id', $request->branch);
-            }
-        }
-        // If user has multiple branches
-        elseif ($user->branches()->count() > 0) {
-            $userBranchIds = $user->branches()->pluck('branch_id');
-            $query->whereIn('branch_id', $userBranchIds);
+        // Get user's branches
+        $userBranches = match (true) {
+            $user->name === 'Super Admin' => Branch::all(),
+            $user->branches()->exists() => $user->branches,
+            default => Branch::where('id', $user->branch_id)->get()
+        };
 
-            // Apply branch filter if requested and user has access
-            if ($request->has('branch') && $userBranchIds->contains($request->branch)) {
+        // If user has only one branch and no branch filter is set, automatically set it
+        if ($userBranches->count() === 1 && !$request->has('branch')) {
+            $request->merge(['branch' => $userBranches->first()->id]);
+        }
+
+        // Apply branch filtering
+        if ($request->has('branch') && $request->branch) {
+            // For Super Admin, allow filtering by any branch
+            if ($user->name === 'Super Admin') {
                 $query->where('branch_id', $request->branch);
             }
+            // For other users, only allow filtering by their assigned branches
+            else {
+                $userBranchIds = $userBranches->pluck('id');
+                if ($userBranchIds->contains($request->branch)) {
+                    $query->where('branch_id', $request->branch);
+                }
+            }
         }
-        // If user has single branch
+        // If no branch filter is applied, show only accessible branches
         else {
-            $query->where('branch_id', $user->branch_id);
+            if ($user->name !== 'Super Admin') {
+                $userBranchIds = $userBranches->pluck('id');
+                $query->whereIn('branch_id', $userBranchIds);
+            }
         }
 
         $customers = $query->latest()->paginate(10);
 
-        // Get branches based on user type
-        $branches = match (true) {
-            $user->name === 'Super Admin' => Branch::all(),
-            $user->branches()->count() > 0 => $user->branches,
-            default => Branch::where('id', $user->branch_id)->get()
-        };
-
         return Inertia::render('Admin/Customer/Index', [
             'customers' => $customers,
-            'branches' => $branches,
+            'branches' => $userBranches,
             'filters' => [
                 'branch' => $request->branch,
             ],
