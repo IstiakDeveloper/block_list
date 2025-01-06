@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BranchOfficerController;
+use App\Http\Controllers\Admin\PaymentReceiptDashboardController;
 use App\Http\Controllers\Admin\ReceiptStockController;
 use App\Http\Controllers\Admin\ReceiptDistributionController;
 use Illuminate\Foundation\Application;
@@ -17,7 +18,7 @@ use Inertia\Inertia;
 
 
 Route::get('/', [AuthenticatedSessionController::class, 'create'])
-->name('login');
+    ->name('login');
 
 Route::get('/storage-link', function () {
     Artisan::call('storage:link');
@@ -67,10 +68,16 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Receipt Distribution Routes
     Route::get('receipt-distributions/create', [ReceiptDistributionController::class, 'create'])->name('receipt-distributions.create');
+
     Route::post('receipt-distributions', [ReceiptDistributionController::class, 'store'])->name('receipt-distributions.store');
+    Route::get('receipt-stocks/{branch}/history', [ReceiptStockController::class, 'history'])
+        ->name('receipt-stocks.history');
     Route::get('receipt-stocks/{branch}/distributions', [ReceiptStockController::class, 'distributions'])
-    ->name('receipt-stocks.distributions');
+        ->name('receipt-stocks.distributions');
+
+
+    Route::get('/payment-receipt/dashboard', [PaymentReceiptDashboardController::class, 'index'])->name('payment-receipt-dashboard');
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

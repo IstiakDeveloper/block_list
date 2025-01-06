@@ -48,4 +48,19 @@ class Branch extends Model
 
         return $query;
     }
+
+    public function branchOfficers()
+    {
+        return $this->hasMany(BranchOfficer::class);
+    }
+
+    public function receiptStock()
+    {
+        return $this->hasOne(ReceiptStock::class);
+    }
+
+    public function receiptDistributions()
+    {
+        return $this->hasMany(OfficerReceiptDistribution::class);
+    }
 }

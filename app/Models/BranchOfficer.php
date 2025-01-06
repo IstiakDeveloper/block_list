@@ -17,4 +17,5 @@ class BranchOfficer extends Model
     {
         return $this->hasMany(OfficerReceiptDistribution::class);
     }
+
 }

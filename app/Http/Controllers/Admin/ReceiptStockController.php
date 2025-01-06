@@ -43,11 +43,25 @@ class ReceiptStockController extends Controller
         ]);
     }
 
+    public function history(Branch $branch)
+    {
+        $user = auth()->user();
+
+        if ($user->branch_id && $user->branch_id !== $branch->id) {
+            abort(403);
+        }
+
+        return ReceiptTransfer::with(['user'])
+            ->where('to_branch_id', $branch->id)
+            ->where('from_branch_id', null)  // Only Head Office transfers
+            ->latest('transfer_date')
+            ->get();
+    }
+
     public function distributions(Branch $branch)
     {
         $user = auth()->user();
 
-        // Ensure user can only view distributions for their branch
         if ($user->branch_id && $user->branch_id !== $branch->id) {
             abort(403);
         }
@@ -57,6 +71,8 @@ class ReceiptStockController extends Controller
             ->latest('distribution_date')
             ->get();
     }
+
+
 
     public function transfer(Request $request)
     {
@@ -108,19 +124,4 @@ class ReceiptStockController extends Controller
         }
     }
 
-    public function history(Branch $branch)
-    {
-        $user = auth()->user();
-
-        // Ensure user can only view history for their branch
-        if ($user->branch_id && $user->branch_id !== $branch->id) {
-            abort(403);
-        }
-
-        return ReceiptTransfer::with(['toBranch', 'user'])
-            ->where('to_branch_id', $branch->id)
-            ->where('from_branch_id', null) // Only Head Office transfers
-            ->latest('transfer_date')
-            ->get();
-    }
 }

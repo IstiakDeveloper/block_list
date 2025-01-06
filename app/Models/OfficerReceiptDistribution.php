@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OfficerReceiptDistribution extends Model
 {
@@ -13,17 +14,18 @@ class OfficerReceiptDistribution extends Model
 
     protected $dates = ['distribution_date'];
 
-    public function branch()
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function officer()
+    // Fixed relationship name from branchOfficer to branchOfficer
+    public function officer(): BelongsTo
     {
         return $this->belongsTo(BranchOfficer::class, 'branch_officer_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
