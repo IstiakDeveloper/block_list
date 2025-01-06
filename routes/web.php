@@ -7,9 +7,15 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BranchOfficerController;
+use App\Http\Controllers\Admin\ReceiptStockController;
+use App\Http\Controllers\Admin\ReceiptDistributionController;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
 Route::get('/', [AuthenticatedSessionController::class, 'create'])
 ->name('login');
 
@@ -39,7 +45,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/download', [ReportController::class, 'downloadPdf'])->name('admin.reports.download');
-
 });
 
 
@@ -48,5 +53,24 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    // Branch Officers Routes
+    Route::resource('branch-officers', BranchOfficerController::class);
+    Route::get('branch-officers/by-branch/{branch}', [BranchOfficerController::class, 'getByBranch'])
+        ->name('branch-officers.by-branch');
+
+    // Receipt Stock Routes
+    Route::get('receipt-stocks', [ReceiptStockController::class, 'index'])->name('receipt-stocks.index');
+    Route::post('receipt-stocks/transfer', [ReceiptStockController::class, 'transfer'])->name('receipt-stocks.transfer');
+    Route::get('receipt-stocks/history/{branch}', [ReceiptStockController::class, 'history'])->name('receipt-stocks.history');
+
+    // Receipt Distribution Routes
+    Route::get('receipt-distributions/create', [ReceiptDistributionController::class, 'create'])->name('receipt-distributions.create');
+    Route::post('receipt-distributions', [ReceiptDistributionController::class, 'store'])->name('receipt-distributions.store');
+    Route::get('receipt-stocks/{branch}/distributions', [ReceiptStockController::class, 'distributions'])
+    ->name('receipt-stocks.distributions');
+});
+
 
 require __DIR__.'/auth.php';

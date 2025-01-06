@@ -1,12 +1,12 @@
 <template>
-    <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 p-4 sm:p-6">
+    <div v-if="data" class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 p-4 sm:p-6">
         <!-- Info Text -->
         <span class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ data.from }} to {{ data.to }} of {{ data.total }} {{ itemName }}
+            Showing {{ data.from || 0 }} to {{ data.to || 0 }} of {{ data.total || 0 }} {{ itemName }}
         </span>
 
         <!-- Pagination Controls -->
-        <div class="flex items-center space-x-2">
+        <div v-if="data.last_page > 1" class="flex items-center space-x-2">
             <!-- First Page -->
             <button @click="goToPage(1)"
                     :disabled="data.current_page === 1"
@@ -78,6 +78,20 @@ const props = defineProps({
     data: {
         type: Object,
         required: true,
+        default: () => ({
+            current_page: 1,
+            last_page: 1,
+            from: 0,
+            to: 0,
+            total: 0,
+            prev_page_url: null,
+            next_page_url: null
+        }),
+        validator: (prop) => {
+            return typeof prop === 'object' &&
+                   'current_page' in prop &&
+                   'last_page' in prop;
+        }
     },
     itemName: {
         type: String,
@@ -98,10 +112,14 @@ const props = defineProps({
 });
 
 const displayedPages = computed(() => {
+    if (!props.data) return [];
+
     const current = props.data.current_page;
     const last = props.data.last_page;
     const delta = 2;
     const pages = [];
+
+    if (last <= 1) return pages;
 
     pages.push(1);
 
@@ -121,6 +139,8 @@ const displayedPages = computed(() => {
 });
 
 function goToPage(page) {
+    if (!props.data || page === props.data.current_page) return;
+
     const params = new URLSearchParams(window.location.search);
     params.set('page', page);
 
