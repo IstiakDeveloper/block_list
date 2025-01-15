@@ -1,20 +1,6 @@
 <template>
     <div>
       <!-- Progress Bar -->
-      <div
-        class="fixed top-0 left-0 right-0 z-[60]"
-        :class="{ 'hidden': !loading }"
-      >
-        <div class="h-1 relative max-w-full overflow-hidden">
-          <div class="w-full h-full bg-gray-200 absolute"></div>
-          <div
-            class="h-full bg-blue-600 absolute transition-all duration-500 ease-out"
-            :style="{ width: `${progress}%` }"
-          />
-        </div>
-      </div>
-
-      <!-- Loading Overlay -->
       <Transition
         enter-active-class="transition duration-200 ease-out"
         enter-from-class="opacity-0"
@@ -23,31 +9,22 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-show="loading" class="fixed inset-0 z-50">
-          <!-- Backdrop -->
-          <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
+        <div
+          v-show="loading || progress > 0"
+          class="fixed top-0 right-0 z-[60] p-4 flex flex-col items-end gap-2"
+        >
+          <!-- Progress Indicator -->
+          <div class="bg-white rounded-full shadow-md border border-gray-200 px-3 py-2 flex items-center gap-2">
+            <div class="w-4 h-4 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
+            <span class="text-sm font-medium text-gray-700">{{ Math.round(progress) }}%</span>
+          </div>
 
-          <!-- Loading Content -->
-          <div class="flex items-center justify-center h-screen">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 relative">
-              <div class="flex flex-col items-center space-y-4">
-                <!-- Spinner -->
-                <div class="text-blue-600 text-4xl animate-spin">
-                  <i class="fas fa-circle-notch"></i>
-                </div>
-
-                <!-- Loading Text -->
-                <div class="text-center">
-                  <h3 class="text-lg font-medium text-gray-900">Loading</h3>
-                  <p class="mt-1 text-sm text-gray-500">Please wait while we process your request...</p>
-                </div>
-
-                <!-- Progress Text -->
-                <div class="text-sm text-gray-500">
-                  {{ Math.round(progress) }}%
-                </div>
-              </div>
-            </div>
+          <!-- Progress Bar -->
+          <div class="w-[200px] h-1 bg-white rounded-full shadow-sm overflow-hidden">
+            <div
+              class="h-full bg-blue-600 transition-all duration-500 ease-out"
+              :style="{ width: `${Math.min(progress, 100)}%` }"
+            />
           </div>
         </div>
       </Transition>
@@ -60,33 +37,61 @@
 
   const progress = ref<number>(0)
   const loading = ref<boolean>(false)
-  let timer: ReturnType<typeof setInterval> | null = null
+  let progressTimer: ReturnType<typeof setInterval> | null = null
+  let completeTimer: ReturnType<typeof setTimeout> | null = null
 
   const startLoading = () => {
+    // Clear any existing timers
+    if (progressTimer) clearInterval(progressTimer)
+    if (completeTimer) clearTimeout(completeTimer)
+
     loading.value = true
     progress.value = 0
-    timer = setInterval(() => {
+
+    progressTimer = setInterval(() => {
       if (progress.value < 90) {
-        progress.value += Math.random() * 10
+        // Smoother progress increment
+        progress.value += Math.random() * 3
       }
-    }, 200)
+    }, 100)
   }
 
   const finishLoading = () => {
+    if (progressTimer) {
+      clearInterval(progressTimer)
+      progressTimer = null
+    }
+
     progress.value = 100
-    setTimeout(() => {
+
+    completeTimer = setTimeout(() => {
       loading.value = false
       progress.value = 0
-      if (timer) clearInterval(timer)
-    }, 300)
+    }, 400)
   }
 
   onMounted(() => {
-    router.on('before', startLoading)
-    router.on('finish', finishLoading)
+    try {
+      router.on('before', () => {
+        startLoading()
+      })
+
+      router.on('finish', () => {
+        finishLoading()
+      })
+
+      // Handle errors
+      router.on('error', () => {
+        finishLoading()
+      })
+    } catch (error) {
+      console.error('Error setting up router events:', error)
+    }
   })
 
   onUnmounted(() => {
-    if (timer) clearInterval(timer)
+    // Clean up all timers
+    if (progressTimer) clearInterval(progressTimer)
+    if (completeTimer) clearTimeout(completeTimer)
   })
   </script>

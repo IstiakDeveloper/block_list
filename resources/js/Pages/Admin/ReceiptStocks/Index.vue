@@ -2,29 +2,30 @@
     <AdminLayout>
         <!-- Header Section -->
         <template #header>
-            <div class="flex items-center space-x-4">
-                <!-- Back Button -->
-                <button @click="$router.back()"
-                    class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <ChevronLeftIcon class="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
 
-                <div class="flex justify-between items-center flex-grow">
-                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center space-x-2">
-                        <ChartBarIcon class="w-6 h-6 text-blue-500" />
-                        <span>Receipt Stock Management</span>
-                    </h2>
-                    <div class="bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
-                        <span class="text-sm font-medium text-blue-700 dark:text-blue-400">
-                            Total Available Stock: {{ totalAvailable }}
-                        </span>
-                    </div>
-                </div>
-            </div>
         </template>
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+                <div class="flex items-center space-x-4 bg-white dark:bg-gray-900 py-4 px-2">
+                    <!-- Back Button -->
+                    <Link :href="route('admin.payment-receipt-dashboard')"
+                        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <ChevronLeftIcon class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                </Link>
+
+                    <div class="flex justify-between items-center flex-grow">
+                        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center space-x-2">
+                            <ChartBarIcon class="w-6 h-6 text-blue-500" />
+                            <span>Receipt Stock Management</span>
+                        </h2>
+                        <div class="bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
+                            <span class="text-sm font-medium text-blue-700 dark:text-blue-400">
+                                Total Available Stock: {{ totalAvailable }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
                 <!-- Alert Messages -->
                 <div class="space-y-2">
                     <AlertMessage v-if="errorMessage" type="error" :message="errorMessage" />
@@ -474,7 +475,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted  } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import Modal from '@/Components/Modal.vue'
@@ -661,5 +662,4 @@ onMounted(() => {
 .table-row-hover {
     @apply transition-colors duration-150;
 }
-
 </style>

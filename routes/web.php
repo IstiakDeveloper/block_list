@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BranchOfficerController;
+use App\Http\Controllers\Admin\PaymentReceiptController;
 use App\Http\Controllers\Admin\PaymentReceiptDashboardController;
 use App\Http\Controllers\Admin\ReceiptStockController;
 use App\Http\Controllers\Admin\ReceiptDistributionController;
@@ -77,6 +78,14 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
 
     Route::get('/payment-receipt/dashboard', [PaymentReceiptDashboardController::class, 'index'])->name('payment-receipt-dashboard');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payment-receipts.index');
+    Route::post('/payment-receipts', [PaymentReceiptController::class, 'store'])->name('payment-receipts.store');
+    Route::put('/payment-receipts/{paymentReceipt}', [PaymentReceiptController::class, 'update'])->name('payment-receipts.update');
+    Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])->name('payment-receipts.export');
+    Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
 });
 
 
