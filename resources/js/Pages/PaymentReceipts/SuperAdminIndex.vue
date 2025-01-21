@@ -28,17 +28,18 @@
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Date Range -->
+                        <!-- Start Date -->
                         <div>
-                            <Label value="Start Date" class="text-gray-700 dark:text-gray-300" />
-                            <Input type="date" v-model="filters.start_date"
-                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                @update:modelValue="handleFilterChange" />
+                            <Label for="start_date" value="Start Date" class="text-gray-700 dark:text-gray-300" />
+                            <CustomDateInput v-model="filters.start_date" placeholder="dd/mm/yyyy"
+                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
                         </div>
+
+                        <!-- End Date -->
                         <div>
-                            <Label value="End Date" class="text-gray-700 dark:text-gray-300" />
-                            <Input type="date" v-model="filters.end_date"
-                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                @update:modelValue="handleFilterChange" />
+                            <Label for="end_date" value="End Date" class="text-gray-700 dark:text-gray-300" />
+                            <CustomDateInput v-model="filters.end_date" placeholder="dd/mm/yyyy"
+                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
                         </div>
                         <!-- Branch Filter -->
                         <div>
@@ -76,7 +77,7 @@
                                 <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
                                     Current Period
                                 </h4>
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-3 gap-4">
                                     <div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">Received</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -89,13 +90,19 @@
                                             {{ summary.period_distributed }}
                                         </div>
                                     </div>
+                                    <div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Available</div>
+                                        <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                                            {{ summary.period_received - summary.period_distributed }}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- All Time -->
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
-                                    All Time
+                                    Cumulative
                                 </h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
@@ -115,16 +122,20 @@
 
                             <!-- Available Receipts -->
                             <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
-                                <div class="text-sm text-blue-600 dark:text-blue-200">Currently Available</div>
-                                <div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                                    {{ summary.current_available }}
-                                </div>
-                                <div class="mt-2 text-sm" :class="{
-                                    'text-red-600 dark:text-red-400': summary.current_available < 100,
-                                    'text-yellow-600 dark:text-yellow-400': summary.current_available >= 100 && summary.current_available < 500,
-                                    'text-green-600 dark:text-green-400': summary.current_available >= 500
-                                }">
-                                    {{ getStockStatus(summary.current_available) }}
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-sm text-blue-600 dark:text-blue-200">Currently Available</div>
+                                        <div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                            {{ summary.current_available }}
+                                        </div>
+                                    </div>
+                                    <div :class="{
+                                        'text-green-600 dark:text-green-400': summary.current_available > 500,
+                                        'text-yellow-600 dark:text-yellow-400': summary.current_available >= 100 && summary.current_available < 500,
+                                        'text-red-600 dark:text-red-400': summary.current_available < 100
+                                    }" class="text-sm font-medium">
+                                        {{ getStockStatus(summary.current_available) }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -187,19 +198,23 @@
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Date
+                                            Branch Code
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">
+                                            class="px-6 py-3 text-left text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                                             Received
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                            class="px-6 py-3 text-left text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider">
                                             Distributed
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Available
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Period Stats
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -208,48 +223,73 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    <tr v-for="receipt in receipts.data" :key="receipt.id"
+                                    <tr v-for="summary in branchSummaries" :key="summary.branch_id"
                                         class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ receipt.branch.branch_name }}
+                                                {{ summary.branch_name }}
                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                {{ receipt.branch.branch_code }}
+                                                {{ summary.branch?.branch_code || '-' }}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                {{ formatDate(receipt.transaction_date) }}
+                                            <div class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                                                {{ summary.all_time_received }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                All Time
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div v-if="receipt.receive_quantity"
-                                                class="text-sm text-green-600 dark:text-green-400 font-medium">
-                                                {{ receipt.receive_quantity }}
+                                            <div class="text-sm text-sky-600 dark:text-sky-400 font-medium">
+                                                {{ summary.all_time_distributed }}
                                             </div>
-                                            <div v-else class="text-sm text-gray-400 dark:text-gray-500">-</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div v-if="receipt.given_quantity"
-                                                class="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                                                {{ receipt.given_quantity }}
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                All Time
                                             </div>
-                                            <div v-else class="text-sm text-gray-400 dark:text-gray-500">-</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium" :class="{
-                                                'text-green-600 dark:text-green-400': receipt.available_receipts > 100,
-                                                'text-yellow-600 dark:text-yellow-400': receipt.available_receipts <= 100 && receipt.available_receipts > 0,
-                                                'text-red-600 dark:text-red-400': receipt.available_receipts === 0
+                                                'text-emerald-600 dark:text-emerald-400': summary.current_available > 100,
+                                                'text-yellow-600 dark:text-yellow-400': summary.current_available <= 100 && summary.current_available > 0,
+                                                'text-red-600 dark:text-red-400': summary.current_available === 0
                                             }">
-                                                {{ receipt.available_receipts }}
+                                                {{ summary.current_available }}
+                                            </div>
+                                            <div class="text-xs" :class="{
+                                                'text-emerald-500 dark:text-emerald-400': summary.current_available > 100,
+                                                'text-yellow-500 dark:text-yellow-400': summary.current_available <= 100 && summary.current_available > 0,
+                                                'text-red-500 dark:text-red-400': summary.current_available === 0
+                                            }">
+                                                {{ getStockStatus(summary.current_available) }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex flex-col space-y-1">
+                                                <div class="text-sm">
+                                                    <span class="text-emerald-600 dark:text-emerald-400">{{
+                                                        summary.period_received }}</span>
+                                                    <span class="text-gray-500 dark:text-gray-400"> received</span>
+                                                </div>
+                                                <div class="text-sm">
+                                                    <span class="text-sky-600 dark:text-sky-400">{{
+                                                        summary.period_distributed }}</span>
+                                                    <span class="text-gray-500 dark:text-gray-400"> distributed</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button @click="viewDetails(receipt.id)"
-                                                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
-                                                View
+                                            <button @click="viewBranchDetails(summary.branch_id)"
+                                                class="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
+                                                <span>View Details</span>
+                                                <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
                                             </button>
                                         </td>
                                     </tr>
@@ -267,15 +307,19 @@
                                     <!-- Date Range -->
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <Label value="Start Date" class="text-gray-700 dark:text-gray-300" />
-                                            <Input type="date" v-model="reportForm.start_date"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                                            <Label for="start_date" value="Start Date"
+                                                class="text-gray-700 dark:text-gray-300" />
+                                            <CustomDateInput v-model="reportForm.start_date" placeholder="dd/mm/yyyy"
+                                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
                                         </div>
+
                                         <div>
-                                            <Label value="End Date" class="text-gray-700 dark:text-gray-300" />
-                                            <Input type="date" v-model="reportForm.end_date"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                                            <Label for="start_date" value="Start Date"
+                                                class="text-gray-700 dark:text-gray-300" />
+                                            <CustomDateInput v-model="reportForm.end_date" placeholder="dd/mm/yyyy"
+                                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
                                         </div>
+
                                     </div>
 
                                     <!-- Branch Selection -->
@@ -357,6 +401,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Label from '@/Components/Label.vue';
 import Input from '@/Components/Input.vue';
 import Pagination from '@/Components/Pagination.vue';
+import CustomDateInput from '@/Components/CustomDateInput.vue';
 import Modal from '@/Components/Modal.vue';                   // Add this
 import PrimaryButton from '@/Components/PrimaryButton.vue';   // Add this
 import SecondaryButton from '@/Components/SecondaryButton.vue'; // Add this

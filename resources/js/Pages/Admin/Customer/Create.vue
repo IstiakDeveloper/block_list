@@ -24,8 +24,6 @@
                             </select>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Select the branch for this customer.</p>
                         </div>
-
-
                         <!-- NID Part 1 -->
                         <div class="sm:col-span-3">
                             <label for="nid_part_1"

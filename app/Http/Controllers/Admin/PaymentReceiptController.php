@@ -66,8 +66,8 @@ class PaymentReceiptController extends Controller
         }
 
         $receipts = $query->with('branch:id,branch_name,branch_code')
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
+            ->orderBy('transaction_date', 'asc')  // Changed to 'asc'
+            ->orderBy('id', 'asc')               // Changed to 'asc'
             ->paginate(50)
             ->withQueryString();
 
@@ -152,8 +152,8 @@ class PaymentReceiptController extends Controller
             $query->where('branch_id', $selectedBranch);
         }
 
-        $receipts = $query->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
+        $receipts = $query->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
             ->paginate(50)
             ->withQueryString();
 
