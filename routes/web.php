@@ -86,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/payment-receipts/{paymentReceipt}', [PaymentReceiptController::class, 'update'])->name('payment-receipts.update');
     Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])->name('payment-receipts.export');
     Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
+
+    Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
+    ->name('payment-receipts.report');
 });
 
 

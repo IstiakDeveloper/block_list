@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 use App\Models\PaymentReceipt;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+
 
 class PaymentReceiptController extends Controller
 {
@@ -17,82 +20,51 @@ class PaymentReceiptController extends Controller
         $user = auth()->user();
         $isSuperAdmin = $user->name === "Super Admin";
 
-        // Get date filters
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        // Set default date range to current month if not provided
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
         $selectedBranch = $request->input('branch_id');
 
-        // Base query
-        $query = PaymentReceipt::query();
-
-        // Apply date filters if provided
-        if ($startDate && $endDate) {
-            $query->whereBetween('transaction_date', [$startDate, $endDate]);
-        }
+        // Base query with date range
+        $query = PaymentReceipt::query()
+            ->whereBetween('transaction_date', [$startDate, $endDate]);
 
         // Handle Super Admin vs Branch User
         if ($isSuperAdmin) {
-            // For Super Admin: Show all branches or filter by selected branch
-            if ($selectedBranch) {
-                $query->where('branch_id', $selectedBranch);
-            }
-
-            // Get all branches for dropdown
-            $branches = Branch::select('id', 'branch_name')->get();
-
-            // Get summary for all branches or selected branch
-            $branchSummaries = PaymentReceipt::when($selectedBranch, function ($q) use ($selectedBranch) {
-                    $q->where('branch_id', $selectedBranch);
-                })
-                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('transaction_date', [$startDate, $endDate]);
-                })
-                ->select(
-                    'branch_id',
-                    DB::raw('SUM(receive_quantity) as total_received'),
-                    DB::raw('SUM(given_quantity) as total_distributed'),
-                    DB::raw('MAX(total_cumulative_quantity) as cumulative_total')
-                )
-                ->groupBy('branch_id')
-                ->with('branch:id,branch_name')
-                ->get();
-
-            // Get the latest available receipts for each branch
-            $latestAvailable = PaymentReceipt::select('branch_id', 'available_receipts')
-                ->whereIn('id', function ($query) {
-                    $query->select(DB::raw('MAX(id)'))
-                        ->from('payment_receipts')
-                        ->groupBy('branch_id');
-                })
-                ->get()
-                ->pluck('available_receipts', 'branch_id');
-
-            // Combine summaries with latest available receipts
-            $branchSummaries = $branchSummaries->map(function ($summary) use ($latestAvailable) {
-                $summary->current_available = $latestAvailable[$summary->branch_id] ?? 0;
-                return $summary;
-            });
-
+            return $this->superAdminDashboard($request);
         } else {
-            // For Branch User: Only show their branch
             $query->where('branch_id', $user->branch_id);
             $branches = null;
 
-            // Get summary for single branch
-            $branchSummaries = PaymentReceipt::where('branch_id', $user->branch_id)
-                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('transaction_date', [$startDate, $endDate]);
-                })
-                ->select(
-                    DB::raw('SUM(receive_quantity) as total_received'),
-                    DB::raw('SUM(given_quantity) as total_distributed'),
-                    DB::raw('MAX(total_cumulative_quantity) as cumulative_total'),
-                    DB::raw('(SELECT available_receipts FROM payment_receipts WHERE branch_id = ' . $user->branch_id . ' ORDER BY id DESC LIMIT 1) as current_available')
-                )
+            // Get single branch summary with historical data - Fixed Query
+            $branchId = $user->branch_id;
+
+            // First get the current available receipts
+            $latestReceipt = PaymentReceipt::where('branch_id', $branchId)
+                ->orderBy('id', 'desc')
                 ->first();
+
+            // Then get the summary data
+            $summaryData = DB::table('payment_receipts')
+                ->where('branch_id', $branchId)
+                ->selectRaw('
+                    SUM(CASE WHEN transaction_date BETWEEN ? AND ? THEN receive_quantity ELSE 0 END) as period_received,
+                    SUM(CASE WHEN transaction_date BETWEEN ? AND ? THEN given_quantity ELSE 0 END) as period_distributed,
+                    SUM(receive_quantity) as all_time_received,
+                    SUM(given_quantity) as all_time_distributed
+                ', [$startDate, $endDate, $startDate, $endDate])
+                ->first();
+
+            // Combine the data
+            $branchSummaries = (object) [
+                'period_received' => $summaryData->period_received ?? 0,
+                'period_distributed' => $summaryData->period_distributed ?? 0,
+                'all_time_received' => $summaryData->all_time_received ?? 0,
+                'all_time_distributed' => $summaryData->all_time_distributed ?? 0,
+                'current_available' => $latestReceipt->available_receipts ?? 0
+            ];
         }
 
-        // Get paginated results
         $receipts = $query->with('branch:id,branch_name,branch_code')
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
@@ -109,6 +81,91 @@ class PaymentReceiptController extends Controller
                 'branch_id' => $selectedBranch,
             ],
             'isSuperAdmin' => $isSuperAdmin
+        ]);
+    }
+
+    private function superAdminDashboard(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+        $selectedBranch = $request->input('branch_id');
+
+        // Get all branches for dropdown
+        $branches = Branch::select('id', 'branch_name')->get();
+
+        // Prepare bindings array
+        $bindings = [$startDate, $endDate];
+        if ($selectedBranch) {
+            $bindings[] = $selectedBranch;
+        }
+
+        // Get branch summaries with historical totals
+        $branchSummaries = Branch::select(
+            'branches.id as branch_id',
+            'branches.branch_name',
+            DB::raw('COALESCE(filtered.total_received, 0) as period_received'),
+            DB::raw('COALESCE(filtered.total_distributed, 0) as period_distributed'),
+            DB::raw('COALESCE(all_time.total_received, 0) as all_time_received'),
+            DB::raw('COALESCE(all_time.total_distributed, 0) as all_time_distributed'),
+            DB::raw('COALESCE(latest.available_receipts, 0) as current_available')
+        )
+            ->leftJoin(DB::raw("(
+        SELECT
+            branch_id,
+            SUM(receive_quantity) as total_received,
+            SUM(given_quantity) as total_distributed
+        FROM payment_receipts
+        WHERE transaction_date BETWEEN ? AND ?
+        GROUP BY branch_id
+    ) as filtered"), 'branches.id', '=', 'filtered.branch_id')
+            ->leftJoin(DB::raw("(
+        SELECT
+            branch_id,
+            SUM(receive_quantity) as total_received,
+            SUM(given_quantity) as total_distributed
+        FROM payment_receipts
+        GROUP BY branch_id
+    ) as all_time"), 'branches.id', '=', 'all_time.branch_id')
+            ->leftJoin(DB::raw("(
+        SELECT
+            p1.branch_id,
+            p1.available_receipts
+        FROM payment_receipts p1
+        INNER JOIN (
+            SELECT branch_id, MAX(id) as max_id
+            FROM payment_receipts
+            GROUP BY branch_id
+        ) p2 ON p1.branch_id = p2.branch_id AND p1.id = p2.max_id
+    ) as latest"), 'branches.id', '=', 'latest.branch_id')
+            ->when($selectedBranch, function ($q) {
+                return $q->where('branches.id', '?');
+            })
+            ->setBindings($bindings)
+            ->get();
+
+        // Get receipts for selected branch or all branches
+        $query = PaymentReceipt::query()
+            ->with('branch:id,branch_name,branch_code')
+            ->whereBetween('transaction_date', [$startDate, $endDate]);
+
+        if ($selectedBranch) {
+            $query->where('branch_id', $selectedBranch);
+        }
+
+        $receipts = $query->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(50)
+            ->withQueryString();
+
+        return Inertia::render('PaymentReceipts/SuperAdminIndex', [
+            'receipts' => $receipts,
+            'branchSummaries' => $branchSummaries,
+            'branches' => $branches,
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'branch_id' => $selectedBranch,
+            ]
         ]);
     }
 
@@ -165,7 +222,6 @@ class PaymentReceiptController extends Controller
 
             DB::commit();
             return redirect()->back()->with('success', 'Receipt record created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -225,12 +281,14 @@ class PaymentReceiptController extends Controller
         $endDate = $request->input('end_date');
         $selectedBranch = $request->input('branch_id');
 
+        // Base query for receipts with branch information
         $query = PaymentReceipt::query()
-            ->with('branch:id,name')
+            ->with('branch:id,branch_name')
             ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('transaction_date', [$startDate, $endDate]);
             });
 
+        // Apply branch filter based on user role
         if ($user->name === "Super Admin") {
             if ($selectedBranch) {
                 $query->where('branch_id', $selectedBranch);
@@ -239,11 +297,169 @@ class PaymentReceiptController extends Controller
             $query->where('branch_id', $user->branch_id);
         }
 
+        // Get the receipts for the report
         $receipts = $query->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->get();
 
-        // Implementation of Excel export will go here
-        // Return the file download response
+        // Get branch name for title
+        $branchName = $selectedBranch
+            ? Branch::find($selectedBranch)->branch_name
+            : ($user->name === "Super Admin" ? 'All Branches' : $user->branch->branch_name);
+
+        // Calculate period summary
+        $periodSummary = [
+            'received' => $receipts->sum('receive_quantity'),
+            'distributed' => $receipts->sum('given_quantity')
+        ];
+
+        // Calculate all-time summary
+        $allTimeQuery = PaymentReceipt::query();
+
+        // Apply branch filter for all-time calculations
+        if ($user->name === "Super Admin") {
+            if ($selectedBranch) {
+                $allTimeQuery->where('branch_id', $selectedBranch);
+            }
+        } else {
+            $allTimeQuery->where('branch_id', $user->branch_id);
+        }
+
+        $allTimeReceipts = $allTimeQuery->get();
+
+        $allTimeSummary = [
+            'received' => $allTimeReceipts->sum('receive_quantity'),
+            'distributed' => $allTimeReceipts->sum('given_quantity'),
+            'available' => $allTimeReceipts->sum('receive_quantity') - $allTimeReceipts->sum('given_quantity')
+        ];
+
+        // Format dates for filename
+        $formattedStartDate = date('Y-m-d', strtotime($startDate));
+        $formattedEndDate = date('Y-m-d', strtotime($endDate));
+
+        // Generate PDF
+        $pdf = PDF::loadView('pdf.payment-receipts', [
+            'receipts' => $receipts,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'branchName' => $branchName,
+            'periodSummary' => $periodSummary,
+            'allTimeSummary' => $allTimeSummary
+        ]);
+
+        // Sanitize branch name for filename
+        $sanitizedBranchName = str_replace(['/', '\\', ' '], '_', $branchName);
+
+        // Return the PDF for download
+        return $pdf->download("payment_receipts_{$sanitizedBranchName}_{$formattedStartDate}_to_{$formattedEndDate}.pdf");
+    }
+
+
+    public function generateReport(Request $request)
+    {
+        try {
+            $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'branch_id' => 'nullable|exists:branches,id'
+            ]);
+
+            $startDate = $request->start_date;
+            $endDate = $request->end_date;
+            $branchId = $request->branch_id;
+
+            // Build query bindings array first
+            $bindings = [$startDate, $endDate];
+            if ($branchId) {
+                $bindings[] = $branchId;
+            }
+
+            // Get branch summaries
+            $branchQuery = Branch::select(
+                'branches.id',
+                'branches.branch_name',
+                DB::raw('COALESCE(filtered.total_received, 0) as period_received'),
+                DB::raw('COALESCE(filtered.total_distributed, 0) as period_distributed'),
+                DB::raw('COALESCE(all_time.total_received, 0) as all_time_received'),
+                DB::raw('COALESCE(all_time.total_distributed, 0) as all_time_distributed'),
+                DB::raw('COALESCE(latest.available_receipts, 0) as current_available')
+            )
+                ->leftJoin(DB::raw("(
+                SELECT
+                    branch_id,
+                    SUM(receive_quantity) as total_received,
+                    SUM(given_quantity) as total_distributed
+                FROM payment_receipts
+                WHERE transaction_date BETWEEN ? AND ?
+                GROUP BY branch_id
+            ) as filtered"), 'branches.id', '=', 'filtered.branch_id')
+                ->leftJoin(DB::raw("(
+                SELECT
+                    branch_id,
+                    SUM(receive_quantity) as total_received,
+                    SUM(given_quantity) as total_distributed
+                FROM payment_receipts
+                GROUP BY branch_id
+            ) as all_time"), 'branches.id', '=', 'all_time.branch_id')
+                ->leftJoin(DB::raw("(
+                SELECT p1.*
+                FROM payment_receipts p1
+                INNER JOIN (
+                    SELECT branch_id, MAX(id) as max_id
+                    FROM payment_receipts
+                    GROUP BY branch_id
+                ) p2 ON p1.branch_id = p2.branch_id AND p1.id = p2.max_id
+            ) as latest"), 'branches.id', '=', 'latest.branch_id');
+
+            // Apply branch filter if specified
+            if ($branchId) {
+                $branchQuery->where('branches.id', $branchId);
+            }
+
+            // Now set all bindings at once
+            $branches = $branchQuery->setBindings($bindings)->get();
+
+            // Get transactions
+            $transactions = PaymentReceipt::with('branch:id,branch_name')
+                ->whereBetween('transaction_date', [$startDate, $endDate])
+                ->when($branchId, function ($query) use ($branchId) {
+                    return $query->where('branch_id', $branchId);
+                })
+                ->orderBy('transaction_date', 'desc')
+                ->get();
+
+            // Calculate totals
+            $totals = [
+                'total_period_received' => $branches->sum('period_received'),
+                'total_period_distributed' => $branches->sum('period_distributed'),
+                'total_available' => $branches->sum('current_available'),
+                'total_branches' => $branches->count(),
+            ];
+
+            $data = [
+                'meta' => [
+                    'start_date' => Carbon::parse($startDate)->format('d/m/Y'),
+                    'end_date' => Carbon::parse($endDate)->format('d/m/Y'),
+                    'generated_at' => now()->format('d/m/Y H:i:s'),
+                    'branch' => $branchId ? $branches->first()->branch_name : 'All Branches'
+                ],
+                'branches' => $branches,
+                'transactions' => $transactions,
+                'totals' => $totals
+            ];
+
+            $pdf = Pdf::loadView('reports.payment-receipts', $data);
+
+            // Generate filename
+            $filename = 'payment_receipts_' .
+                ($branchId ? strtolower(str_replace(' ', '_', $branches->first()->branch_name)) : 'all_branches') . '_' .
+                Carbon::parse($startDate)->format('Y_m_d') . '_to_' .
+                Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
+
+            return $pdf->setPaper('a4', 'landscape')->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('Report Generation Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to generate report: ' . $e->getMessage()], 422);
+        }
     }
 }
