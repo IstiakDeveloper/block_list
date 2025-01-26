@@ -2,12 +2,13 @@
 import { ref, computed, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { chartConfig } from './config/chartConfig';
 import DateRangeFilter from '@/Components/DateRangeFilter.vue';
 import ChartGrid from '@/Components/ChartGrid.vue';
 import RecentCustomers from '@/Components/RecentCustomers.vue';
 import MetricsSection from '@/Components/MetricsSection.vue';
 import BranchUserTable from '@/Components/BranchUserTable.vue';
-// import BranchDetailsTable from '@/Components/BranchDetailsTable.vue';
+import BranchDetailsTable from '@/Components/BranchDetailsTable.vue';
 import StatsOverview from '@/Components/StatsOverview.vue';
 
 defineOptions({ layout: AdminLayout });
@@ -16,7 +17,7 @@ const props = defineProps({
     reportData: { type: Object, required: true }
 });
 
-// State
+
 const selectedDateRange = ref('all');
 const startDate = ref(null);
 const endDate = ref(null);
@@ -31,7 +32,7 @@ const filteredBranchData = computed(() => {
 
 // Methods
 const getFilteredTotal = (branch) => {
-    switch(selectedDateRange.value) {
+    switch (selectedDateRange.value) {
         case 'month': return branch.this_month;
         case 'week': return branch.last_7_days;
         case 'custom': return branch.total_customers;
@@ -89,9 +90,26 @@ const getTopPerformingBranch = () => {
 const getMostRecentGrowthBranch = () => {
     return [...props.reportData.branchDetails].sort((a, b) => b.this_month - a.this_month)[0];
 };
+
+const handleFilter = () => {
+    router.get(
+        route('admin.reports'),
+        {
+            dateRange: selectedDateRange.value,
+            startDate: startDate.value,
+            endDate: endDate.value
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['reportData']
+        }
+    );
+};
 </script>
 
 <template>
+
     <Head title="Reports Dashboard" />
 
     <div class="py-6 dark:bg-gray-900">
@@ -113,46 +131,30 @@ const getMostRecentGrowthBranch = () => {
             <StatsOverview :stats="statsData" />
 
             <!-- Date Range Filter -->
-            <DateRangeFilter
-                v-model:dateRange="selectedDateRange"
-                v-model:startDate="startDate"
-                v-model:endDate="endDate"
-            />
+            <DateRangeFilter v-model="selectedDateRange" v-model:startDate="startDate" v-model:endDate="endDate"
+                @filter="handleFilter" />
 
+            <div class="mt-8 flex gap-6">
+                <BranchDetailsTable :branches="reportData.branchDetails" @download="downloadReport" />
+                <BranchUserTable :branches="reportData.branchDetails" :getFilteredTotal="getFilteredTotal" />
+            </div>
             <!-- Charts -->
-            <ChartGrid
-                :branch-data="props.reportData.branchWiseCustomers"
-                :monthly-data="props.reportData.monthlyCustomers"
-                :age-data="props.reportData.ageDistribution"
-            />
+            <ChartGrid :branch-data="props.reportData.branchWiseCustomers"
+                :monthly-data="props.reportData.monthlyCustomers" :age-data="props.reportData.ageDistribution" />
 
             <!-- Recent Customers -->
             <RecentCustomers :customers="props.reportData.recentCustomers" />
 
             <!-- Metrics -->
-            <MetricsSection
-                :demographics="props.reportData.ageDistribution"
-                :stats="statsData"
-            />
+            <MetricsSection :demographics="props.reportData.ageDistribution" :stats="statsData" />
 
-            <!-- Branch User Distribution -->
-            <BranchUserTable
-                :branches="filteredBranchData"
-                :getFilteredTotal="getFilteredTotal"
-            />
 
-            <!-- Branch Details -->
-            <!-- <BranchDetailsTable
-                :branches="filteredBranchData"
-                @download="downloadReport"
-            /> -->
         </div>
     </div>
 </template>
 
 <style scoped>
 .btn-primary {
-    @apply inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md
-           hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200;
+    @apply inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200;
 }
 </style>

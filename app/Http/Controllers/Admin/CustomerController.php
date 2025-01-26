@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use thiagoalessio\TesseractOCR\TesseractOCR;
@@ -68,10 +69,14 @@ class CustomerController extends Controller
 
     public function create()
     {
-        // Fetch branches for the authenticated user through the pivot table
-        $branches = Branch::whereHas('users', function ($query) {
-            $query->where('users.id', auth()->id()); // Specify 'users.id' to avoid ambiguity
-        })->get();
+        // For single branch user
+        if (auth()->user()->branch_id) {
+            $branches = [Branch::find(auth()->user()->branch_id)];
+        }
+        // For multiple branch user
+        else {
+            $branches = auth()->user()->branches;
+        }
 
         return Inertia::render('Admin/Customer/Create', [
             'branches' => $branches,
@@ -82,47 +87,45 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'branch_id' => 'nullable|exists:branches,id',
-            'nid_part_1' => 'nullable|file|image|max:2048',
-            'nid_part_2' => 'nullable|file|image|max:2048',
+            'branch_id' => 'required|exists:branches,id',
+            'nid_part_1' => 'nullable|image|max:2048',
+            'nid_part_2' => 'nullable|image|max:2048',
             'name' => 'required|string|max:255',
             'name_bn' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
-            'spouse_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
-            'rejected_by' => 'nullable|string|max:255',
-            'dob' => 'nullable|date',
-            'nid_number' => 'nullable|string|unique:customers',
-            'phone_number' => 'nullable|string',
-            'address' => 'nullable|string',
-            'details' => 'nullable|string',
+            'spouse_name' => 'nullable|string|max:255',
+            'dob' => 'nullable|date|before:today',
+            'nid_number' => 'nullable|string|unique:customers,nid_number',
+            'phone_number' => 'nullable|string|regex:/^[0-9]{10,14}$/',
+            'address' => 'nullable|string|max:500',
+            'details' => 'nullable|string|max:1000'
+        ], [
+            'phone_number.regex' => 'Phone number must be between 10-14 digits.',
+            'dob.before' => 'Date of birth must be a date before today.',
+            'nid_number.unique' => 'This NID number is already registered.'
         ]);
 
-        // Initialize file paths
-        $nid_part_1_path = $request->file('nid_part_1') ? $request->file('nid_part_1')->store('nid_images', 'public') : null;
-        $nid_part_2_path = $request->file('nid_part_2') ? $request->file('nid_part_2')->store('nid_images', 'public') : null;
+        DB::transaction(function () use ($request, $validated) {
+            // File upload handling
+            $nid_part_1_path = $request->file('nid_part_1')
+                ? $request->file('nid_part_1')->store('nid_images', 'public')
+                : null;
 
-        // Attempt to extract information from images only if they exist
-        $extracted_info = [];
-        if ($nid_part_1_path || $nid_part_2_path) {
-            $extracted_info = $this->extractInfoFromImages($nid_part_1_path, $nid_part_2_path);
-        }
+            $nid_part_2_path = $request->file('nid_part_2')
+                ? $request->file('nid_part_2')->store('nid_images', 'public')
+                : null;
 
-        // Create new customer
-        $customer = new Customer($validated);
-        $customer->user_id = auth()->id();
-        $customer->branch_id = auth()->user()->branch_id ?? $validated['branch_id'];
-        $customer->nid_part_1 = $nid_part_1_path;
-        $customer->nid_part_2 = $nid_part_2_path;
+            // Create customer
+            $customer = new Customer($validated);
+            $customer->user_id = auth()->id();
+            $customer->nid_part_1 = $nid_part_1_path;
+            $customer->nid_part_2 = $nid_part_2_path;
+            $customer->save();
+        });
 
-        // Use extracted info if available, otherwise use manually entered data
-        $customer->name = $extracted_info['name'] ?? $validated['name'];
-        $customer->nid_number = $extracted_info['nid_number'] ?? $validated['nid_number'];
-        $customer->phone_number = $validated['phone_number'];
-
-
-        $customer->save();
-        return redirect()->route('admin.customers.index')->with('success', 'Customer created successfully.');
+        return to_route('admin.customers.index')
+            ->with('success', 'Customer created successfully.');
     }
 
 

@@ -1,237 +1,155 @@
 <template>
 
     <Head title="Create Customer" />
-
     <AdminLayout>
-        <div class="container mx-auto py-8">
-            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8">
-                <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Create Customer</h1>
-                <form @submit.prevent="createCustomer">
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+        <div class="container mx-auto px-4 py-8">
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300 border-b pb-3">
+                    Create New Customer
+                </h1>
 
-                        <!-- Branch Selection -->
-                        <div v-if="branches.length > 0" class="sm:col-span-3">
-                            <label for="branch_id" class="block text-sm font-medium text-gray-700 dark:text-gray-400">
-                                Select Branch
-                            </label>
-                            <select id="branch_id" v-model="form.branch_id"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                                <option value="" disabled>Select a branch</option>
-                                <option v-for="branch in branches" :key="branch.id" :value="branch.id">
-                                    {{ branch.branch_name }}
-                                    <!-- Adjust this to the appropriate field in your branch model -->
-                                </option>
-                            </select>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Select the branch for this customer.</p>
-                        </div>
-                        <!-- NID Part 1 -->
-                        <div class="sm:col-span-3">
-                            <label for="nid_part_1"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 1</label>
-                            <input type="file" id="nid_part_1" @input="handleFileUpload('nid_part_1', $event)"
-                                accept="image/*"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Upload the first part of your NID.</p>
-                            <img v-if="form.nid_part_1_url" :src="form.nid_part_1_url" alt="NID Part 1 Preview"
-                                class="mt-2 w-32 h-32 object-cover rounded">
+                <form @submit.prevent="submitForm" class="space-y-6">
+                    <!-- Branch Selection with Validation -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <BranchSelectCustomer :branches="branches" :form="form" :errors="errors" />
                         </div>
 
-                        <!-- NID Part 2 -->
-                        <div class="sm:col-span-3">
-                            <label for="nid_part_2"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Part 2</label>
-                            <input type="file" id="nid_part_2" @input="handleFileUpload('nid_part_2', $event)"
-                                accept="image/*"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Upload the second part of your NID.</p>
-                            <img v-if="form.nid_part_2_url" :src="form.nid_part_2_url" alt="NID Part 2 Preview"
-                                class="mt-2 w-32 h-32 object-cover rounded">
-                        </div>
-
-                        <!-- Customer Name -->
-                        <div class="sm:col-span-3">
-                            <label for="name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
-                            <input type="text" id="name" v-model="form.name" required
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter the customer's full name.</p>
-                        </div>
-
-                        <!-- Other Fields -->
-                        <div class="sm:col-span-3">
-                            <label for="name_bn" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name
-                                (Bangla)</label>
-                            <input type="text" id="name_bn" v-model="form.name_bn"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="father_name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Father's Name</label>
-                            <input type="text" id="father_name" v-model="form.father_name"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="spouse_name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Spouse Name</label>
-                            <input type="text" id="spouse_name" v-model="form.spouse_name"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="mother_name"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Mother's Name</label>
-                            <input type="text" id="mother_name" v-model="form.mother_name"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="rejected_by"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Rejected By</label>
-                            <input type="text" id="rejected_by" v-model="form.rejected_by"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Date of
-                                Birth</label>
-                            <input type="date" id="dob" v-model="form.dob"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="nid_number"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">NID Number</label>
-                            <input type="text" id="nid_number" v-model="form.nid_number"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="phone_number"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Phone Number</label>
-                            <input type="text" id="phone_number" v-model="form.phone_number"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="sm:col-span-6">
-                            <label for="address"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Address</label>
-                            <textarea id="address" v-model="form.address" rows="3"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"></textarea>
-                        </div>
-
-                        <div class="sm:col-span-6">
-                            <label for="details"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-400">Details</label>
-                            <textarea id="details" v-model="form.details" rows="3"
-                                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600 dark:bg-gray-700 dark:text-white"></textarea>
+                        <!-- NID File Uploads with Preview and Validation -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <FormLabel>NID Part 1</FormLabel>
+                                <FileUpload :file="form.nid_part_1"
+                                    @update:file="handleFileUpload('nid_part_1', $event)" :error="errors.nid_part_1" />
+                            </div>
+                            <div>
+                                <FormLabel>NID Part 2</FormLabel>
+                                <FileUpload :file="form.nid_part_2"
+                                    @update:file="handleFileUpload('nid_part_2', $event)" :error="errors.nid_part_2" />
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-end mt-6">
-                        <button type="submit" class="btn-primary inline-flex items-center" :disabled="loading">
-                            <span v-if="loading">Creating...</span>
-                            <span v-else>Create Customer</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path
-                                    d="M10 2a1 1 0 00-1 1v6H3a1 1 0 100 2h6v6a1 1 0 002 0v-6h6a1 1 0 100-2h-6V3a1 1 0 00-1-1z" />
-                            </svg>
+                    <!-- Personal Information Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormInput label="Full Name" v-model="form.name" :error="errors.name" required />
+                        <FormInput label="Name (Bangla)" v-model="form.name_bn" :error="errors.name_bn" />
+                        <FormInput label="Father's Name" v-model="form.father_name" :error="errors.father_name" />
+                        <FormInput label="Mother's Name" v-model="form.mother_name" :error="errors.mother_name" />
+                        <FormInput label="Spouse Name" v-model="form.spouse_name" :error="errors.spouse_name" />
+                        <FormInput label="Date of Birth" type="date" v-model="form.dob" :error="errors.dob" />
+                    </div>
+
+                    <!-- Contact & Identification Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormInput label="NID Number" v-model="form.nid_number" :error="errors.nid_number" required />
+                        <FormInput label="Phone Number" v-model="form.phone_number" :error="errors.phone_number"
+                            required />
+                    </div>
+
+                    <!-- Address and Details -->
+                    <div class="space-y-6">
+                        <FormTextarea label="Address" v-model="form.address" :error="errors.address" />
+                        <FormTextarea label="Details" v-model="form.details" :error="errors.details" />
+                    </div>
+
+                    <!-- Form Submission -->
+                    <div class="flex justify-end space-x-4 mt-8">
+                        <button type="button" @click="resetForm" class="btn-secondary">
+                            Reset
                         </button>
-                        <Link :href="route('admin.customers.index')"
-                            class="btn-secondary inline-flex items-center ml-4">
-                        Back to Customers
-                        </Link>
+                        <button type="submit" class="btn-primary" :disabled="form.processing">
+                            <span v-if="form.processing">Creating...</span>
+                            <span v-else>Create Customer</span>
+                        </button>
                     </div>
                 </form>
-                <div v-if="successMessage" class="mt-4 text-green-600">{{ successMessage }}</div>
-                <div v-if="errorMessage" class="mt-4 text-red-600">{{ errorMessage }}</div>
             </div>
         </div>
     </AdminLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useForm, Link, Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import FormInput from '@/Components/FormInput.vue';
+import FormLabel from '@/Components/FormLabel.vue';
+import FormError from '@/Components/FormError.vue';
+import FormTextarea from '@/Components/FormTextarea.vue';
+import FileUpload from '@/Components/FileUpload.vue';
+import BranchSelectCustomer from '@/Components/BranchSelectCustomer.vue';
 
 const props = defineProps({
-    branches: Array, // Receive branches from the server
+    branches: {
+        type: Array,
+        default: () => []
+    }
 });
 
 const form = useForm({
-    branch_id: '', // Add branch_id to the form
+    branch_id: '',
     nid_part_1: null,
     nid_part_2: null,
-    nid_part_1_url: '', // URL for the image preview
-    nid_part_2_url: '', // URL for the image preview
     name: '',
     name_bn: '',
     father_name: '',
-    spouse_name: '',
     mother_name: '',
-    rejected_by: '',
+    spouse_name: '',
     dob: '',
     nid_number: '',
     phone_number: '',
     address: '',
-    details: '',
+    details: ''
 });
 
-const successMessage = ref('');
-const errorMessage = ref('');
-const loading = ref(false); // New loading state
+const errors = ref({});
 
-function handleFileUpload(field, event) {
-    const file = event.target.files[0];
-    form[field] = file;
-
-    // Create a URL for the image preview
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (field === 'nid_part_1') {
-                form.nid_part_1_url = e.target.result;
-            } else if (field === 'nid_part_2') {
-                form.nid_part_2_url = e.target.result;
-            }
-        };
-        reader.readAsDataURL(file);
+// Automatically select branch if only one is available
+onMounted(() => {
+    if (props.branches.length === 1) {
+        form.branch_id = props.branches[0].id;
     }
+});
+
+function handleFileUpload(field, file) {
+    form[field] = file;
 }
 
-function createCustomer() {
-    loading.value = true; // Start loading
+function submitForm() {
     form.post(route('admin.customers.store'), {
         forceFormData: true,
         onSuccess: () => {
-            successMessage.value = 'Customer created successfully!';
-            errorMessage.value = ''; // Clear any previous error messages
-            form.reset(); // Reset form fields
-            loading.value = false; // Stop loading
+            // Reset form or redirect
         },
-        onError: () => {
-            errorMessage.value = 'Error creating customer. Please try again.';
-            successMessage.value = ''; // Clear any previous success messages
-            loading.value = false; // Stop loading
-        },
+        onError: (err) => {
+            errors.value = err;
+        }
     });
+}
+
+function resetForm() {
+    form.reset();
+    errors.value = {};
+
+    // Reapply auto-branch selection if only one branch exists
+    if (props.branches.length === 1) {
+        form.branch_id = props.branches[0].id;
+    }
 }
 </script>
 
 <style scoped>
+/* Tailwind utility classes for form styling */
+.form-input {
+    @apply w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 dark:bg-gray-700 dark:text-white;
+}
+
 .btn-primary {
-    @apply bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-blue-700 transition duration-200;
+    @apply bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-secondary {
-    @apply bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow hover:bg-gray-400 transition duration-200;
-}
-
-img {
-    border: 1px solid #ccc;
-    /* Optional styling for the image */
+    @apply bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded shadow hover:bg-gray-300 transition duration-200;
 }
 </style>

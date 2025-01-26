@@ -45,8 +45,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/customer-search', [CustomerSearchController::class, 'search'])->name('customer.search');
 
-    Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/admin/reports', [ReportController::class, 'index'])->name('admin.reports');
     Route::get('/reports/download', [ReportController::class, 'downloadPdf'])->name('admin.reports.download');
+    Route::get('/admin/reports/filter', [ReportController::class, 'filter'])->name('admin.reports.filter');
+    Route::get('/admin/reports/branch-users-pdf', [ReportController::class, 'branchUsersPdf'])
+        ->name('admin.reports.branch-users-pdf');
 });
 
 
@@ -88,7 +91,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
 
     Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
-    ->name('payment-receipts.report');
+        ->name('payment-receipts.report');
 });
 
 

@@ -1,6 +1,30 @@
 <script setup>
 import { computed } from 'vue';
 import { Bar, Line, Pie } from 'vue-chartjs';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    LineElement,
+    PointElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    LineElement,
+    PointElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const props = defineProps({
     branchData: { type: Array, required: true },
@@ -14,7 +38,11 @@ const chartOptions = {
     plugins: {
         legend: {
             position: 'bottom',
-            labels: { color: 'currentColor', font: { size: 12 } }
+            labels: {
+                color: 'currentColor',
+                font: { size: 12 },
+                usePointStyle: true
+            }
         },
         tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -31,7 +59,8 @@ const chartOptions = {
         },
         y: {
             ticks: { color: 'currentColor' },
-            grid: { color: 'rgba(128, 128, 128, 0.2)' }
+            grid: { color: 'rgba(128, 128, 128, 0.2)' },
+            beginAtZero: true
         }
     }
 };
@@ -47,7 +76,10 @@ const branchChartData = computed(() => ({
 }));
 
 const monthlyChartData = computed(() => ({
-    labels: props.monthlyData.map(m => m.month),
+    labels: props.monthlyData.map(m => {
+        const date = new Date(m.month + '-01');
+        return date.toLocaleDateString('default', { month: 'short', year: 'numeric' });
+    }),
     datasets: [{
         label: 'New Customers',
         data: props.monthlyData.map(m => m.count),
@@ -63,13 +95,15 @@ const ageChartData = computed(() => ({
     datasets: [{
         data: props.ageData.map(a => a.count),
         backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
-        borderWidth: 0
+        borderWidth: 0,
+        label: 'Age Distribution'
     }]
 }));
 </script>
 
 <template>
     <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <!-- Branch Distribution -->
         <div class="chart-card">
             <h3 class="chart-title">Customers by Branch</h3>
             <div class="chart-container">
@@ -77,6 +111,7 @@ const ageChartData = computed(() => ({
             </div>
         </div>
 
+        <!-- Monthly Growth -->
         <div class="chart-card">
             <h3 class="chart-title">Monthly Customer Growth</h3>
             <div class="chart-container">
@@ -84,10 +119,11 @@ const ageChartData = computed(() => ({
             </div>
         </div>
 
+        <!-- Age Distribution -->
         <div class="chart-card">
             <h3 class="chart-title">Age Distribution</h3>
             <div class="chart-container">
-                <Pie :data="ageChartData" :options="chartOptions" />
+                <Pie :data="ageChartData" :options="{ ...chartOptions, maintainAspectRatio: true }" />
             </div>
         </div>
     </div>

@@ -18,8 +18,15 @@ class ReportController extends Controller
     public function index()
     {
         $dateRange = request('dateRange', 'all');
-        $startDate = $this->getStartDate($dateRange);
-        $endDate = request('endDate');
+        $startDate = null;
+        $endDate = null;
+
+        if ($dateRange === 'custom') {
+            $startDate = request('startDate') ? Carbon::parse(request('startDate'))->startOfDay() : null;
+            $endDate = request('endDate') ? Carbon::parse(request('endDate'))->endOfDay() : null;
+        } else {
+            $startDate = $this->getStartDate($dateRange);
+        }
 
         $branchDetails = Branch::with(['users'])
             ->withCount([
@@ -32,9 +39,7 @@ class ReportController extends Controller
                 $userEntriesQuery = Customer::where('branch_id', $branch->id)
                     ->select('user_id', DB::raw('COUNT(*) as entry_count'));
 
-                if ($dateRange !== 'all') {
-                    $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
-                }
+                $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
 
                 $userEntries = $userEntriesQuery->groupBy('user_id')
                     ->with('user:id,name')
@@ -58,9 +63,77 @@ class ReportController extends Controller
                 ];
             });
 
+        $filterData = [
+            'dateRange' => $dateRange,
+            'startDate' => request('startDate'),
+            'endDate' => request('endDate')
+        ];
+
         return Inertia::render('Admin/Reports/Dashboard', [
-            'reportData' => $this->getReportData($branchDetails, $dateRange)
+            'reportData' => array_merge(
+                $this->getReportData($branchDetails, $dateRange, $startDate, $endDate),
+                ['filter' => $filterData]
+            )
         ]);
+    }
+
+    private function getStartDate($range)
+    {
+        return match ($range) {
+            'week' => now()->subDays(7)->startOfDay(),
+            'month' => now()->startOfMonth(),
+            'custom' => request('startDate') ? Carbon::parse(request('startDate'))->startOfDay() : null,
+            default => null
+        };
+    }
+
+    private function getReportData($branchDetails, $dateRange, $startDate, $endDate)
+    {
+        $customerQuery = Customer::query();
+        $this->applyDateFilter($customerQuery, $startDate, $endDate);
+
+        return [
+            'totalCustomers' => $customerQuery->count(),
+            'totalBranches' => Branch::count(),
+            'branchWiseCustomers' => Branch::withCount([
+                'customers' => function ($query) use ($startDate, $endDate) {
+                    $this->applyDateFilter($query, $startDate, $endDate);
+                }
+            ])->get(),
+            'branchDetails' => $branchDetails,
+            'recentCustomers' => Customer::with(['branch', 'user'])->latest()->take(5)->get(),
+            'monthlyCustomers' => $this->getMonthlyData($startDate, $endDate),
+            'ageDistribution' => $this->getAgeDistribution($startDate, $endDate)
+        ];
+    }
+
+    private function getMonthlyData($startDate, $endDate)
+    {
+        $query = Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as count')
+            ->groupBy('month')
+            ->orderBy('month');
+
+        $this->applyDateFilter($query, $startDate, $endDate);
+
+        return $query->get();
+    }
+
+    private function getAgeDistribution($startDate, $endDate)
+    {
+        $query = Customer::selectRaw('
+            CASE
+                WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 25 THEN "18-24"
+                WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 35 THEN "25-34"
+                WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 45 THEN "35-44"
+                ELSE "45+"
+            END as age_group,
+            COUNT(*) as count
+        ')
+            ->whereNotNull('dob');
+
+        $this->applyDateFilter($query, $startDate, $endDate);
+
+        return $query->groupBy('age_group')->get();
     }
 
     private function applyDateFilter($query, $startDate, $endDate)
@@ -73,35 +146,6 @@ class ReportController extends Controller
         }
     }
 
-    private function getReportData($branchDetails, $dateRange)
-    {
-        $startDate = $this->getStartDate($dateRange);
-
-        return [
-            'totalCustomers' => $startDate ? Customer::where('created_at', '>=', $startDate)->count() : Customer::count(),
-            'totalBranches' => Branch::count(),
-            'branchWiseCustomers' => Branch::withCount([
-                'customers' => function ($query) use ($startDate) {
-                    if ($startDate) {
-                        $query->where('created_at', '>=', $startDate);
-                    }
-                }
-            ])->get(),
-            'branchDetails' => $branchDetails,
-            'recentCustomers' => Customer::with(['branch', 'user'])->latest()->take(5)->get(),
-            'monthlyCustomers' => $this->getMonthlyData(),
-            'ageDistribution' => $this->getAgeDistribution($startDate)
-        ];
-    }
-
-    private function getStartDate($range)
-    {
-        return match ($range) {
-            'week' => now()->subDays(7),
-            'month' => now()->startOfMonth(),
-            default => null
-        };
-    }
 
     private function getBranchCount($branchId, $range)
     {
@@ -112,33 +156,7 @@ class ReportController extends Controller
     }
 
 
-    private function getMonthlyData()
-    {
-        return Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as count')
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-    }
 
-    private function getAgeDistribution($startDate)
-    {
-        $query = Customer::selectRaw('
-        CASE
-            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 25 THEN "18-24"
-            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 35 THEN "25-34"
-            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 45 THEN "35-44"
-            ELSE "45+"
-        END as age_group,
-        COUNT(*) as count
-    ')
-            ->whereNotNull('dob');
-
-        if ($startDate) {
-            $query->where('created_at', '>=', $startDate);
-        }
-
-        return $query->groupBy('age_group')->get();
-    }
 
     public function downloadPdf(Request $request)
     {
@@ -224,5 +242,60 @@ class ReportController extends Controller
 
         // Download
         return $pdf->download('block-list-report-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+
+    public function branchUsersPdf(Request $request)
+    {
+        $dateRange = $request->dateRange ?? 'all';
+        $startDate = $this->getStartDate($dateRange);
+        $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
+
+        if ($dateRange === 'custom') {
+            $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
+        }
+
+        $query = Branch::with(['users']);
+
+        if ($request->branch_id) {
+            $query->where('id', $request->branch_id);
+        }
+
+        $branches = $query->get()->map(function ($branch) use ($startDate, $endDate) {
+            $userEntriesQuery = Customer::where('branch_id', $branch->id)
+                ->select('user_id', DB::raw('COUNT(*) as entry_count'));
+
+            $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
+
+            $userEntries = $userEntriesQuery->groupBy('user_id')
+                ->with('user:id,name')
+                ->get()
+                ->map(function ($entry) {
+                    return [
+                        'name' => $entry->user->name,
+                        'entries' => $entry->entry_count
+                    ];
+                });
+
+            return [
+                'name' => $branch->branch_name,
+                'code' => $branch->branch_code,
+                'users' => $userEntries,
+                'total' => $userEntries->sum('entries')
+            ];
+        });
+
+        $data = [
+            'branches' => $branches,
+            'dateRange' => $dateRange,
+            'startDate' => $startDate ? $startDate->format('Y-m-d') : null,
+            'endDate' => $endDate ? $endDate->format('Y-m-d') : null,
+        ];
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('reports.branch-users-pdf', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download('branch-users-report-' . now()->format('Y-m-d') . '.pdf');
     }
 }

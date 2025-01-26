@@ -3,10 +3,28 @@ defineProps({
     branches: { type: Array, required: true },
     getFilteredTotal: { type: Function, required: true }
 });
+
+const downloadPdf = (branchId = null) => {
+    window.location.href = route('admin.reports.branch-users-pdf', {
+        branch_id: branchId,
+        dateRange: window.route().params.dateRange,
+        startDate: window.route().params.startDate,
+        endDate: window.route().params.endDate
+    });
+};
 </script>
 
 <template>
-    <div class="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg">
+    <div class="flex-1 bg-white dark:bg-gray-800 shadow rounded-lg w-1/2">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Branch User Distribution</h3>
+            <button @click="downloadPdf()" class="download-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+            </button>
+        </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -14,6 +32,7 @@ defineProps({
                         <th class="th-cell">Branch Name</th>
                         <th class="th-cell text-center">Total Entries</th>
                         <th class="th-cell">User Distribution</th>
+                        <th class="th-cell text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -42,6 +61,13 @@ defineProps({
                                 </div>
                             </div>
                         </td>
+                        <td class="td-cell text-right">
+                            <button @click="downloadPdf(branch.id)" class="action-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -68,5 +94,14 @@ defineProps({
 
 .progress-bar-fill {
     @apply h-2 bg-blue-600 rounded-full transition-all duration-300;
+}
+
+.download-btn {
+    @apply inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700
+           transition-colors duration-200 text-sm font-medium;
+}
+
+.action-btn {
+    @apply text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200;
 }
 </style>
