@@ -9,6 +9,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ReportController extends Controller
@@ -16,56 +17,127 @@ class ReportController extends Controller
 
     public function index()
     {
-        $branchDetails = Branch::withCount('customers')
-            ->with(['customers' => function($query) {
-                $query->selectRaw('branch_id,
-                    COUNT(*) as total,
-                    COUNT(CASE WHEN created_at >= DATE_FORMAT(NOW(), "%Y-%m-01") THEN 1 END) as this_month,
-                    COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as last_7_days')
-                    ->groupBy('branch_id');
-            }])
+        $dateRange = request('dateRange', 'all');
+        $startDate = $this->getStartDate($dateRange);
+        $endDate = request('endDate');
+
+        $branchDetails = Branch::with(['users'])
+            ->withCount([
+                'customers as total_customers' => function ($query) use ($startDate, $endDate) {
+                    $this->applyDateFilter($query, $startDate, $endDate);
+                }
+            ])
             ->get()
-            ->map(function($branch) {
+            ->map(function ($branch) use ($dateRange, $startDate, $endDate) {
+                $userEntriesQuery = Customer::where('branch_id', $branch->id)
+                    ->select('user_id', DB::raw('COUNT(*) as entry_count'));
+
+                if ($dateRange !== 'all') {
+                    $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
+                }
+
+                $userEntries = $userEntriesQuery->groupBy('user_id')
+                    ->with('user:id,name')
+                    ->get()
+                    ->map(function ($entry) {
+                        return [
+                            'name' => $entry->user->name,
+                            'entries' => $entry->entry_count
+                        ];
+                    });
+
                 return [
                     'id' => $branch->id,
                     'name' => $branch->branch_name,
                     'code' => $branch->branch_code,
-                    'total_customers' => $branch->customers_count,
-                    'this_month' => $branch->customers->first()->this_month ?? 0,
-                    'last_7_days' => $branch->customers->first()->last_7_days ?? 0,
+                    'total_customers' => $branch->total_customers,
+                    'users' => $userEntries,
+                    'this_month' => $this->getBranchCount($branch->id, 'month'),
+                    'last_7_days' => $this->getBranchCount($branch->id, 'week'),
+                    'all_time' => $this->getBranchCount($branch->id, 'all')
                 ];
             });
 
-        $reports = [
-            'totalCustomers' => Customer::count(),
-            'totalBranches' => Branch::count(),
-            'branchWiseCustomers' => Branch::withCount('customers')->get(),
-            'branchDetails' => $branchDetails,
-            'recentCustomers' => Customer::with('branch')
-                ->latest()
-                ->take(5)
-                ->get(),
-            'monthlyCustomers' => Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as count')
-                ->groupBy('month')
-                ->orderBy('month')
-                ->get(),
-            'ageDistribution' => Customer::selectRaw('
-                CASE
-                    WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 25 THEN "18-24"
-                    WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 35 THEN "25-34"
-                    WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 45 THEN "35-44"
-                    ELSE "45+"
-                END as age_group,
-                COUNT(*) as count
-            ')
-            ->whereNotNull('dob')
-            ->groupBy('age_group')
-            ->get(),
-        ];
-
         return Inertia::render('Admin/Reports/Dashboard', [
-            'reportData' => $reports
+            'reportData' => $this->getReportData($branchDetails, $dateRange)
         ]);
+    }
+
+    private function applyDateFilter($query, $startDate, $endDate)
+    {
+        if ($startDate) {
+            $query->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->where('created_at', '<=', $endDate);
+        }
+    }
+
+    private function getReportData($branchDetails, $dateRange)
+    {
+        $startDate = $this->getStartDate($dateRange);
+
+        return [
+            'totalCustomers' => $startDate ? Customer::where('created_at', '>=', $startDate)->count() : Customer::count(),
+            'totalBranches' => Branch::count(),
+            'branchWiseCustomers' => Branch::withCount([
+                'customers' => function ($query) use ($startDate) {
+                    if ($startDate) {
+                        $query->where('created_at', '>=', $startDate);
+                    }
+                }
+            ])->get(),
+            'branchDetails' => $branchDetails,
+            'recentCustomers' => Customer::with(['branch', 'user'])->latest()->take(5)->get(),
+            'monthlyCustomers' => $this->getMonthlyData(),
+            'ageDistribution' => $this->getAgeDistribution($startDate)
+        ];
+    }
+
+    private function getStartDate($range)
+    {
+        return match ($range) {
+            'week' => now()->subDays(7),
+            'month' => now()->startOfMonth(),
+            default => null
+        };
+    }
+
+    private function getBranchCount($branchId, $range)
+    {
+        $query = Customer::where('branch_id', $branchId);
+        $startDate = $this->getStartDate($range);
+
+        return $startDate ? $query->where('created_at', '>=', $startDate)->count() : $query->count();
+    }
+
+
+    private function getMonthlyData()
+    {
+        return Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as count')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+    }
+
+    private function getAgeDistribution($startDate)
+    {
+        $query = Customer::selectRaw('
+        CASE
+            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 25 THEN "18-24"
+            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 35 THEN "25-34"
+            WHEN TIMESTAMPDIFF(YEAR, dob, CURDATE()) < 45 THEN "35-44"
+            ELSE "45+"
+        END as age_group,
+        COUNT(*) as count
+    ')
+            ->whereNotNull('dob');
+
+        if ($startDate) {
+            $query->where('created_at', '>=', $startDate);
+        }
+
+        return $query->groupBy('age_group')->get();
     }
 
     public function downloadPdf(Request $request)
@@ -74,9 +146,11 @@ class ReportController extends Controller
         $data = [];
 
         if ($branch_id) {
-            $branch = Branch::with(['customers' => function($query) {
-                $query->latest();
-            }])->findOrFail($branch_id);
+            $branch = Branch::with([
+                'customers' => function ($query) {
+                    $query->latest();
+                }
+            ])->findOrFail($branch_id);
 
             $data['branch'] = $branch;
             $data['customers'] = $branch->customers;

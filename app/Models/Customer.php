@@ -23,5 +23,4 @@ class Customer extends Model
         return $this->belongsTo(Branch::class); // Adjust as needed
     }
 
-
 }
