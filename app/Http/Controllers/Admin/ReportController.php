@@ -268,12 +268,14 @@ class ReportController extends Controller
             $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
 
             $userEntries = $userEntriesQuery->groupBy('user_id')
-                ->with('user:id,name')
+                ->with('user:id,name,role') // Include 'role' in the query
                 ->get()
                 ->map(function ($entry) {
                     return [
+                        'user_id' => $entry->user->id,
                         'name' => $entry->user->name,
-                        'entries' => $entry->entry_count
+                        'entries' => $entry->entry_count,
+                        'role' => $entry->user->role // Include role in the mapped data
                     ];
                 });
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
+import CustomDateInput from '@/Components/CustomDateInput.vue';
 
 const props = defineProps({
     modelValue: {
@@ -68,11 +69,8 @@ const handleDateChange = (type, value) => {
             <div class="flex flex-wrap items-center gap-4">
                 <div class="flex items-center gap-2">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date Range:</label>
-                    <select
-                        :value="selectedRange"
-                        @change="handleRangeChange($event.target.value)"
-                        class="filter-select"
-                    >
+                    <select :value="selectedRange" @change="handleRangeChange($event.target.value)"
+                        class="filter-select">
                         <option value="all">All Time</option>
                         <option value="month">This Month</option>
                         <option value="week">Last 7 Days</option>
@@ -82,21 +80,12 @@ const handleDateChange = (type, value) => {
 
                 <template v-if="selectedRange === 'custom'">
                     <div class="flex items-center gap-3">
-                        <input
-                            type="date"
-                            :value="selectedStartDate"
-                            @input="handleDateChange('start', $event.target.value)"
-                            class="date-input"
-                            :max="selectedEndDate"
-                        >
+                        <CustomDateInput v-model="selectedStartDate"
+                            @update:modelValue="handleDateChange('start', $event)" :max="selectedEndDate"
+                            placeholder="Start Date" class="w-36" />
                         <span class="text-gray-500 dark:text-gray-400">to</span>
-                        <input
-                            type="date"
-                            :value="selectedEndDate"
-                            @input="handleDateChange('end', $event.target.value)"
-                            class="date-input"
-                            :min="selectedStartDate"
-                        >
+                        <CustomDateInput v-model="selectedEndDate" @update:modelValue="handleDateChange('end', $event)"
+                            :min="selectedStartDate" placeholder="End Date" class="w-36" />
                     </div>
                 </template>
             </div>
@@ -106,14 +95,6 @@ const handleDateChange = (type, value) => {
 
 <style scoped>
 .filter-select {
-    @apply rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white
-           text-sm focus:border-blue-500 focus:ring-blue-500 min-w-[150px]
-           transition-colors duration-200;
-}
-
-.date-input {
-    @apply rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white
-           text-sm focus:border-blue-500 focus:ring-blue-500 w-36
-           transition-colors duration-200;
+    @apply rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500 min-w-[150px] transition-colors duration-200;
 }
 </style>
