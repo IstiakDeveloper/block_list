@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Payment Receipts Report</title>
+    <title>Receipts Payment Report</title>
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Payment Receipts Report</title>
+    <title>Receipts Payment Report</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,26 +18,29 @@
             text-align: center;
             margin-bottom: 25px;
             padding: 15px;
-            background: linear-gradient(to right, #f8fafc, #f1f5f9);
             border-radius: 8px;
+            color: black;
+        }
+
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
 
         .report-title {
             font-size: 22px;
             font-weight: bold;
             margin-bottom: 8px;
-            color: #1e293b;
         }
 
         .branch-info {
             font-size: 15px;
             margin-bottom: 5px;
-            color: #475569;
         }
 
         .period-info {
             font-size: 13px;
-            color: #64748b;
         }
 
         .summary-section {
@@ -100,19 +103,16 @@
             font-size: 10px;
         }
 
-        th {
-            background-color: #f1f5f9;
+        th, td {
             padding: 6px;
-            text-align: left;
-            font-weight: bold;
             border: 1px solid #e2e8f0;
             white-space: nowrap;
+            text-align: center;
         }
 
-        td {
-            padding: 6px;
-            border: 1px solid #e2e8f0;
-            white-space: nowrap;
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
         }
 
         tr:nth-child(even) {
@@ -216,8 +216,9 @@
 
 <body>
     <div class="header">
-        <div class="report-title">Payment Receipts Report</div>
-        <div class="branch-info">{{ $branchName }}</div>
+        <div class="company-name">Mousumi NGO</div>
+        <div class="report-title">Receipts Payment Report</div>
+        <div class="branch-info">Branch: {{ $branchName }}</div>
         <div class="period-info">Period: {{ date('d/m/Y', strtotime($startDate)) }} -
             {{ date('d/m/Y', strtotime($endDate)) }}</div>
     </div>
@@ -228,7 +229,7 @@
                 <td colspan="4" class="summary-header">Summary Statistics</td>
             </tr>
             <tr class="column-headers">
-                <th>Category</th>
+                <th></th>
                 <th>Period Summary</th>
                 <th>All Time Summary</th>
                 <th>Current Status</th>
@@ -240,7 +241,7 @@
                 <td class="value" rowspan="2">{{ $allTimeSummary['available'] ?? 0 }}</td>
             </tr>
             <tr>
-                <td class="label">Distributed</td>
+                <td class="label">Disbursement</td>
                 <td class="value">{{ $periodSummary['distributed'] ?? 0 }}</td>
                 <td class="value">{{ $allTimeSummary['distributed'] ?? 0 }}</td>
             </tr>
@@ -251,9 +252,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
+                    <th></th>
                     <th colspan="5" class="receive-section">Receive Section</th>
-                    <th colspan="6" class="distribute-section">Distribution Section</th>
+                    <th colspan="6" class="distribute-section">Disbursement Section</th>
                 </tr>
                 <tr>
                     <th>Date</th>
@@ -262,7 +263,7 @@
                     <th>To #</th>
                     <th>Total</th>
                     <th>Received By</th>
-                    <th>Given To</th>
+                    <th>Disburse To</th>
                     <th>PIN</th>
                     <th>From #</th>
                     <th>To #</th>

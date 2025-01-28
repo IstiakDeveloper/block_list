@@ -21,6 +21,13 @@
             padding-bottom: 15px;
         }
 
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+
         .title {
             font-size: 18px;
             font-weight: bold;
@@ -170,6 +177,7 @@
 
 <body>
     <div class="header">
+        <div class="company-name">Mousumi NGO</div>
         <div class="title">Branch Users Report</div>
         <div class="date-range">
             Period:

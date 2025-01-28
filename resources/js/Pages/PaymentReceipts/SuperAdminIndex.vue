@@ -85,13 +85,13 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Distributed</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Disbursement</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                             {{ summary.period_distributed }}
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Available</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Balance</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                             {{ summary.period_received - summary.period_distributed }}
                                         </div>
@@ -112,7 +112,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Distributed</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Disbursement</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                             {{ summary.all_time_distributed }}
                                         </div>
@@ -120,11 +120,11 @@
                                 </div>
                             </div>
 
-                            <!-- Available Receipts -->
+                            <!-- Balance Receipts -->
                             <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
                                 <div class="flex justify-between items-center">
                                     <div>
-                                        <div class="text-sm text-blue-600 dark:text-blue-200">Currently Available</div>
+                                        <div class="text-sm text-blue-600 dark:text-blue-200">Currently Balance</div>
                                         <div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
                                             {{ summary.current_available }}
                                         </div>
@@ -156,17 +156,17 @@
                             </div>
                         </div>
 
-                        <!-- Total Period Distributed -->
+                        <!-- Total Period Disbursement -->
                         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Period Distributed</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Period Disbursement</div>
                             <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {{ totalPeriodDistributed }}
                             </div>
                         </div>
 
-                        <!-- Total Available -->
+                        <!-- Total Balance -->
                         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Available Receipts</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Balance Receipts</div>
                             <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                 {{ totalAvailable }}
                             </div>
@@ -206,11 +206,11 @@
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider">
-                                            Distributed
+                                            Disbursement
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Available
+                                            Balance
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -277,7 +277,7 @@
                                                 <div class="text-sm">
                                                     <span class="text-sky-600 dark:text-sky-400">{{
                                                         summary.period_distributed }}</span>
-                                                    <span class="text-gray-500 dark:text-gray-400"> distributed</span>
+                                                    <span class="text-gray-500 dark:text-gray-400"> disbursement</span>
                                                 </div>
                                             </div>
                                         </td>

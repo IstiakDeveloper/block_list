@@ -8,7 +8,7 @@
                         <!-- Desktop View -->
                         <div class="hidden sm:flex justify-between items-center">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                                Payment Receipts Management
+                                Receipts Payment Management
                             </h2>
                             <div class="flex gap-2">
                                 <!-- Download Button -->
@@ -130,7 +130,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Distributed</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Disbursement</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                             {{ summary.period_distributed }}
                                         </div>
@@ -149,7 +149,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Distributed</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Total Disbursement</div>
                                         <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                             {{ summary.all_time_distributed }}
                                         </div>
@@ -159,7 +159,7 @@
 
                             <!-- Available Receipts -->
                             <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
-                                <div class="text-sm text-blue-600 dark:text-blue-200">Currently Available</div>
+                                <div class="text-sm text-blue-600 dark:text-blue-200">Current Balance</div>
                                 <div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
                                     {{ summary.current_available }}
                                 </div>
@@ -182,13 +182,13 @@
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">Distributed</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Disbursement</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.period_distributed }}
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">Available in Period</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Balance in Period</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.period_received - branchSummaries.period_distributed }}
                                     </div>
@@ -207,7 +207,7 @@
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Distributed</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Disbursement</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.all_time_distributed }}
                                     </div>
@@ -215,7 +215,7 @@
                                 <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
                                     <div class="flex justify-between items-center">
                                         <div>
-                                            <div class="text-sm text-blue-600 dark:text-blue-200">Currently Available
+                                            <div class="text-sm text-blue-600 dark:text-blue-200">Current Balance
                                             </div>
                                             <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">
                                                 {{ branchSummaries.current_available }}
@@ -260,7 +260,7 @@
                                         </th>
                                         <th scope="col" colspan="6"
                                             class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider bg-sky-50 dark:bg-sky-900/30">
-                                            <span class="text-sky-600 dark:text-sky-400 font-bold">◆ Distribution
+                                            <span class="text-sky-600 dark:text-sky-400 font-bold">◆ Disbursement
                                                 Section ◆</span>
                                         </th>
                                     </tr>
@@ -287,15 +287,15 @@
                                             Total
                                         </th>
                                         <th
-                                            class="name-col px-4 py-2 text-left text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 border-r border-gray-300 dark:border-gray-600">
+                                            class="name-col px-1 py-2 text-left text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 border-r border-gray-300 dark:border-gray-600">
                                             Received By
                                         </th>
                                         <th
-                                            class="name-col px-4 py-2 text-left text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20">
-                                            Given To
+                                            class="name-col px-1 py-2 text-left text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20">
+                                            Disburse To
                                         </th>
                                         <th
-                                            class="pin-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-16">
+                                            class="pin-col px-1 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-4">
                                             PIN
                                         </th>
                                         <th
@@ -307,12 +307,12 @@
                                             To
                                         </th>
                                         <th
-                                            class="book-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-20">
+                                            class="book-col px-1 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-4">
                                             Book
                                         </th>
                                         <th
                                             class="available-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-20">
-                                            Available
+                                            Balance
                                         </th>
                                     </tr>
                                 </thead>
@@ -340,11 +340,11 @@
                                             {{ receipt.total_cumulative_quantity }}
                                         </td>
                                         <td
-                                            class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 text-left bg-emerald-50/30 dark:bg-emerald-900/10 border-r border-gray-300 dark:border-gray-600">
+                                            class="px-1 py-2 text-sm text-gray-600 dark:text-gray-400 text-left bg-emerald-50/30 dark:bg-emerald-900/10 border-r border-gray-300 dark:border-gray-600">
                                             {{ receipt.received_by || '-' }}
                                         </td>
                                         <td
-                                            class="px-4 py-2 text-sm text-sky-600 dark:text-sky-400 font-medium text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-1 py-2 text-sm text-sky-600 dark:text-sky-400 font-medium text-center bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.given_to || '-' }}
                                         </td>
                                         <td
@@ -421,11 +421,11 @@
 
                                     <!-- Distribution Section -->
                                     <div class="receipt-section-header distribute-section">
-                                        Distribution Details
+                                        Disbursement Details
                                     </div>
                                     <div class="p-4 space-y-3 bg-sky-50/20 dark:bg-sky-900/10">
                                         <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600 dark:text-gray-400">Given To</span>
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">Disburse To</span>
                                             <span class="font-medium text-sky-600 dark:text-sky-400">
                                                 {{ receipt.given_to || '-' }}
                                             </span>
@@ -451,7 +451,7 @@
                                     <div class="p-4 border-t dark:border-gray-700">
                                         <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Available Receipts
+                                                Balance
                                             </span>
                                             <span class="text-lg font-bold" :class="{
                                                 'text-emerald-600 dark:text-emerald-400': receipt.available_receipts > 100,
@@ -501,9 +501,7 @@
                     <!-- Receive Section -->
                     <div class="mb-6 border-t dark:border-gray-700 pt-4">
                         <h3 class="text-md font-medium text-green-600 dark:text-green-400 mb-4">
-                            Receive Section
-                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">(Optional if only
-                                distributing)</span>
+                            H/O Receive Section
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -543,15 +541,13 @@
                     <!-- Distribution Section -->
                     <div class="mb-6 border-t dark:border-gray-700 pt-4">
                         <h3 class="text-md font-medium text-blue-600 dark:text-blue-400 mb-4">
-                            Distribution Section
-                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">(Optional if only
-                                receiving)</span>
+                            Disbursement Section
                         </h3>
                         <!-- Distribution Section Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Given Quantity -->
                             <div>
-                                <Label for="given_quantity" value="Given Quantity"
+                                <Label for="given_quantity" value="Disburse Quantity"
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="given_quantity" type="number" v-model="form.given_quantity"
                                     :error="form.errors.given_quantity"
