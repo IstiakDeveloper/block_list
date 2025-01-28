@@ -8,7 +8,7 @@
         body {
             font-family: bangla, sans-serif;
             font-size: 11px;
-            line-height: 1.5;
+            line-height: 1.2;
             margin: 0;
             padding: 20px;
             color: #1a1a1a;
@@ -53,7 +53,7 @@
         th,
         td {
             border: 1.5px solid #000;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
             vertical-align: middle;
         }
@@ -264,10 +264,18 @@
                 <tr class="grand-total-row">
                     <td style="text-align: right;">Grand Total</td>
                     @foreach ($roles as $role)
-                        <td class="total-entries">{{ number_format($grandTotals[$role]) }}</td>
+                        <td class="total-entries">
+                            {{ number_format($grandTotals[$role]) }}
+                            <span class="user-percentage">
+                                ({{ round(($grandTotals[$role] / $grandTotals['total']) * 100, 1) }}%)
+                            </span>
+                        </td>
                     @endforeach
-                    <td class="total-entries">{{ number_format($grandTotals['total']) }}</td>
+                    <td class="total-entries">
+                        {{ number_format($grandTotals['total']) }}
+                    </td>
                 </tr>
+
             </tbody>
         </table>
 
