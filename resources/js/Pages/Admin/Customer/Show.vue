@@ -1,4 +1,5 @@
 <template>
+
     <Head :title="customer ? customer.name : 'Customer Details'" />
 
     <AdminLayout>
@@ -13,9 +14,12 @@
                         </div>
                         <div class="flex space-x-3">
                             <button @click="openProfileModal" class="btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                                    fill="currentColor">
                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd"
+                                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                        clip-rule="evenodd" />
                                 </svg>
                                 View Full Profile
                             </button>
@@ -29,25 +33,20 @@
                         <div class="p-4 bg-gray-200 dark:bg-gray-700">
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">NID Part 1</h3>
                         </div>
-                        <img
-                            v-if="customer.nid_part_1"
-                            :src="getImageUrl(customer.nid_part_1)"
-                            alt="NID Part 1"
-                            class="w-full h-64 object-cover"
-                            @error="handleImageError"
-                        />
+                        <img v-if="customer.nid_part_1" :src="getImageUrl(customer.nid_part_1)" alt="NID Part 1"
+                            class="w-full h-64 object-cover" @error="handleImageError" />
                     </div>
                     <div class="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
                         <div class="p-4 bg-gray-200 dark:bg-gray-700">
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">NID Part 2</h3>
                         </div>
-                        <img
-                            v-if="customer.nid_part_2"
-                            :src="getImageUrl(customer.nid_part_2)"
-                            alt="NID Part 2"
-                            class="w-full h-64 object-cover"
-                            @error="handleImageError"
-                        />
+                        <img v-if="customer.nid_part_2" :src="getImageUrl(customer.nid_part_2)" alt="NID Part 2"
+                            class="w-full h-64 object-cover" @error="handleImageError" />
+                    </div>
+                    <div class="px-4 pt-4">
+                        <p class="text-md font-bold text-gray-600 dark:text-gray-400">
+                            Created: {{ formatDate(customer.created_at) }}
+                        </p>
                     </div>
                 </div>
 
@@ -67,31 +66,32 @@
                 </div>
 
                 <!-- Additional Information -->
-                <div class="p-6 bg-gray-50 dark:bg-gray-800 border-t">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Address</h3>
-                            <p class="text-gray-600 dark:text-gray-400">
-                                {{ customer.address || 'No address provided' }}
-                            </p>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Additional Details</h3>
-                            <p class="text-gray-600 dark:text-gray-400">
-                                {{ customer.details || 'No additional details' }}
-                            </p>
-                        </div>
+                <div class="p-6 grid grid-cols-2 gap-6">
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200 border-b pb-2">
+                            Address Information
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-400 min-h-[100px]">
+                            {{ customer.address || 'No address provided' }}
+                        </p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200 border-b pb-2">
+                            Details
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-400 min-h-[100px]">
+                            {{ customer.details || 'No additional details' }}
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Full Profile Modal -->
-        <ProfileModal
-            :customer="customer"
-            :visible="isProfileModalVisible"
-            @close="closeProfileModal"
-        />
+        <ProfileModal :customer="customer" :visible="isProfileModalVisible" @close="closeProfileModal" />
     </AdminLayout>
 </template>
 
@@ -127,15 +127,14 @@ function handleImageError(event) {
     event.target.src = '/default-image.png';
 }
 
-function formatDate(dateString) {
-    return dateString
-        ? new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })
-        : 'N/A';
-}
+const formatDate = (date) => {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
+};
 
 function printProfile() {
     window.print();
@@ -147,9 +146,12 @@ function printProfile() {
     body * {
         visibility: hidden;
     }
-    #printable-area, #printable-area * {
+
+    #printable-area,
+    #printable-area * {
         visibility: visible;
     }
+
     #printable-area {
         position: absolute;
         left: 0;
@@ -158,12 +160,10 @@ function printProfile() {
 }
 
 .btn-primary {
-    @apply flex items-center bg-blue-600 text-white font-semibold py-2 px-4
-           rounded-lg shadow-md hover:bg-blue-700 transition duration-200 ease-in-out;
+    @apply flex items-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-200 ease-in-out;
 }
 
 .btn-secondary {
-    @apply flex items-center bg-gray-100 text-gray-800 font-semibold py-2 px-4
-           rounded-lg shadow-md hover:bg-gray-200 transition duration-200 ease-in-out;
+    @apply flex items-center bg-gray-100 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-200 transition duration-200 ease-in-out;
 }
 </style>
