@@ -50,6 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/reports/filter', [ReportController::class, 'filter'])->name('admin.reports.filter');
     Route::get('/admin/reports/branch-users-pdf', [ReportController::class, 'branchUsersPdf'])
         ->name('admin.reports.branch-users-pdf');
+
+    Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
+        ->name('payment-receipts.branch-transactions');
+    Route::delete('/payment-receipts/{receipt}', [PaymentReceiptController::class, 'destroy'])
+        ->name('payment-receipts.destroy');
 });
 
 

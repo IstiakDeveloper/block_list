@@ -703,80 +703,11 @@ const formatDate = (date) => {
 
 // Validation computed
 const isFormValid = computed(() => {
-    if (form.receive_quantity === 0 && form.given_quantity === 0) {
-        return false;
-    }
-    if (form.receive_quantity > 0) {
-        if (!form.receipt_from_number ||
-            !form.receipt_to_number ||
-            !form.received_by ||
-            form.receipt_to_number <= form.receipt_from_number) {
-            return false;
-        }
-    }
-
-    if (form.given_quantity > 0) {
-        if (!form.given_to ||
-            !form.pin_number ||
-            !form.given_from_number ||
-            !form.given_to_number ||
-            !form.receipt_book_number ||
-            form.given_to_number <= form.given_from_number) {
-            return false;
-        }
-    }
-
-    return true;
+    // Only check if at least one section has data
+    return form.receive_quantity > 0 || form.given_quantity > 0;
 });
 
-// Form Validation Methods
-const validateReceiveSection = () => {
-    form.clearErrors();
 
-    if (form.receive_quantity > 0) {
-        if (!form.receipt_from_number || !form.receipt_to_number) {
-            return;
-        }
-
-        if (form.receipt_to_number <= form.receipt_from_number) {
-            form.setError('receipt_to_number', 'To number must be greater than From number');
-        }
-
-        const calculatedQuantity = form.receipt_to_number - form.receipt_from_number + 1;
-        if (calculatedQuantity !== parseInt(form.receive_quantity)) {
-            form.setError('receive_quantity', 'Quantity does not match the receipt number range');
-            form.setError('receipt_to_number', 'Range does not match the specified quantity');
-        }
-    }
-};
-
-const validateDistributeSection = () => {
-    form.clearErrors();
-
-    if (form.given_quantity > 0) {
-        if (!form.given_from_number || !form.given_to_number) {
-            return;
-        }
-
-        if (form.given_to_number <= form.given_from_number) {
-            form.setError('given_to_number', 'To number must be greater than From number');
-        }
-
-        const calculatedQuantity = form.given_to_number - form.given_from_number + 1;
-        if (calculatedQuantity !== parseInt(form.given_quantity)) {
-            form.setError('given_quantity', 'Quantity does not match the receipt number range');
-            form.setError('given_to_number', 'Range does not match the specified quantity');
-        }
-
-        // Check against available receipts
-        const availableReceipts = props.branchSummaries?.current_available || 0;
-        const totalAvailable = availableReceipts + parseInt(form.receive_quantity || 0);
-
-        if (form.given_quantity > totalAvailable) {
-            form.setError('given_quantity', `Not enough receipts available. Current: ${availableReceipts}, New: ${form.receive_quantity}, Total Available: ${totalAvailable}`);
-        }
-    }
-};
 
 // Modal Handlers
 const openNewEntryModal = () => {
@@ -794,10 +725,6 @@ const closeNewEntryModal = () => {
 
 // Form Submission
 const submitForm = () => {
-    if (!isFormValid.value) {
-        return;
-    }
-
     form.post(route('payment-receipts.store'), {
         preserveScroll: true,
         onSuccess: () => {
