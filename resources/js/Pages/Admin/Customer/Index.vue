@@ -1,22 +1,36 @@
 <template>
-
     <Head title="Customers" />
 
     <AdminLayout>
-        <div class="container mx-auto px-4 py-8">
-            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+        <div class="container px-4 py-8 mx-auto">
+            <div class="overflow-hidden bg-white rounded-lg shadow-lg dark:bg-gray-800">
                 <!-- Header and Filters -->
                 <div
-                    class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-300">Customers</h1>
+                    class="flex flex-col items-start justify-between p-4 space-y-4 sm:p-6 sm:flex-row sm:items-center sm:space-y-0">
+                    <h1 class="text-2xl font-bold text-gray-800 sm:text-3xl dark:text-gray-300">Customers</h1>
 
                     <div
-                        class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                        class="flex flex-col items-start w-full space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 sm:w-auto">
+                        <!-- Search Input -->
+                        <div class="relative w-full sm:w-64">
+                            <input
+                                type="text"
+                                v-model="search"
+                                placeholder="Search by name, NID..."
+                                @input="handleSearchInput"
+                                class="w-full px-4 py-2 pl-10 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                            />
+                            <div class="absolute left-3 top-2.5 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
 
                         <!-- Branch Filter -->
                         <div v-if="user.name === 'Super Admin' || branches.length > 1" class="w-full sm:w-48">
                             <select v-model="selectedBranch" @change="filterByBranch"
-                                class="w-full px-4 py-2 text-gray-700 bg-white dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500">
+                                class="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500">
                                 <option value="">All Branches</option>
                                 <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                                     {{ branch.branch_name }}
@@ -29,7 +43,7 @@
                         </div>
                         <!-- Add Customer Button -->
                         <Link v-if="user.name !== 'Super Admin'" href="/admin/customers/create"
-                            class="btn-primary w-full sm:w-auto flex items-center justify-center">
+                            class="flex items-center justify-center w-full btn-primary sm:w-auto">
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path
                                 d="M10 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z" />
@@ -45,27 +59,27 @@
                         <thead class="bg-gray-50 dark:bg-gray-900">
                             <tr>
                                 <th
-                                    class="p-4 hidden sm:table-cell text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="hidden p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:table-cell dark:text-gray-300">
                                     Serial Number
                                 </th>
                                 <th
-                                    class="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-300">
                                     Name
                                 </th>
                                 <th
-                                    class="p-4 hidden md:table-cell text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="hidden p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase md:table-cell dark:text-gray-300">
                                     NID Number
                                 </th>
                                 <th
-                                    class="p-4 hidden lg:table-cell text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="hidden p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase lg:table-cell dark:text-gray-300">
                                     Branch
                                 </th>
                                 <th
-                                    class="p-4 hidden xl:table-cell text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="hidden p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase xl:table-cell dark:text-gray-300">
                                     Created At
                                 </th>
                                 <th
-                                    class="p-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="p-4 text-xs font-medium tracking-wider text-right text-gray-500 uppercase dark:text-gray-300">
                                     Actions
                                 </th>
                             </tr>
@@ -74,7 +88,7 @@
                             <tr v-for="(customer, index) in customers.data" :key="customer.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td
-                                    class="p-4 hidden sm:table-cell whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    class="hidden p-4 text-sm text-gray-900 sm:table-cell whitespace-nowrap dark:text-gray-100">
                                     {{ index + 1 }}
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
@@ -82,29 +96,29 @@
                                         <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{
                                             customer.name }}</span>
                                         <!-- Mobile-only info -->
-                                        <span class="text-xs text-gray-500 md:hidden mt-1">NID: {{ customer.nid_number
+                                        <span class="mt-1 text-xs text-gray-500 md:hidden">NID: {{ customer.nid_number
                                             }}</span>
-                                        <span class="text-xs text-gray-500 lg:hidden mt-1">Branch: {{
+                                        <span class="mt-1 text-xs text-gray-500 lg:hidden">Branch: {{
                                             customer.branch.branch_name }}</span>
                                     </div>
                                 </td>
                                 <td
-                                    class="p-4 hidden md:table-cell whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    class="hidden p-4 text-sm text-gray-900 md:table-cell whitespace-nowrap dark:text-gray-100">
                                     {{ customer.nid_number }}
                                 </td>
                                 <td
-                                    class="p-4 hidden lg:table-cell whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    class="hidden p-4 text-sm text-gray-900 lg:table-cell whitespace-nowrap dark:text-gray-100">
                                     {{ customer.branch.branch_name }}
                                 </td>
                                 <td
-                                    class="p-4 hidden xl:table-cell whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    class="hidden p-4 text-sm text-gray-500 xl:table-cell whitespace-nowrap dark:text-gray-400">
                                     {{ formatDate(customer.created_at) }}
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
                                     <div
-                                        class="flex flex-col sm:flex-row items-end sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                                        class="flex flex-col items-end justify-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
                                         <Link :href="route('admin.customers.show', customer.id)"
-                                            class="btn-action btn-show w-full sm:w-auto">
+                                            class="w-full btn-action btn-show sm:w-auto">
                                         <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                             <path
                                                 d="M9.049 2.927C9.469 2.607 10 2.903 10 3.5v13c0 .597-.531.893-.951.573l-7.902-6.5a.75.75 0 010-1.146l7.902-6.5z" />
@@ -114,7 +128,7 @@
 
                                         <Link v-if="user.name === 'Super Admin'"
                                             :href="route('admin.customers.edit', customer.id)"
-                                            class="btn-action btn-edit w-full sm:w-auto">
+                                            class="w-full btn-action btn-edit sm:w-auto">
                                         <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                             <path
                                                 d="M12.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-9 9a1 1 0 01-.353.213l-3 1a1 1 0 01-1.293-1.293l1-3a1 1 0 01.213-.353l9-9z" />
@@ -123,7 +137,7 @@
                                         </Link>
 
                                         <button v-if="user.name === 'Super Admin'" @click="confirmDelete(customer.id)"
-                                            class="btn-action btn-delete w-full sm:w-auto">
+                                            class="w-full btn-action btn-delete sm:w-auto">
                                             <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                                 <path d="M6 2a1 1 0 00-1 1v1h12V3a1 1 0 00-1-1H6z" />
                                                 <path fill-rule="evenodd"
@@ -135,12 +149,23 @@
                                     </div>
                                 </td>
                             </tr>
+                            <!-- No customers found message -->
+                            <tr v-if="customers.data.length === 0">
+                                <td colspan="6" class="p-4 text-center text-gray-500 dark:text-gray-400">
+                                    <div class="py-6">
+                                        <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p class="mt-2 text-lg font-medium">No customers found</p>
+                                        <p class="mt-1">Try adjusting your search or filter criteria</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
 
-
-                <Pagination :data="customers" item-name="customers" :extra-params="{ branch: selectedBranch }" />
+                <Pagination :data="customers" item-name="customers" :extra-params="paginationParams" />
             </div>
         </div>
 
@@ -152,8 +177,9 @@
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ConfirmationDialog from '@/Components/ConfirmationDialog.vue';
-import Pagination from '@/Components/Pagination.vue';  // Add this import
-import { ref, computed, onMounted } from 'vue';
+import Pagination from '@/Components/Pagination.vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import debounce from 'lodash/debounce';
 
 const props = defineProps({
     customers: Object,
@@ -174,20 +200,25 @@ const customerToDelete = ref(null);
 const selectedBranch = ref(
     props.branches.length === 1 ? props.branches[0].id : (props.filters.branch || '')
 );
+const search = ref(props.filters.search || '');
 const form = useForm({});
 
 // Computed
 const user = computed(() => props.auth.user);
 
 const hasMultipleBranches = computed(() =>
-    props.auth.user.name === 'Super Admin' || props.userBranches.length > 1
+    props.auth.user.name === 'Super Admin' || props.userBranches?.length > 1
 );
 
-onMounted(() => {
-    if (props.branches.length === 1 && !props.filters.branch) {
-        filterByBranch();
-    }
-});
+const paginationParams = computed(() => ({
+    branch: selectedBranch.value,
+    search: search.value
+}));
+
+// Create debounced search function
+const handleSearchInput = debounce(() => {
+    applyFilters();
+}, 300);
 
 // Methods
 const formatDate = (date) => {
@@ -199,18 +230,25 @@ const formatDate = (date) => {
     return `${day}/${month}/${year}`;
 };
 
-function filterByBranch() {
-    const params = new URLSearchParams(window.location.search);
+function applyFilters() {
+    const params = new URLSearchParams();
+
     if (selectedBranch.value) {
         params.set('branch', selectedBranch.value);
-    } else {
-        params.delete('branch');
+    }
+
+    if (search.value) {
+        params.set('search', search.value);
     }
 
     router.get(`/admin/customers?${params.toString()}`, {}, {
         preserveState: true,
         preserveScroll: true,
     });
+}
+
+function filterByBranch() {
+    applyFilters();
 }
 
 function confirmDelete(customerId) {
@@ -228,17 +266,11 @@ function deleteCustomer() {
     }
 }
 
-function previousPage() {
-    if (props.customers.prev_page_url) {
-        router.get(props.customers.prev_page_url);
+onMounted(() => {
+    if (props.branches.length === 1 && !props.filters.branch) {
+        filterByBranch();
     }
-}
-
-function nextPage() {
-    if (props.customers.next_page_url) {
-        router.get(props.customers.next_page_url);
-    }
-}
+});
 </script>
 
 <style scoped>

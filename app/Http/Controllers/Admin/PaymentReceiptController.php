@@ -169,10 +169,69 @@ class PaymentReceiptController extends Controller
         ]);
     }
 
+    public function getBranchTransactions(Request $request, Branch $branch)
+    {
+        $transactions = PaymentReceipt::where('branch_id', $branch->id)
+            ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
+                return $query->whereBetween('transaction_date', [
+                    $request->start_date,
+                    $request->end_date
+                ]);
+            })
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'transaction_date' => $transaction->transaction_date,
+                    'receive_quantity' => $transaction->receive_quantity,
+                    'receipt_from_number' => $transaction->receipt_from_number,
+                    'receipt_to_number' => $transaction->receipt_to_number,
+                    'given_quantity' => $transaction->given_quantity,
+                    'given_from_number' => $transaction->given_from_number,
+                    'given_to_number' => $transaction->given_to_number,
+                    'available_receipts' => $transaction->available_receipts,
+                ];
+            });
+
+        return response()->json(['transactions' => $transactions]);
+    }
+
+    public function destroy(PaymentReceipt $receipt)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Get all subsequent receipts from the same branch
+            $subsequentReceipts = PaymentReceipt::where('branch_id', $receipt->branch_id)
+                ->where('id', '>', $receipt->id)
+                ->orderBy('id')
+                ->get();
+
+            // Update the available_receipts and total_cumulative_quantity for all subsequent entries
+            foreach ($subsequentReceipts as $subsequentReceipt) {
+                $subsequentReceipt->total_cumulative_quantity -= $receipt->receive_quantity;
+                $subsequentReceipt->available_receipts = $subsequentReceipt->available_receipts
+                    - $receipt->receive_quantity
+                    + $receipt->given_quantity;
+                $subsequentReceipt->save();
+            }
+
+            // Delete the receipt
+            $receipt->delete();
+
+            DB::commit();
+            return back()->with('success', 'Receipt deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to delete receipt');
+        }
+    }
+
+
     public function store(Request $request)
     {
-        $validated = $this->validateRequest($request);
-
         try {
             DB::beginTransaction();
 
@@ -182,40 +241,30 @@ class PaymentReceiptController extends Controller
                 ->first();
 
             // Initialize values
-            $receiveQuantity = $validated['receive_quantity'] ?? 0;
-            $givenQuantity = $validated['given_quantity'] ?? 0;
+            $receiveQuantity = $request->receive_quantity ?? 0;
+            $givenQuantity = $request->given_quantity ?? 0;
             $currentAvailable = $latestRecord?->available_receipts ?? 0;
 
             // Calculate new totals
             $totalCumulative = ($latestRecord?->total_cumulative_quantity ?? 0) + $receiveQuantity;
 
-            // Calculate new available receipts by adding new receipts and subtracting distributions
+            // Calculate new available receipts
             $newAvailableReceipts = $currentAvailable + $receiveQuantity - $givenQuantity;
-
-            // Validate if we have enough receipts when distributing
-            if ($givenQuantity > 0) {
-                $totalAvailable = $currentAvailable + $receiveQuantity;
-                if ($givenQuantity > $totalAvailable) {
-                    throw ValidationException::withMessages([
-                        'given_quantity' => "Not enough receipts available. Current available: {$currentAvailable}, New receipts: {$receiveQuantity}, Total available: {$totalAvailable}"
-                    ]);
-                }
-            }
 
             // Create the new record
             PaymentReceipt::create([
                 'branch_id' => auth()->user()->branch_id,
-                'transaction_date' => $validated['transaction_date'],
+                'transaction_date' => $request->transaction_date,
                 'receive_quantity' => $receiveQuantity,
-                'receipt_from_number' => $validated['receipt_from_number'] ?? null,
-                'receipt_to_number' => $validated['receipt_to_number'] ?? null,
+                'receipt_from_number' => $request->receipt_from_number,
+                'receipt_to_number' => $request->receipt_to_number,
                 'total_cumulative_quantity' => $totalCumulative,
-                'received_by' => $validated['received_by'] ?? null,
-                'given_to' => $validated['given_to'] ?? null,
-                'pin_number' => $validated['pin_number'] ?? null,
-                'given_from_number' => $validated['given_from_number'] ?? null,
-                'given_to_number' => $validated['given_to_number'] ?? null,
-                'receipt_book_number' => $validated['receipt_book_number'] ?? null,
+                'received_by' => $request->received_by,
+                'given_to' => $request->given_to,
+                'pin_number' => $request->pin_number,
+                'given_from_number' => $request->given_from_number,
+                'given_to_number' => $request->given_to_number,
+                'receipt_book_number' => $request->receipt_book_number,
                 'given_quantity' => $givenQuantity,
                 'available_receipts' => $newAvailableReceipts
             ]);

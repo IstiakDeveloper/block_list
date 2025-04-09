@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,13 +55,27 @@ class CustomerController extends Controller
             }
         }
 
-        $customers = $query->latest()->paginate(10);
+        // Apply search filtering
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                    ->orWhere('name_bn', 'like', "%{$searchTerm}%")
+                    ->orWhere('nid_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('father_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('mother_name', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $customers = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Customer/Index', [
             'customers' => $customers,
             'branches' => $userBranches,
             'filters' => [
                 'branch' => $request->branch,
+                'search' => $request->search,
             ],
         ]);
     }
@@ -201,6 +216,68 @@ class CustomerController extends Controller
         return Inertia::render('Admin/Customer/Show', [
             'customer' => $customer,
         ]);
+    }
+
+    public function downloadPdf($id)
+    {
+        // Eager load 'branch' and 'user' relationships
+        $customer = Customer::with(['branch', 'user'])->findOrFail($id);
+
+        // Create a new mPDF instance with proper Bangla font configuration
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_left' => 25,
+            'margin_right' => 25,
+            'margin_top' => 25,
+            'margin_bottom' => 25,
+            'fontDir' => array_merge($fontDirs, [
+                public_path('fonts'),
+            ]),
+            'fontdata' => array_merge($fontData, [
+                'kalpurush' => [
+                    'R' => 'kalpurush.ttf',
+                    'useOTL' => 0xFF,    // Use OpenType Layout features
+                    'useKashida' => 75,  // Use kashida for justification
+                ],
+                'nikosh' => [
+                    'R' => 'nikosh.ttf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+                'sutonnymj' => [
+                    'R' => 'SutonnyMJ.ttf',
+                    'useOTL' => 0xFF,
+                    'useKashida' => 75,
+                ],
+            ]),
+            'default_font' => 'kalpurush',
+            'tempDir' => storage_path('app/pdf-temp'),
+            'debug' => true, // Enable debugging if needed
+            'allow_charset_conversion' => true,
+            'autoLangToFont' => true,
+            'autoScriptToLang' => true,
+        ]);
+
+        // Set document information
+        $mpdf->SetTitle('Customer Profile - ' . $customer->name);
+        $mpdf->SetAuthor('Mousumi NGO');
+        $mpdf->SetCreator('Mousumi NGO');
+
+        // Generate PDF content from view
+        $html = view('pdfs.customer-profile-mpdf', ['customer' => $customer])->render();
+
+        // Load the HTML into mPDF
+        $mpdf->WriteHTML($html);
+
+        // Output the PDF as a download
+        return $mpdf->Output("customer-profile-{$customer->id}.pdf", \Mpdf\Output\Destination::DOWNLOAD);
     }
 
     // Remove the specified customer from storage

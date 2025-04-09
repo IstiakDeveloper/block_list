@@ -3,18 +3,18 @@
     <Head :title="customer ? customer.name : 'Customer Details'" />
 
     <AdminLayout>
-        <div class="container mx-auto px-4 py-8">
-            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden">
+        <div class="container px-4 py-8 mx-auto">
+            <div class="overflow-hidden bg-white shadow-2xl dark:bg-gray-900 rounded-xl">
                 <!-- Header Section -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
+                <div class="p-6 bg-gradient-to-r from-blue-600 to-indigo-700">
                     <div class="flex items-center justify-between">
                         <div>
                             <h1 class="text-3xl font-bold text-white">{{ customer.name }}</h1>
-                            <p class="text-blue-100 mt-2">Customer Detailed Profile</p>
+                            <p class="mt-2 text-blue-100">Customer Detailed Profile</p>
                         </div>
                         <div class="flex space-x-3">
                             <button @click="openProfileModal" class="btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 20 20"
                                     fill="currentColor">
                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                     <path fill-rule="evenodd"
@@ -23,28 +23,37 @@
                                 </svg>
                                 View Full Profile
                             </button>
+                            <a :href="route('admin.customers.download-pdf', customer.id)" class="btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Download PDF
+                            </a>
                         </div>
                     </div>
                 </div>
 
                 <!-- NID Images Section -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-                    <div class="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
+                <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+                    <div class="overflow-hidden bg-gray-100 rounded-lg shadow-md dark:bg-gray-800">
                         <div class="p-4 bg-gray-200 dark:bg-gray-700">
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">NID Part 1</h3>
                         </div>
                         <img v-if="customer.nid_part_1" :src="getImageUrl(customer.nid_part_1)" alt="NID Part 1"
-                            class="w-full h-64 object-cover" @error="handleImageError" />
+                            class="object-cover w-full h-64" @error="handleImageError" />
                     </div>
-                    <div class="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-md">
+                    <div class="overflow-hidden bg-gray-100 rounded-lg shadow-md dark:bg-gray-800">
                         <div class="p-4 bg-gray-200 dark:bg-gray-700">
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">NID Part 2</h3>
                         </div>
                         <img v-if="customer.nid_part_2" :src="getImageUrl(customer.nid_part_2)" alt="NID Part 2"
-                            class="w-full h-64 object-cover" @error="handleImageError" />
+                            class="object-cover w-full h-64" @error="handleImageError" />
                     </div>
                     <div class="px-4 pt-4">
-                        <p class="text-md font-bold text-gray-600 dark:text-gray-400">
+                        <p class="font-bold text-gray-600 text-md dark:text-gray-400">
                             Created: {{ formatDate(customer.created_at) }}
                         </p>
                     </div>
@@ -52,7 +61,7 @@
 
                 <!-- Customer Details Grid -->
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         <DetailCard label="Name (Bangla)" :value="customer.name_bn" />
                         <DetailCard label="Father's Name" :value="customer.father_name" />
                         <DetailCard label="Mother's Name" :value="customer.mother_name" />
@@ -66,10 +75,10 @@
                 </div>
 
                 <!-- Additional Information -->
-                <div class="p-6 grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-2 gap-6 p-6">
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200 border-b pb-2">
+                        class="p-6 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
+                        <h3 class="pb-2 mb-3 text-lg font-semibold text-gray-800 border-b dark:text-gray-200">
                             Address Information
                         </h3>
                         <p class="text-gray-600 dark:text-gray-400 min-h-[100px]">
@@ -78,8 +87,8 @@
                     </div>
 
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200 border-b pb-2">
+                        class="p-6 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
+                        <h3 class="pb-2 mb-3 text-lg font-semibold text-gray-800 border-b dark:text-gray-200">
                             Details
                         </h3>
                         <p class="text-gray-600 dark:text-gray-400 min-h-[100px]">
@@ -98,6 +107,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ProfileModal from '@/Components/Modals/ProfileModal.vue';
 import DetailCard from '@/Components/Cards/DetailCard.vue';

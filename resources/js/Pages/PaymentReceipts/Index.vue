@@ -1,20 +1,20 @@
 <template>
     <AdminLayout title="Payment Receipts">
         <div class="py-6 dark:bg-gray-900">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
                 <!-- Header Section -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-4 sm:p-6">
                         <!-- Desktop View -->
-                        <div class="hidden sm:flex justify-between items-center">
+                        <div class="items-center justify-between hidden sm:flex">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
                                 Receipts Payment Management
                             </h2>
                             <div class="flex gap-2">
                                 <!-- Download Button -->
                                 <button @click="downloadPDF"
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 dark:bg-green-700 text-white font-semibold rounded-md hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                    class="inline-flex items-center px-4 py-2 font-semibold text-white transition-colors duration-200 bg-green-600 rounded-md dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -24,8 +24,8 @@
 
                                 <!-- Add New Entry Button -->
                                 <button @click="openNewEntryModal"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                    class="inline-flex items-center px-4 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 4v16m8-8H4" />
@@ -36,9 +36,9 @@
                         </div>
 
                         <!-- Mobile View -->
-                        <div class="sm:hidden space-y-4">
+                        <div class="space-y-4 sm:hidden">
                             <!-- Title -->
-                            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 text-center mb-4">
+                            <h2 class="mb-4 text-lg font-semibold text-center text-gray-800 dark:text-gray-200">
                                 Payment Receipts
                             </h2>
 
@@ -46,7 +46,7 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <!-- Download Button -->
                                 <button @click="downloadPDF"
-                                    class="flex items-center justify-center px-3 py-2 bg-green-600 dark:bg-green-700 text-white text-sm font-medium rounded-md hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                    class="flex items-center justify-center px-3 py-2 text-sm font-medium text-white transition-colors duration-200 bg-green-600 rounded-md dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -57,7 +57,7 @@
 
                                 <!-- Add New Entry Button -->
                                 <button @click="openNewEntryModal"
-                                    class="flex items-center justify-center px-3 py-2 bg-blue-600 dark:bg-blue-700 text-white text-sm font-medium rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                    class="flex items-center justify-center px-3 py-2 text-sm font-medium text-white transition-colors duration-200 bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -71,28 +71,28 @@
                 </div>
 
                 <!-- Filters Section -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 
                         <!-- Start Date -->
                         <div>
                             <Label for="start_date" value="Start Date" class="text-gray-700 dark:text-gray-300" />
                             <CustomDateInput v-model="filters.start_date" placeholder="dd/mm/yyyy"
-                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
+                                class="block w-full mt-1" @update:modelValue="handleFilterChange" />
                         </div>
 
                         <!-- End Date -->
                         <div>
                             <Label for="end_date" value="End Date" class="text-gray-700 dark:text-gray-300" />
                             <CustomDateInput v-model="filters.end_date" placeholder="dd/mm/yyyy"
-                                class="mt-1 block w-full" @update:modelValue="handleFilterChange" />
+                                class="block w-full mt-1" @update:modelValue="handleFilterChange" />
                         </div>
 
                         <!-- Branch Selector (Super Admin Only) -->
                         <div v-if="isSuperAdmin">
                             <Label for="branch_id" value="Branch" class="text-gray-700 dark:text-gray-300" />
                             <select id="branch_id" v-model="filters.branch_id" @change="handleFilterChange"
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                class="block w-full mt-1 border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">All Branches</option>
                                 <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                                     {{ branch.branch_name }}
@@ -104,23 +104,23 @@
 
                 <!-- Status Message -->
                 <div v-if="$page.props.flash.success"
-                    class="bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded relative"
+                    class="relative px-4 py-3 text-green-700 bg-green-100 border border-green-400 rounded dark:bg-green-900 dark:border-green-600 dark:text-green-300"
                     role="alert">
                     <span class="block sm:inline">{{ $page.props.flash.success }}</span>
                 </div>
 
                 <!-- Branch Summaries (Super Admin) -->
-                <div v-if="isSuperAdmin" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-if="isSuperAdmin" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <div v-for="summary in branchSummaries" :key="summary.branch_id"
-                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                        class="p-6 overflow-hidden transition-shadow duration-200 bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg hover:shadow-md">
+                        <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
                             {{ summary.branch_name }}
                         </h3>
 
                         <!-- Current Period Stats -->
                         <div class="space-y-4">
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Current Period
+                            <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                <h4 class="mb-3 text-sm font-medium text-gray-600 dark:text-gray-400">Current Period
                                 </h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
@@ -139,8 +139,8 @@
                             </div>
 
                             <!-- All Time Stats -->
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Cumulative</h4>
+                            <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                <h4 class="mb-3 text-sm font-medium text-gray-600 dark:text-gray-400">Cumulative</h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">Total Received</div>
@@ -158,7 +158,7 @@
                             </div>
 
                             <!-- Available Receipts -->
-                            <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
+                            <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900">
                                 <div class="text-sm text-blue-600 dark:text-blue-200">Current Balance</div>
                                 <div class="text-2xl font-bold text-blue-700 dark:text-blue-300">
                                     {{ summary.current_available }}
@@ -169,25 +169,25 @@
                 </div>
 
                 <!-- Single Branch Summary -->
-                <div v-else class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div v-else class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-6">
                         <!-- Three Boxes in Line for Current Period -->
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Current Period</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Current Period</h3>
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Received</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.period_received }}
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Disbursement</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.period_distributed }}
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Balance in Period</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.period_received - branchSummaries.period_distributed }}
@@ -198,22 +198,22 @@
 
                         <!-- Three Boxes in Line for All Time -->
                         <div class="mt-6">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Cumulative</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Cumulative</h3>
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Total Received</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.all_time_received }}
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Total Disbursement</div>
                                     <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                                         {{ branchSummaries.all_time_distributed }}
                                     </div>
                                 </div>
-                                <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
+                                <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900">
+                                    <div class="flex items-center justify-between">
                                         <div>
                                             <div class="text-sm text-blue-600 dark:text-blue-200">Current Balance
                                             </div>
@@ -236,134 +236,134 @@
 
                         <!-- Currently Available Box in Line with Status Indicator -->
                         <div class="mt-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-6">
                         <div class="table-wrapper desktop-only">
                             <table
-                                class="receipt-table min-w-full divide-y divide-gray-300 dark:divide-gray-600 border border-gray-300 dark:border-gray-600">
+                                class="min-w-full border border-gray-300 divide-y divide-gray-300 receipt-table dark:divide-gray-600 dark:border-gray-600">
                                 <thead>
                                     <tr
-                                        class="divide-x divide-gray-300 dark:divide-gray-600 border-b border-gray-300 dark:border-gray-600">
+                                        class="border-b border-gray-300 divide-x divide-gray-300 dark:divide-gray-600 dark:border-gray-600">
                                         <th scope="col" colspan="1"
-                                            class="date-col px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700 border-r border-gray-300 dark:border-gray-600">
+                                            class="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase border-r border-gray-300 date-col dark:text-gray-400 bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
                                         </th>
                                         <th scope="col" colspan="5"
-                                            class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 border-r border-gray-300 dark:border-gray-600">
-                                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">★ Receive
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase border-r border-gray-300 bg-emerald-50 dark:bg-emerald-900/30 dark:border-gray-600">
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400">★ Receive
                                                 Section ★</span>
                                         </th>
                                         <th scope="col" colspan="6"
-                                            class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider bg-sky-50 dark:bg-sky-900/30">
-                                            <span class="text-sky-600 dark:text-sky-400 font-bold">◆ Disbursement
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase bg-sky-50 dark:bg-sky-900/30">
+                                            <span class="font-bold text-sky-600 dark:text-sky-400">◆ Disbursement
                                                 Section ◆</span>
                                         </th>
                                     </tr>
                                     <tr
-                                        class="bg-gray-50 dark:bg-gray-700 divide-x divide-gray-300 dark:divide-gray-600">
+                                        class="divide-x divide-gray-300 bg-gray-50 dark:bg-gray-700 dark:divide-gray-600">
                                         <th
-                                            class="date-col px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-r border-gray-300 dark:border-gray-600">
+                                            class="px-3 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase border-r border-gray-300 date-col dark:text-gray-400 dark:border-gray-600">
                                             Date
                                         </th>
                                         <th
-                                            class="qty-col px-2 py-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 w-16">
+                                            class="w-16 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase qty-col text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20">
                                             Qty
                                         </th>
                                         <th
-                                            class="number-col px-2 py-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase number-col text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20">
                                             From
                                         </th>
                                         <th
-                                            class="number-col px-2 py-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase number-col text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20">
                                             To
                                         </th>
                                         <th
-                                            class="total-col px-2 py-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase total-col text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20">
                                             Total
                                         </th>
                                         <th
-                                            class="name-col px-1 py-2 text-left text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50/50 dark:bg-emerald-900/20 border-r border-gray-300 dark:border-gray-600">
+                                            class="px-1 py-2 text-xs font-medium tracking-wider text-left uppercase border-r border-gray-300 name-col text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-gray-600">
                                             Received By
                                         </th>
                                         <th
-                                            class="name-col px-1 py-2 text-left text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20">
+                                            class="px-1 py-2 text-xs font-medium tracking-wider text-left uppercase name-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             Disburse To
                                         </th>
                                         <th
-                                            class="pin-col px-1 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-4">
+                                            class="w-4 px-1 py-2 text-xs font-medium tracking-wider text-center uppercase pin-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             PIN
                                         </th>
                                         <th
-                                            class="number-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase number-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             From
                                         </th>
                                         <th
-                                            class="number-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase number-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             To
                                         </th>
                                         <th
-                                            class="book-col px-1 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-4">
+                                            class="w-4 px-1 py-2 text-xs font-medium tracking-wider text-center uppercase book-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             Book
                                         </th>
                                         <th
-                                            class="available-col px-2 py-2 text-center text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider bg-sky-50/50 dark:bg-sky-900/20 w-20">
+                                            class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase available-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             Balance
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-300 dark:divide-gray-600">
+                                <tbody class="bg-white divide-y divide-gray-300 dark:bg-gray-800 dark:divide-gray-600">
                                     <tr v-for="receipt in receipts.data" :key="receipt.id"
-                                        class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors divide-x divide-gray-300 dark:divide-gray-600">
+                                        class="transition-colors divide-x divide-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:divide-gray-600">
                                         <td
-                                            class="text-center py-2 text-sm text-gray-900 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                                            class="py-2 text-sm text-center text-gray-900 border-r border-gray-300 dark:text-gray-300 dark:border-gray-600">
                                             {{ formatDate(receipt.transaction_date) }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium text-center bg-emerald-50/30 dark:bg-emerald-900/10">
+                                            class="px-2 py-2 text-sm font-medium text-center text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/10">
                                             {{ receipt.receive_quantity || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-emerald-50/30 dark:bg-emerald-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-emerald-50/30 dark:bg-emerald-900/10">
                                             {{ receipt.receipt_from_number || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-emerald-50/30 dark:bg-emerald-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-emerald-50/30 dark:bg-emerald-900/10">
                                             {{ receipt.receipt_to_number || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm font-medium text-gray-900 dark:text-gray-300 text-center bg-emerald-50/30 dark:bg-emerald-900/10">
+                                            class="px-2 py-2 text-sm font-medium text-center text-gray-900 dark:text-gray-300 bg-emerald-50/30 dark:bg-emerald-900/10">
                                             {{ receipt.total_cumulative_quantity }}
                                         </td>
                                         <td
-                                            class="px-1 py-2 text-sm text-gray-600 dark:text-gray-400 text-left bg-emerald-50/30 dark:bg-emerald-900/10 border-r border-gray-300 dark:border-gray-600">
+                                            class="px-1 py-2 text-sm text-left text-gray-600 border-r border-gray-300 dark:text-gray-400 bg-emerald-50/30 dark:bg-emerald-900/10 dark:border-gray-600">
                                             {{ receipt.received_by || '-' }}
                                         </td>
                                         <td
-                                            class="px-1 py-2 text-sm text-sky-600 dark:text-sky-400 font-medium text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-1 py-2 text-sm font-medium text-center text-sky-600 dark:text-sky-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.given_to || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.pin_number || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.given_from_number || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.given_to_number || '-' }}
                                         </td>
                                         <td
-                                            class="px-2 py-2 text-sm text-gray-600 dark:text-gray-400 text-center bg-sky-50/30 dark:bg-sky-900/10">
+                                            class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.receipt_book_number || '-' }}
                                         </td>
-                                        <td class="px-2 py-2 text-sm text-center font-medium bg-sky-50/30 dark:bg-sky-900/10"
+                                        <td class="px-2 py-2 text-sm font-medium text-center bg-sky-50/30 dark:bg-sky-900/10"
                                             :class="{
                                                 'text-emerald-600 dark:text-emerald-400': receipt.available_receipts > 100,
                                                 'text-yellow-600 dark:text-yellow-400': receipt.available_receipts <= 100 && receipt.available_receipts > 0,
@@ -380,10 +380,10 @@
                         <div class="mobile-only">
                             <div class="space-y-4">
                                 <div v-for="receipt in receipts.data" :key="receipt.id"
-                                    class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                                    class="overflow-hidden bg-white rounded-lg shadow-sm dark:bg-gray-800">
                                     <!-- Date Header -->
-                                    <div class="bg-gray-50 dark:bg-gray-700 p-4 flex justify-between items-center">
-                                        <div class="text-gray-900 dark:text-gray-100 font-medium">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">
                                             {{ formatDate(receipt.transaction_date) }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -396,24 +396,24 @@
                                         Receive Details
                                     </div>
                                     <div class="p-4 space-y-3 bg-emerald-50/20 dark:bg-emerald-900/10">
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">Quantity</span>
                                             <span class="font-medium text-emerald-600 dark:text-emerald-400">
                                                 {{ receipt.receive_quantity || '-' }}
                                             </span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">From - To</span>
                                             <span class="text-sm">
                                                 {{ receipt.receipt_from_number || '-' }} - {{ receipt.receipt_to_number
                                                     || '-' }}
                                             </span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">Received By</span>
                                             <span class="text-sm">{{ receipt.received_by || '-' }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">Total</span>
                                             <span class="font-medium">{{ receipt.total_cumulative_quantity }}</span>
                                         </div>
@@ -424,24 +424,24 @@
                                         Disbursement Details
                                     </div>
                                     <div class="p-4 space-y-3 bg-sky-50/20 dark:bg-sky-900/10">
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">Disburse To</span>
                                             <span class="font-medium text-sky-600 dark:text-sky-400">
                                                 {{ receipt.given_to || '-' }}
                                             </span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">PIN</span>
                                             <span class="text-sm">{{ receipt.pin_number || '-' }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">From - To</span>
                                             <span class="text-sm">
                                                 {{ receipt.given_from_number || '-' }} - {{ receipt.given_to_number ||
                                                     '-' }}
                                             </span>
                                         </div>
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">Book Number</span>
                                             <span class="text-sm">{{ receipt.receipt_book_number || '-' }}</span>
                                         </div>
@@ -449,7 +449,7 @@
 
                                     <!-- Available Receipts -->
                                     <div class="p-4 border-t dark:border-gray-700">
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
                                                 Balance
                                             </span>
@@ -478,13 +478,13 @@
         <!-- New Entry Modal -->
         <Modal :show="showNewEntryModal" @close="closeNewEntryModal" maxWidth="2xl">
             <div class="p-6 dark:bg-gray-800">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                <h2 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
                     New Receipt Entry
                 </h2>
 
                 <!-- Error Message Display -->
                 <div v-if="Object.keys(form.errors).length > 0"
-                    class="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-400 dark:border-red-500 rounded">
+                    class="p-4 mb-4 border border-red-400 rounded bg-red-50 dark:bg-red-900/30 dark:border-red-500">
                     <div v-for="(error, key) in form.errors" :key="key" class="text-sm text-red-600 dark:text-red-400">
                         {{ error }}
                     </div>
@@ -495,28 +495,28 @@
                     <div class="mb-4">
                         <Label for="transaction_date" value="Date" required class="text-gray-700 dark:text-gray-300" />
                         <CustomDateInput v-model="form.transaction_date" placeholder="dd/mm/yyyy"
-                            class="mt-1 block w-full" required />
+                            class="block w-full mt-1" required />
                     </div>
 
                     <!-- Receive Section -->
-                    <div class="mb-6 border-t dark:border-gray-700 pt-4">
-                        <h3 class="text-md font-medium text-green-600 dark:text-green-400 mb-4">
+                    <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                        <h3 class="mb-4 font-medium text-green-600 text-md dark:text-green-400">
                             H/O Receive Section
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <Label for="receive_quantity" value="Quantity"
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="receive_quantity" type="number" v-model="form.receive_quantity"
                                     :error="form.errors.receive_quantity"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="0" @input="validateReceiveSection" />
                             </div>
                             <div>
                                 <Label for="received_by" value="Received By" class="text-gray-700 dark:text-gray-300" />
                                 <Input id="received_by" type="text" v-model="form.received_by"
                                     :error="form.errors.received_by"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     :required="!!form.receive_quantity" />
                             </div>
                             <div>
@@ -524,7 +524,7 @@
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="receipt_from_number" type="number" v-model="form.receipt_from_number"
                                     :error="form.errors.receipt_from_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="1" :required="!!form.receive_quantity" />
                             </div>
                             <div>
@@ -532,26 +532,26 @@
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="receipt_to_number" type="number" v-model="form.receipt_to_number"
                                     :error="form.errors.receipt_to_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="1" :required="!!form.receive_quantity" />
                             </div>
                         </div>
                     </div>
 
                     <!-- Distribution Section -->
-                    <div class="mb-6 border-t dark:border-gray-700 pt-4">
-                        <h3 class="text-md font-medium text-blue-600 dark:text-blue-400 mb-4">
+                    <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                        <h3 class="mb-4 font-medium text-blue-600 text-md dark:text-blue-400">
                             Disbursement Section
                         </h3>
                         <!-- Distribution Section Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <!-- Given Quantity -->
                             <div>
                                 <Label for="given_quantity" value="Disburse Quantity"
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="given_quantity" type="number" v-model="form.given_quantity"
                                     :error="form.errors.given_quantity"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="0" @input="validateDistributeSection" />
                             </div>
 
@@ -559,7 +559,7 @@
                             <div>
                                 <Label for="given_to" value="Given To" class="text-gray-700 dark:text-gray-300" />
                                 <Input id="given_to" type="text" v-model="form.given_to" :error="form.errors.given_to"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     :required="!!form.given_quantity" />
                             </div>
 
@@ -568,7 +568,7 @@
                                 <Label for="pin_number" value="PIN Number" class="text-gray-700 dark:text-gray-300" />
                                 <Input id="pin_number" type="text" v-model="form.pin_number"
                                     :error="form.errors.pin_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     :required="!!form.given_quantity" />
                             </div>
 
@@ -578,7 +578,7 @@
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="given_from_number" type="number" v-model="form.given_from_number"
                                     :error="form.errors.given_from_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="1" :required="!!form.given_quantity" />
                             </div>
 
@@ -588,7 +588,7 @@
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="given_to_number" type="number" v-model="form.given_to_number"
                                     :error="form.errors.given_to_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     min="1" :required="!!form.given_quantity" />
                             </div>
 
@@ -598,7 +598,7 @@
                                     class="text-gray-700 dark:text-gray-300" />
                                 <Input id="receipt_book_number" type="text" v-model="form.receipt_book_number"
                                     :error="form.errors.receipt_book_number"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                    class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                                     :required="!!form.given_quantity" />
                             </div>
                         </div>
@@ -703,80 +703,11 @@ const formatDate = (date) => {
 
 // Validation computed
 const isFormValid = computed(() => {
-    if (form.receive_quantity === 0 && form.given_quantity === 0) {
-        return false;
-    }
-    if (form.receive_quantity > 0) {
-        if (!form.receipt_from_number ||
-            !form.receipt_to_number ||
-            !form.received_by ||
-            form.receipt_to_number <= form.receipt_from_number) {
-            return false;
-        }
-    }
-
-    if (form.given_quantity > 0) {
-        if (!form.given_to ||
-            !form.pin_number ||
-            !form.given_from_number ||
-            !form.given_to_number ||
-            !form.receipt_book_number ||
-            form.given_to_number <= form.given_from_number) {
-            return false;
-        }
-    }
-
-    return true;
+    // Only check if at least one section has data
+    return form.receive_quantity > 0 || form.given_quantity > 0;
 });
 
-// Form Validation Methods
-const validateReceiveSection = () => {
-    form.clearErrors();
 
-    if (form.receive_quantity > 0) {
-        if (!form.receipt_from_number || !form.receipt_to_number) {
-            return;
-        }
-
-        if (form.receipt_to_number <= form.receipt_from_number) {
-            form.setError('receipt_to_number', 'To number must be greater than From number');
-        }
-
-        const calculatedQuantity = form.receipt_to_number - form.receipt_from_number + 1;
-        if (calculatedQuantity !== parseInt(form.receive_quantity)) {
-            form.setError('receive_quantity', 'Quantity does not match the receipt number range');
-            form.setError('receipt_to_number', 'Range does not match the specified quantity');
-        }
-    }
-};
-
-const validateDistributeSection = () => {
-    form.clearErrors();
-
-    if (form.given_quantity > 0) {
-        if (!form.given_from_number || !form.given_to_number) {
-            return;
-        }
-
-        if (form.given_to_number <= form.given_from_number) {
-            form.setError('given_to_number', 'To number must be greater than From number');
-        }
-
-        const calculatedQuantity = form.given_to_number - form.given_from_number + 1;
-        if (calculatedQuantity !== parseInt(form.given_quantity)) {
-            form.setError('given_quantity', 'Quantity does not match the receipt number range');
-            form.setError('given_to_number', 'Range does not match the specified quantity');
-        }
-
-        // Check against available receipts
-        const availableReceipts = props.branchSummaries?.current_available || 0;
-        const totalAvailable = availableReceipts + parseInt(form.receive_quantity || 0);
-
-        if (form.given_quantity > totalAvailable) {
-            form.setError('given_quantity', `Not enough receipts available. Current: ${availableReceipts}, New: ${form.receive_quantity}, Total Available: ${totalAvailable}`);
-        }
-    }
-};
 
 // Modal Handlers
 const openNewEntryModal = () => {
@@ -794,10 +725,6 @@ const closeNewEntryModal = () => {
 
 // Form Submission
 const submitForm = () => {
-    if (!isFormValid.value) {
-        return;
-    }
-
     form.post(route('payment-receipts.store'), {
         preserveScroll: true,
         onSuccess: () => {

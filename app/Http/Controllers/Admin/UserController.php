@@ -46,16 +46,20 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'role' => 'required|string|in:admin,manager,user',
             'password' => 'required|string|min:8|confirmed',
             'branch_ids' => 'nullable|array', // Expect an array of branch IDs
             'branch_ids.*' => 'exists:branches,id', // Ensure each branch ID exists in the branches table
+            'branch_id' => 'required|exists:branches,id', // Ensure main branch exists
         ]);
 
-        // Create the user without assigning branches immediately
+        // Create the user with role and branch_id
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'role' => $request->role,
             'password' => Hash::make($request->password),
+            'branch_id' => $request->branch_id, // Set the main branch ID
         ]);
 
         // Attach the selected branches to the user

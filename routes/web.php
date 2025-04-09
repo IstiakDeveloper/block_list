@@ -42,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/branches', BranchController::class)->names('admin.branches');
     Route::resource('admin/users', UserController::class)->names('admin.users');
     Route::resource('admin/customers', CustomerController::class)->names('admin.customers');
+    Route::get('/admin/customers/{customer}/download-pdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-pdf');
+    Route::get('/admin/customers/{customer}/download-mpdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-pdf');
+
 
     Route::get('/customer-search', [CustomerSearchController::class, 'search'])->name('customer.search');
 
@@ -90,6 +93,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])->name('payment-receipts.export');
     Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
 
+    Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
+        ->name('payment-receipts.branch-transactions');
     Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
         ->name('payment-receipts.report');
 });
