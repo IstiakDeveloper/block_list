@@ -101,5 +101,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('payment-receipts.report');
 });
 
-
 require __DIR__ . '/auth.php';
