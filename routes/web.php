@@ -95,6 +95,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
         ->name('payment-receipts.branch-transactions');
+    Route::delete('/payment-receipts/{receipt}', [PaymentReceiptController::class, 'destroy'])
+        ->name('payment-receipts.destroy');
     Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
         ->name('payment-receipts.report');
 });
