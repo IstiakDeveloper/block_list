@@ -177,8 +177,8 @@ class PaymentReceiptController extends Controller
 
         $transactions = PaymentReceipt::where('branch_id', $branch->id)
             ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
             ->get()
             ->map(function ($transaction) {
                 return [

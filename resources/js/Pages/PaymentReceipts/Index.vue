@@ -492,11 +492,11 @@
 
                 <form @submit.prevent="submitForm">
                     <!-- Date -->
-                    <div class="mb-4">
+                    <!-- <div class="mb-4">
                         <Label for="transaction_date" value="Date" required class="text-gray-700 dark:text-gray-300" />
                         <CustomDateInput v-model="form.transaction_date" placeholder="dd/mm/yyyy"
                             class="block w-full mt-1" required />
-                    </div>
+                    </div> -->
 
                     <!-- Receive Section -->
                     <div class="pt-4 mb-6 border-t dark:border-gray-700">
