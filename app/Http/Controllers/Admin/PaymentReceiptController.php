@@ -171,13 +171,12 @@ class PaymentReceiptController extends Controller
 
     public function getBranchTransactions(Request $request, Branch $branch)
     {
+        // Get date filters from request or use defaults if not provided
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
         $transactions = PaymentReceipt::where('branch_id', $branch->id)
-            ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
-                return $query->whereBetween('transaction_date', [
-                    $request->start_date,
-                    $request->end_date
-                ]);
-            })
+            ->whereBetween('transaction_date', [$startDate, $endDate])
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->get()
@@ -188,9 +187,11 @@ class PaymentReceiptController extends Controller
                     'receive_quantity' => $transaction->receive_quantity,
                     'receipt_from_number' => $transaction->receipt_from_number,
                     'receipt_to_number' => $transaction->receipt_to_number,
+                    'received_by' => $transaction->received_by,
                     'given_quantity' => $transaction->given_quantity,
                     'given_from_number' => $transaction->given_from_number,
                     'given_to_number' => $transaction->given_to_number,
+                    'given_to' => $transaction->given_to,
                     'available_receipts' => $transaction->available_receipts,
                 ];
             });

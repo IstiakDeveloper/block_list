@@ -334,12 +334,20 @@
                                                         From - To
                                                     </th>
                                                     <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-emerald-600 dark:text-emerald-400">
+                                                        Received By
+                                                    </th>
+                                                    <th
                                                         class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
                                                         Disbursed
                                                     </th>
                                                     <th
                                                         class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
                                                         From - To
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
+                                                        Given To
                                                     </th>
                                                     <th
                                                         class="px-4 py-3 text-xs font-medium tracking-wider text-center text-gray-500 uppercase dark:text-gray-400">
@@ -369,7 +377,12 @@
                                                             {{ transaction.receipt_from_number ?
                                                                 `${transaction.receipt_from_number} -
                                                             ${transaction.receipt_to_number}` :
-                                                            '-' }}
+                                                                '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm font-medium text-sky-600 dark:text-sky-400">
+                                                            {{ transaction.received_by || '-' }}
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-4 text-center">
@@ -382,7 +395,12 @@
                                                             {{ transaction.given_from_number ?
                                                                 `${transaction.given_from_number} -
                                                             ${transaction.given_to_number}` :
-                                                            '-' }}
+                                                                '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm font-medium text-sky-600 dark:text-sky-400">
+                                                            {{ transaction.given_to || '-' }}
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-4 text-center">
@@ -519,7 +537,7 @@
                                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <span class="text-sm text-red-600 dark:text-red-400">{{ reportForm.error
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                     </div>
                                     <PrimaryButton @click="generateReport"
@@ -630,7 +648,19 @@ const totalAvailable = computed(() => {
 
 const viewBranchDetails = async (branchId) => {
     try {
-        const response = await fetch(route('payment-receipts.branch-transactions', { branch: branchId }), {
+        // Build query string with date parameters
+        const params = new URLSearchParams();
+        if (filters.value.start_date) {
+            params.append('start_date', filters.value.start_date);
+        }
+        if (filters.value.end_date) {
+            params.append('end_date', filters.value.end_date);
+        }
+
+        // Construct URL with parameters
+        const url = `${route('payment-receipts.branch-transactions', { branch: branchId })}?${params.toString()}`;
+
+        const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json'
             }
