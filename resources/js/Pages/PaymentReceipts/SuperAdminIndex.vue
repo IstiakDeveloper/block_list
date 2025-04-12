@@ -299,165 +299,163 @@
 
 
                         <Modal :show="showTransactionModal" @close="closeTransactionModal" maxWidth="5xl">
-    <div class="flex flex-col bg-white rounded-lg shadow-xl dark:bg-gray-800">
-        <div
-            class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {{ selectedBranch?.branch_name }} - Transaction Details
-            </h2>
-            <button @click="closeTransactionModal"
-                class="p-2 text-gray-400 transition-colors rounded-full hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
-                <span class="sr-only">Close</span>
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-
-
-        <div class="flex-1 px-6 py-4">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700">
-                            <th
-                                class="w-32 px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
-                                Date
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-emerald-600 dark:text-emerald-400">
-                                Received
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-emerald-600 dark:text-emerald-400">
-                                From - To
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
-                                Disbursed
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
-                                From - To
-                            </th>
-                            <th
-                                class="px-4 py-3 text-xs font-medium tracking-wider text-center text-gray-500 uppercase dark:text-gray-400">
-                                Balance
-                            </th>
-                            <th
-                                class="w-24 px-4 py-3 text-xs font-medium tracking-wider text-center text-gray-500 uppercase dark:text-gray-400">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody
-                        class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                        <tr v-for="transaction in branchTransactions" :key="transaction.id"
-                            class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-300">
-                                {{ formatDate(transaction.transaction_date) }}
-                            </td>
-                            <td class="px-4 py-4 text-center">
+                            <div class="flex flex-col bg-white rounded-lg shadow-xl dark:bg-gray-800">
                                 <div
-                                    class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                                    {{ transaction.receive_quantity || '-' }}
+                                    class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                                        {{ selectedBranch?.branch_name }} - Transaction Details
+                                    </h2>
+                                    <button @click="closeTransactionModal"
+                                        class="p-2 text-gray-400 transition-colors rounded-full hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <span class="sr-only">Close</span>
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
                                 </div>
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ transaction.receipt_from_number ?
-                                        `${transaction.receipt_from_number} -
-                                    ${transaction.receipt_to_number}` :
-                                        '-' }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <div class="text-sm font-medium text-sky-600 dark:text-sky-400">
-                                    {{ transaction.given_quantity || '-' }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ transaction.given_from_number ?
-                                        `${transaction.given_from_number} -
-                                    ${transaction.given_to_number}` :
-                                        '-' }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <div class="text-sm font-medium" :class="{
-                                    'text-emerald-600 dark:text-emerald-400': transaction.available_receipts > 100,
-                                    'text-yellow-600 dark:text-yellow-400': transaction.available_receipts <= 100 && transaction.available_receipts > 0,
-                                    'text-red-600 dark:text-red-400': transaction.available_receipts === 0
-                                }">
-                                    {{ transaction.available_receipts }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <button @click="confirmDelete(transaction.id)"
-                                    class="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 transition-colors rounded-md hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</Modal>
 
-<!-- Delete Confirmation Modal (Separate from Transaction Modal) -->
-<Modal :show="showDeleteModal" @close="closeDeleteModal" maxWidth="md">
-    <div class="overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-800">
-        <div class="p-6">
-            <div class="flex items-center mb-4">
-                <div
-                    class="flex-shrink-0 p-2 mr-3 bg-red-100 rounded-full dark:bg-red-900/30">
-                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    Confirm Delete
-                </h3>
-            </div>
 
-            <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
-                Are you sure you want to delete this transaction? This action cannot be
-                undone and will affect all subsequent balance calculations.
-            </p>
+                                <div class="flex-1 px-6 py-4">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                            <thead>
+                                                <tr class="bg-gray-50 dark:bg-gray-700">
+                                                    <th
+                                                        class="w-32 px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400">
+                                                        Date
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-emerald-600 dark:text-emerald-400">
+                                                        Received
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-emerald-600 dark:text-emerald-400">
+                                                        From - To
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
+                                                        Disbursed
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase text-sky-600 dark:text-sky-400">
+                                                        From - To
+                                                    </th>
+                                                    <th
+                                                        class="px-4 py-3 text-xs font-medium tracking-wider text-center text-gray-500 uppercase dark:text-gray-400">
+                                                        Balance
+                                                    </th>
+                                                    <th
+                                                        class="w-24 px-4 py-3 text-xs font-medium tracking-wider text-center text-gray-500 uppercase dark:text-gray-400">
+                                                        Actions
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody
+                                                class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                                                <tr v-for="transaction in branchTransactions" :key="transaction.id"
+                                                    class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                    <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-300">
+                                                        {{ formatDate(transaction.transaction_date) }}
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div
+                                                            class="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                                            {{ transaction.receive_quantity || '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                            {{ transaction.receipt_from_number ?
+                                                                `${transaction.receipt_from_number} -
+                                                            ${transaction.receipt_to_number}` :
+                                                            '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm font-medium text-sky-600 dark:text-sky-400">
+                                                            {{ transaction.given_quantity || '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                            {{ transaction.given_from_number ?
+                                                                `${transaction.given_from_number} -
+                                                            ${transaction.given_to_number}` :
+                                                            '-' }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <div class="text-sm font-medium" :class="{
+                                                            'text-emerald-600 dark:text-emerald-400': transaction.available_receipts > 100,
+                                                            'text-yellow-600 dark:text-yellow-400': transaction.available_receipts <= 100 && transaction.available_receipts > 0,
+                                                            'text-red-600 dark:text-red-400': transaction.available_receipts === 0
+                                                        }">
+                                                            {{ transaction.available_receipts }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-center">
+                                                        <button @click="confirmDelete(transaction.id)"
+                                                            class="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 transition-colors rounded-md hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                            <svg class="w-4 h-4 mr-1.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </Modal>
 
-            <div class="flex justify-end space-x-3">
-                <SecondaryButton @click="closeDeleteModal"
-                    class="px-4 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                    Cancel
-                </SecondaryButton>
-                <DangerButton @click="deleteTransaction" :disabled="deleting"
-                    class="px-4 py-2 bg-red-600 hover:bg-red-700 focus:ring-red-500">
-                    <svg v-if="deleting" class="w-4 h-4 mr-2 -ml-1 text-white animate-spin"
-                        fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                            stroke="currentColor" stroke-width="4" />
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    {{ deleting ? 'Deleting...' : 'Delete Transaction' }}
-                </DangerButton>
-            </div>
-        </div>
-    </div>
-</Modal>
+                        <!-- Delete Confirmation Modal (Separate from Transaction Modal) -->
+                        <Modal :show="showDeleteModal" @close="closeDeleteModal" maxWidth="md">
+                            <div class="overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-800">
+                                <div class="p-6">
+                                    <div class="flex items-center mb-4">
+                                        <div class="flex-shrink-0 p-2 mr-3 bg-red-100 rounded-full dark:bg-red-900/30">
+                                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                            Confirm Delete
+                                        </h3>
+                                    </div>
+
+                                    <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+                                        Are you sure you want to delete this transaction? This action cannot be
+                                        undone and will affect all subsequent balance calculations.
+                                    </p>
+
+                                    <div class="flex justify-end space-x-3">
+                                        <SecondaryButton @click="closeDeleteModal"
+                                            class="px-4 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
+                                            Cancel
+                                        </SecondaryButton>
+                                        <DangerButton @click="deleteTransaction" :disabled="deleting"
+                                            class="px-4 py-2 bg-red-600 hover:bg-red-700 focus:ring-red-500">
+                                            <svg v-if="deleting" class="w-4 h-4 mr-2 -ml-1 text-white animate-spin"
+                                                fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                    stroke-width="4" />
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            {{ deleting ? 'Deleting...' : 'Delete Transaction' }}
+                                        </DangerButton>
+                                    </div>
+                                </div>
+                            </div>
+                        </Modal>
 
                         <!-- Report Generation Modal -->
                         <Modal :show="showReportModal" @close="closeReportModal" maxWidth="md">
@@ -521,7 +519,7 @@
                                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <span class="text-sm text-red-600 dark:text-red-400">{{ reportForm.error
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                     </div>
                                     <PrimaryButton @click="generateReport"
