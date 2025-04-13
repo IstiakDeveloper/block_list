@@ -18,7 +18,20 @@
                                 </svg>
                                 Generate Report
                             </button>
+
+                            <!-- Add New Entry Button for Super Admin -->
+                            <button @click="openNewEntryModal"
+                                class="inline-flex items-center px-4 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add New Entry
+                            </button>
                         </div>
+
+
 
 
                     </div>
@@ -413,16 +426,28 @@
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-4 text-center">
-                                                        <button @click="confirmDelete(transaction.id)"
-                                                            class="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 transition-colors rounded-md hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                                            <svg class="w-4 h-4 mr-1.5" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                            Delete
-                                                        </button>
+                                                        <div class="flex justify-center space-x-2">
+                                                            <button @click="editTransaction(transaction)"
+                                                                class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 transition-colors rounded-md hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                                                <svg class="w-4 h-4 mr-1.5" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                                Edit
+                                                            </button>
+                                                            <button @click="confirmDelete(transaction.id)"
+                                                                class="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 transition-colors rounded-md hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                                <svg class="w-4 h-4 mr-1.5" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -575,8 +600,248 @@
                         </div>
                     </div>
                 </div>
+
+                <Modal :show="showNewEntryModal" @close="closeNewEntryModal" maxWidth="2xl">
+                    <div class="p-6 dark:bg-gray-800">
+                        <h2 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                            New Receipt Entry
+                        </h2>
+
+                        <!-- Error Message Display -->
+                        <div v-if="Object.keys(form.errors).length > 0"
+                            class="p-4 mb-4 border border-red-400 rounded bg-red-50 dark:bg-red-900/30 dark:border-red-500">
+                            <div v-for="(error, key) in form.errors" :key="key"
+                                class="text-sm text-red-600 dark:text-red-400">
+                                {{ error }}
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="submitForm">
+                            <!-- Branch Selection (Super Admin Only) -->
+                            <div class="mb-4">
+                                <Label for="branch_id" value="Select Branch" required
+                                    class="text-gray-700 dark:text-gray-300" />
+                                <select id="branch_id" v-model="form.branch_id" :error="form.errors.branch_id" required
+                                    class="block w-full mt-1 border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">Select a branch</option>
+                                    <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                                        {{ branch.branch_name }}
+                                    </option>
+                                </select>
+                                <div v-if="form.errors.branch_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.branch_id }}
+                                </div>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="mb-4">
+                                <Label for="transaction_date" value="Date" required
+                                    class="text-gray-700 dark:text-gray-300" />
+                                <CustomDateInput v-model="form.transaction_date" placeholder="dd/mm/yyyy"
+                                    class="block w-full mt-1" required />
+                            </div>
+
+                            <!-- Receive Section -->
+                            <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                                <h3 class="mb-4 font-medium text-green-600 text-md dark:text-green-400">
+                                    H/O Receive Section
+                                </h3>
+                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label for="receive_quantity" value="Quantity"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="receive_quantity" type="number" v-model="form.receive_quantity"
+                                            :error="form.errors.receive_quantity"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="0" @input="validateReceiveSection" />
+                                    </div>
+                                    <div>
+                                        <Label for="received_by" value="Received By"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="received_by" type="text" v-model="form.received_by"
+                                            :error="form.errors.received_by"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                         />
+                                    </div>
+                                    <div>
+                                        <Label for="receipt_from_number" value="From Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="receipt_from_number" type="number" v-model="form.receipt_from_number"
+                                            :error="form.errors.receipt_from_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1"/>
+                                    </div>
+                                    <div>
+                                        <Label for="receipt_to_number" value="To Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="receipt_to_number" type="number" v-model="form.receipt_to_number"
+                                            :error="form.errors.receipt_to_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end mt-6 space-x-3">
+                                <SecondaryButton @click="closeNewEntryModal" type="button"
+                                    class="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                    Cancel
+                                </SecondaryButton>
+                                <PrimaryButton :disabled="form.processing || !isFormValid"
+                                    class="dark:bg-blue-600 dark:hover:bg-blue-700">
+                                    {{ form.processing ? 'Saving...' : 'Save Entry' }}
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </Modal>
+
+
+                <!-- Edit Transaction Modal -->
+                <Modal :show="showEditModal" @close="closeEditModal" maxWidth="2xl">
+                    <div class="p-6 dark:bg-gray-800">
+                        <h2 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                            Edit Transaction
+                        </h2>
+
+                        <!-- Error Message Display -->
+                        <div v-if="Object.keys(editForm.errors).length > 0"
+                            class="p-4 mb-4 border border-red-400 rounded bg-red-50 dark:bg-red-900/30 dark:border-red-500">
+                            <div v-for="(error, key) in editForm.errors" :key="key"
+                                class="text-sm text-red-600 dark:text-red-400">
+                                {{ error }}
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="updateTransaction">
+                            <!-- Date -->
+                            <div class="mb-4">
+                                <Label for="edit_transaction_date" value="Date"
+                                    class="text-gray-700 dark:text-gray-300" />
+                                <CustomDateInput v-model="editForm.transaction_date" placeholder="dd/mm/yyyy"
+                                    class="block w-full mt-1" />
+                            </div>
+
+                            <!-- Receive Section -->
+                            <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                                <h3 class="mb-4 font-medium text-green-600 text-md dark:text-green-400">
+                                    H/O Receive Section
+                                </h3>
+                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label for="edit_receive_quantity" value="Quantity"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_receive_quantity" type="number"
+                                            v-model="editForm.receive_quantity"
+                                            :error="editForm.errors.receive_quantity"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="0" />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_received_by" value="Received By"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_received_by" type="text" v-model="editForm.received_by"
+                                            :error="editForm.errors.received_by"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_receipt_from_number" value="From Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_receipt_from_number" type="number"
+                                            v-model="editForm.receipt_from_number"
+                                            :error="editForm.errors.receipt_from_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1"/>
+                                    </div>
+                                    <div>
+                                        <Label for="edit_receipt_to_number" value="To Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_receipt_to_number" type="number"
+                                            v-model="editForm.receipt_to_number"
+                                            :error="editForm.errors.receipt_to_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Distribution Section -->
+                            <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                                <h3 class="mb-4 font-medium text-blue-600 text-md dark:text-blue-400">
+                                    Disbursement Section
+                                </h3>
+                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <Label for="edit_given_quantity" value="Disburse Quantity"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_given_quantity" type="number" v-model="editForm.given_quantity"
+                                            :error="editForm.errors.given_quantity"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="0" />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_given_to" value="Given To"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_given_to" type="text" v-model="editForm.given_to"
+                                            :error="editForm.errors.given_to"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_pin_number" value="PIN Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_pin_number" type="text" v-model="editForm.pin_number"
+                                            :error="editForm.errors.pin_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_given_from_number" value="From Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_given_from_number" type="number"
+                                            v-model="editForm.given_from_number"
+                                            :error="editForm.errors.given_from_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1" />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_given_to_number" value="To Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_given_to_number" type="number"
+                                            v-model="editForm.given_to_number" :error="editForm.errors.given_to_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            min="1" />
+                                    </div>
+                                    <div>
+                                        <Label for="edit_receipt_book_number" value="Book Number"
+                                            class="text-gray-700 dark:text-gray-300" />
+                                        <Input id="edit_receipt_book_number" type="text"
+                                            v-model="editForm.receipt_book_number"
+                                            :error="editForm.errors.receipt_book_number"
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                                            />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end space-x-3">
+                                <SecondaryButton @click="closeEditModal" type="button"
+                                    class="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                    Cancel
+                                </SecondaryButton>
+                                <PrimaryButton :disabled="editForm.processing"
+                                    class="dark:bg-blue-600 dark:hover:bg-blue-700">
+                                    {{ editForm.processing ? 'Saving...' : 'Save Changes' }}
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </Modal>
             </div>
         </div>
+
+
 
 
     </AdminLayout>
@@ -584,7 +849,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Label from '@/Components/Label.vue';
@@ -610,6 +875,10 @@ const selectedBranch = ref(null);
 const branchTransactions = ref([]);
 const selectedTransactionId = ref(null);
 const deleting = ref(false);
+const showNewEntryModal = ref(false);
+const showEditModal = ref(false);
+const selectedTransaction = ref(null);
+
 
 // Filters state
 const filters = ref({
@@ -617,6 +886,144 @@ const filters = ref({
     end_date: props.filters.end_date || '',
     branch_id: props.filters.branch_id || ''
 });
+
+const form = useForm({
+    branch_id: '', // Add this for super admin
+    transaction_date: new Date().toISOString().split('T')[0],
+    receive_quantity: 0,
+    receipt_from_number: null,
+    receipt_to_number: null,
+    received_by: '',
+    given_to: '',
+    pin_number: '',
+    given_from_number: null,
+    given_to_number: null,
+    receipt_book_number: '',
+    given_quantity: 0
+});
+
+const isFormValid = computed(() => {
+    return form.branch_id && form.receive_quantity > 0;
+});
+
+// Modal handlers
+const openNewEntryModal = () => {
+    form.reset();
+    form.transaction_date = new Date().toISOString().split('T')[0];
+    form.clearErrors();
+    showNewEntryModal.value = true;
+};
+
+const closeNewEntryModal = () => {
+    form.reset();
+    form.clearErrors();
+    showNewEntryModal.value = false;
+};
+
+// Form validation methods
+const validateReceiveSection = () => {
+    if (form.receive_quantity > 0) {
+        // Validation logic if needed
+    }
+};
+
+// Form submission
+const submitForm = () => {
+    form.post(route('payment-receipts.store-admin'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeNewEntryModal();
+            // Refresh the data
+            handleFilterChange();
+        },
+        onError: (errors) => {
+            console.error('Form submission failed:', errors);
+        }
+    });
+};
+
+
+const editForm = useForm({
+    id: null,
+    transaction_date: '',
+    receive_quantity: 0,
+    receipt_from_number: null,
+    receipt_to_number: null,
+    received_by: '',
+    given_quantity: 0,
+    given_to: '',
+    pin_number: '',
+    given_from_number: null,
+    given_to_number: null,
+    receipt_book_number: '',
+});
+
+// Edit transaction function
+const editTransaction = (transaction) => {
+    selectedTransaction.value = transaction;
+
+    // Format the date properly for the form
+    const isoDate = transaction.transaction_date;
+    let formattedDate = isoDate;
+
+    // Check if date needs formatting from ISO to YYYY-MM-DD
+    if (isoDate && isoDate.includes('T')) {
+        formattedDate = isoDate.split('T')[0];
+    }
+
+    // Additional debug logging
+    console.log('Original transaction date:', transaction.transaction_date);
+    console.log('Formatted date for form:', formattedDate);
+
+    // Populate form with transaction data
+    editForm.reset(); // Reset form first to clear any previous data
+    editForm.clearErrors();
+
+    editForm.id = transaction.id;
+    editForm.transaction_date = formattedDate;
+    editForm.receive_quantity = transaction.receive_quantity || 0;
+    editForm.receipt_from_number = transaction.receipt_from_number;
+    editForm.receipt_to_number = transaction.receipt_to_number;
+    editForm.received_by = transaction.received_by || '';
+    editForm.given_quantity = transaction.given_quantity || 0;
+    editForm.given_to = transaction.given_to || '';
+    editForm.pin_number = transaction.pin_number || '';
+    editForm.given_from_number = transaction.given_from_number;
+    editForm.given_to_number = transaction.given_to_number;
+    editForm.receipt_book_number = transaction.receipt_book_number || '';
+
+    showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+    selectedTransaction.value = null;
+    editForm.reset();
+    editForm.clearErrors();
+};
+
+const updateTransaction = () => {
+    if (!editForm.id) {
+        console.error('No transaction ID found');
+        return;
+    }
+
+    console.log('Updating transaction with ID:', editForm.id);
+
+    editForm.put(route('payment-receipts.update', editForm.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeEditModal();
+            // Refresh the branch transactions
+            if (selectedBranch.value && selectedBranch.value.id) {
+                viewBranchDetails(selectedBranch.value.id);
+            }
+        },
+        onError: (errors) => {
+            console.error('Error updating transaction:', errors);
+        }
+    });
+};
 
 const formatNumber = (number) => {
     if (number === 0) return '0';
@@ -656,13 +1063,16 @@ const viewBranchDetails = async (branchId) => {
         if (filters.value.end_date) {
             params.append('end_date', filters.value.end_date);
         }
+        // Add a timestamp to prevent caching
+        params.append('_t', Date.now());
 
         // Construct URL with parameters
         const url = `${route('payment-receipts.branch-transactions', { branch: branchId })}?${params.toString()}`;
 
         const response = await fetch(url, {
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
             }
         });
 

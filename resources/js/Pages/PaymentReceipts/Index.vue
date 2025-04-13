@@ -499,7 +499,7 @@
                     </div> -->
 
                     <!-- Receive Section -->
-                    <div class="pt-4 mb-6 border-t dark:border-gray-700">
+                    <!-- <div class="pt-4 mb-6 border-t dark:border-gray-700">
                         <h3 class="mb-4 font-medium text-green-600 text-md dark:text-green-400">
                             H/O Receive Section
                         </h3>
@@ -536,7 +536,7 @@
                                     min="1" :required="!!form.receive_quantity" />
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- Distribution Section -->
                     <div class="pt-4 mb-6 border-t dark:border-gray-700">

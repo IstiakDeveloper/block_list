@@ -277,7 +277,6 @@ class PaymentReceiptController extends Controller
             throw $e;
         }
     }
-
     private function validateRequest(Request $request)
     {
         return $request->validate([
@@ -297,6 +296,133 @@ class PaymentReceiptController extends Controller
             'given_to_number' => 'nullable|integer|min:1',
             'receipt_book_number' => 'nullable|string|max:50',
         ]);
+    }
+
+
+    public function storeAdmin(Request $request)
+    {
+        try {
+
+            DB::beginTransaction();
+
+            // Get the latest record for calculations
+            $latestRecord = PaymentReceipt::where('branch_id', $request->branch_id)
+                ->latest()
+                ->first();
+
+            // Initialize values
+            $receiveQuantity = $request->receive_quantity ?? 0;
+            $givenQuantity = 0; // For super admin, we only handle receives
+            $currentAvailable = $latestRecord?->available_receipts ?? 0;
+
+            // Calculate new totals
+            $totalCumulative = ($latestRecord?->total_cumulative_quantity ?? 0) + $receiveQuantity;
+
+            // Calculate new available receipts
+            $newAvailableReceipts = $currentAvailable + $receiveQuantity;
+
+            // Create the new record
+            PaymentReceipt::create([
+                'branch_id' => $request->branch_id,
+                'transaction_date' => $request->transaction_date,
+                'receive_quantity' => $receiveQuantity,
+                'receipt_from_number' => $request->receipt_from_number,
+                'receipt_to_number' => $request->receipt_to_number,
+                'total_cumulative_quantity' => $totalCumulative,
+                'received_by' => $request->received_by,
+                'given_quantity' => 0, // Super admin only handles receives
+                'available_receipts' => $newAvailableReceipts
+            ]);
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Receipt record created successfully for the branch.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function validateSuperAdminRequest(Request $request)
+    {
+        return $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'transaction_date' => 'required|date',
+            'receive_quantity' => 'required|integer|min:1',
+            'receipt_from_number' => 'required|integer|min:1',
+            'receipt_to_number' => 'required|integer|min:1',
+            'received_by' => 'required|string|max:255',
+        ]);
+    }
+
+    public function update(Request $request, $receiptId)
+    {
+        try {
+            // Find the receipt by ID
+            $receipt = PaymentReceipt::findOrFail($receiptId);
+
+            // Log for debugging
+            \Log::info('Updating receipt', [
+                'receipt_id' => $receipt->id,
+                'branch_id' => $receipt->branch_id,
+                'data' => $request->all()
+            ]);
+
+            DB::beginTransaction();
+
+            // Calculate the change in receipt quantities
+            $receiveQuantityDiff = ($request->receive_quantity ?? 0) - $receipt->receive_quantity;
+            $givenQuantityDiff = ($request->given_quantity ?? 0) - $receipt->given_quantity;
+
+            // Get all subsequent receipts from the same branch (ordered by ID)
+            $subsequentReceipts = PaymentReceipt::where('branch_id', $receipt->branch_id)
+                ->where('id', '>', $receipt->id)
+                ->orderBy('id')
+                ->get();
+
+            // Update the current receipt
+            $receipt->transaction_date = $request->transaction_date;
+            $receipt->receive_quantity = $request->receive_quantity ?? 0;
+            $receipt->receipt_from_number = $request->receipt_from_number;
+            $receipt->receipt_to_number = $request->receipt_to_number;
+            $receipt->received_by = $request->received_by;
+            $receipt->given_quantity = $request->given_quantity ?? 0;
+            $receipt->given_to = $request->given_to;
+            $receipt->pin_number = $request->pin_number;
+            $receipt->given_from_number = $request->given_from_number;
+            $receipt->given_to_number = $request->given_to_number;
+            $receipt->receipt_book_number = $request->receipt_book_number;
+
+            // Update total_cumulative_quantity and available_receipts
+            if ($receiveQuantityDiff != 0) {
+                $receipt->total_cumulative_quantity += $receiveQuantityDiff;
+            }
+
+            $receipt->available_receipts += $receiveQuantityDiff - $givenQuantityDiff;
+            $receipt->save();
+
+            // Update all subsequent receipts
+            foreach ($subsequentReceipts as $subsequentReceipt) {
+                // Update cumulative quantity if receive quantity changed
+                if ($receiveQuantityDiff != 0) {
+                    $subsequentReceipt->total_cumulative_quantity += $receiveQuantityDiff;
+                }
+
+                // Update available_receipts
+                $subsequentReceipt->available_receipts += $receiveQuantityDiff - $givenQuantityDiff;
+                $subsequentReceipt->save();
+            }
+
+            DB::commit();
+            return back()->with('success', 'Receipt updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to update receipt', [
+                'receipt_id' => $receiptId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Failed to update receipt: ' . $e->getMessage());
+        }
     }
 
     public function getBranchSummary(Request $request)

@@ -92,6 +92,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/payment-receipts/{paymentReceipt}', [PaymentReceiptController::class, 'update'])->name('payment-receipts.update');
     Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])->name('payment-receipts.export');
     Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
+    Route::post('/payment-receipts/store-admin', [PaymentReceiptController::class, 'storeAdmin'])
+        ->name('payment-receipts.store-admin');
+
+    Route::put('/payment-receipts/{receipt}', [PaymentReceiptController::class, 'update'])
+        ->name('payment-receipts.update');
 
     Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
         ->name('payment-receipts.branch-transactions');
@@ -99,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('payment-receipts.destroy');
     Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
         ->name('payment-receipts.report');
+
 });
 
 require __DIR__ . '/auth.php';
