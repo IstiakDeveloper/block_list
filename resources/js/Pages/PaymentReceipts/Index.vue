@@ -258,7 +258,7 @@
                                             <span class="font-bold text-emerald-600 dark:text-emerald-400">★ Receive
                                                 Section ★</span>
                                         </th>
-                                        <th scope="col" colspan="6"
+                                        <th scope="col" colspan="7"
                                             class="px-4 py-3 text-xs font-medium tracking-wider text-center uppercase bg-sky-50 dark:bg-sky-900/30">
                                             <span class="font-bold text-sky-600 dark:text-sky-400">◆ Disbursement
                                                 Section ◆</span>
@@ -267,7 +267,7 @@
                                     <tr
                                         class="divide-x divide-gray-300 bg-gray-50 dark:bg-gray-700 dark:divide-gray-600">
                                         <th
-                                            class="px-3 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase border-r border-gray-300 date-col dark:text-gray-400 dark:border-gray-600">
+                                            class="px-3 py-2 text-xs font-medium tracking-wider text-center text-gray-500 uppercase border-r border-gray-300 date-col dark:text-gray-400 dark:border-gray-600">
                                             Date
                                         </th>
                                         <th
@@ -296,8 +296,13 @@
                                         </th>
                                         <th
                                             class="w-4 px-1 py-2 text-xs font-medium tracking-wider text-center uppercase pin-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
+                                            Qty
+                                        </th>
+                                        <th
+                                            class="w-4 px-1 py-2 text-xs font-medium tracking-wider text-center uppercase pin-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             PIN
                                         </th>
+
                                         <th
                                             class="w-20 px-2 py-2 text-xs font-medium tracking-wider text-center uppercase number-col text-sky-600 dark:text-sky-400 bg-sky-50/50 dark:bg-sky-900/20">
                                             From
@@ -346,6 +351,10 @@
                                         <td
                                             class="px-1 py-2 text-sm font-medium text-center text-sky-600 dark:text-sky-400 bg-sky-50/30 dark:bg-sky-900/10">
                                             {{ receipt.given_to || '-' }}
+                                        </td>
+                                        <td
+                                            class="px-1 py-2 text-sm font-medium text-center text-sky-600 dark:text-sky-400 bg-sky-50/30 dark:bg-sky-900/10">
+                                            {{ receipt.given_quantity || '-' }}
                                         </td>
                                         <td
                                             class="px-2 py-2 text-sm text-center text-gray-600 dark:text-gray-400 bg-sky-50/30 dark:bg-sky-900/10">
@@ -430,6 +439,13 @@
                                                 {{ receipt.given_to || '-' }}
                                             </span>
                                         </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">Quantity</span>
+                                            <span class="font-medium text-sky-600 dark:text-sky-400">
+                                                {{ receipt.given_quantity || '-' }}
+                                            </span>
+                                        </div>
+
                                         <div class="flex items-center justify-between">
                                             <span class="text-sm text-gray-600 dark:text-gray-400">PIN</span>
                                             <span class="text-sm">{{ receipt.pin_number || '-' }}</span>
@@ -1028,5 +1044,88 @@ table-wrapper {
 
 .dark .table-container::after {
     background: linear-gradient(to left, rgba(31, 41, 55, 0.9), rgba(31, 41, 55, 0));
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Dark mode transition */
+.dark-transition {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Hover effects */
+.hover\:transform-scale {
+    transition: transform 0.2s ease;
+}
+
+.hover\:transform-scale:hover {
+    transform: scale(1.01);
+}
+
+/* New compact table styles */
+.receipt-table th {
+    padding: 0.4rem 0.3rem !important;
+    font-size: 0.65rem !important;
+    white-space: nowrap;
+}
+
+.receipt-table td {
+    padding: 0.35rem 0.3rem !important;
+    font-size: 0.7rem !important;
+}
+
+/* Adjust column widths */
+.date-col {
+    width: 7%;
+    min-width: 75px;
+}
+
+.qty-col {
+    width: 4%;
+    min-width: 40px;
+}
+
+.number-col {
+    width: 5%;
+    min-width: 50px;
+}
+
+.total-col {
+    width: 5%;
+    min-width: 50px;
+}
+
+.name-col {
+    width: 8%;
+    min-width: 80px;
+}
+
+.pin-col {
+    width: 3%;
+    min-width: 35px;
+}
+
+.book-col {
+    width: 4%;
+    min-width: 40px;
+}
+
+.available-col {
+    width: 5%;
+    min-width: 50px;
+}
+
+/* Table wrapper for responsive scrolling */
+.table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
 }
 </style>

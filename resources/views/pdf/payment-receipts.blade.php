@@ -264,6 +264,7 @@
                     <th>Total</th>
                     <th>Received By</th>
                     <th>Disburse To</th>
+                    <th>Quantity</th>
                     <th>PIN</th>
                     <th>From #</th>
                     <th>To #</th>
@@ -281,6 +282,7 @@
                         <td>{{ $receipt->total_cumulative_quantity }}</td>
                         <td>{{ $receipt->received_by ?: '-' }}</td>
                         <td>{{ $receipt->given_to ?: '-' }}</td>
+                        <td>{{ $receipt->given_quantity ?: '-' }}</td>
                         <td>{{ $receipt->pin_number ?: '-' }}</td>
                         <td>{{ $receipt->given_from_number ?: '-' }}</td>
                         <td>{{ $receipt->given_to_number ?: '-' }}</td>

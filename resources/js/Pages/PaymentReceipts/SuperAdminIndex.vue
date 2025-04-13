@@ -562,7 +562,7 @@
                                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <span class="text-sm text-red-600 dark:text-red-400">{{ reportForm.error
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                     </div>
                                     <PrimaryButton @click="generateReport"
@@ -660,8 +660,7 @@
                                             class="text-gray-700 dark:text-gray-300" />
                                         <Input id="received_by" type="text" v-model="form.received_by"
                                             :error="form.errors.received_by"
-                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                         />
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                                     </div>
                                     <div>
                                         <Label for="receipt_from_number" value="From Number"
@@ -669,7 +668,7 @@
                                         <Input id="receipt_from_number" type="number" v-model="form.receipt_from_number"
                                             :error="form.errors.receipt_from_number"
                                             class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            min="1"/>
+                                            min="1" />
                                     </div>
                                     <div>
                                         <Label for="receipt_to_number" value="To Number"
@@ -677,7 +676,7 @@
                                         <Input id="receipt_to_number" type="number" v-model="form.receipt_to_number"
                                             :error="form.errors.receipt_to_number"
                                             class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            min="1"/>
+                                            min="1" />
                                     </div>
                                 </div>
                             </div>
@@ -742,8 +741,7 @@
                                             class="text-gray-700 dark:text-gray-300" />
                                         <Input id="edit_received_by" type="text" v-model="editForm.received_by"
                                             :error="editForm.errors.received_by"
-                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            />
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                                     </div>
                                     <div>
                                         <Label for="edit_receipt_from_number" value="From Number"
@@ -752,7 +750,7 @@
                                             v-model="editForm.receipt_from_number"
                                             :error="editForm.errors.receipt_from_number"
                                             class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            min="1"/>
+                                            min="1" />
                                     </div>
                                     <div>
                                         <Label for="edit_receipt_to_number" value="To Number"
@@ -785,16 +783,14 @@
                                             class="text-gray-700 dark:text-gray-300" />
                                         <Input id="edit_given_to" type="text" v-model="editForm.given_to"
                                             :error="editForm.errors.given_to"
-                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            />
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                                     </div>
                                     <div>
                                         <Label for="edit_pin_number" value="PIN Number"
                                             class="text-gray-700 dark:text-gray-300" />
                                         <Input id="edit_pin_number" type="text" v-model="editForm.pin_number"
                                             :error="editForm.errors.pin_number"
-                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            />
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                                     </div>
                                     <div>
                                         <Label for="edit_given_from_number" value="From Number"
@@ -819,8 +815,7 @@
                                         <Input id="edit_receipt_book_number" type="text"
                                             v-model="editForm.receipt_book_number"
                                             :error="editForm.errors.receipt_book_number"
-                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            />
+                                            class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                                     </div>
                                 </div>
                             </div>
@@ -958,25 +953,40 @@ const editForm = useForm({
     receipt_book_number: '',
 });
 
-// Edit transaction function
 const editTransaction = (transaction) => {
     selectedTransaction.value = transaction;
 
-    // Format the date properly for the form
-    const isoDate = transaction.transaction_date;
-    let formattedDate = isoDate;
+    // Get the original date string
+    const originalDate = transaction.transaction_date;
 
-    // Check if date needs formatting from ISO to YYYY-MM-DD
-    if (isoDate && isoDate.includes('T')) {
-        formattedDate = isoDate.split('T')[0];
+    // Add 1 day to the date to compensate for timezone issue
+    let formattedDate;
+
+    if (originalDate && originalDate.includes('-')) {
+        // If it's in YYYY-MM-DD format (or YYYY-MM-DDT... format)
+        const datePart = originalDate.includes('T') ? originalDate.split('T')[0] : originalDate;
+        const [year, month, day] = datePart.split('-').map(Number);
+
+        // Create a date and add 1 day
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() + 1);
+
+        // Format back to YYYY-MM-DD
+        const adjustedYear = date.getFullYear();
+        const adjustedMonth = String(date.getMonth() + 1).padStart(2, '0');
+        const adjustedDay = String(date.getDate()).padStart(2, '0');
+
+        formattedDate = `${adjustedYear}-${adjustedMonth}-${adjustedDay}`;
+    } else {
+        // Fallback to the original date
+        formattedDate = originalDate;
     }
 
-    // Additional debug logging
-    console.log('Original transaction date:', transaction.transaction_date);
-    console.log('Formatted date for form:', formattedDate);
+    console.log('Original transaction date:', originalDate);
+    console.log('Adjusted date for form:', formattedDate);
 
     // Populate form with transaction data
-    editForm.reset(); // Reset form first to clear any previous data
+    editForm.reset();
     editForm.clearErrors();
 
     editForm.id = transaction.id;
@@ -993,6 +1003,36 @@ const editTransaction = (transaction) => {
     editForm.receipt_book_number = transaction.receipt_book_number || '';
 
     showEditModal.value = true;
+};
+
+// Add this helper function
+const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+
+    try {
+        // Handle ISO format (with T)
+        if (dateString.includes('T')) {
+            dateString = dateString.split('T')[0];
+        }
+
+        // If it's already in YYYY-MM-DD format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+
+        // Parse the date using Date object
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            console.error('Invalid date:', dateString);
+            return '';
+        }
+
+        // Format as YYYY-MM-DD
+        return date.toISOString().split('T')[0];
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return '';
+    }
 };
 
 const closeEditModal = () => {
