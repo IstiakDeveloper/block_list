@@ -605,7 +605,8 @@
                                 <Input id="given_to_number" type="number" v-model="form.given_to_number"
                                     :error="form.errors.given_to_number"
                                     class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                    min="1" :required="!!form.given_quantity" />
+                                    min="1" :required="!!form.given_quantity" readonly
+                                    :class="{ 'bg-gray-100 dark:bg-gray-600': form.given_from_number && form.given_quantity > 0 }" />
                             </div>
 
                             <!-- Receipt Book Number -->
@@ -637,7 +638,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce';
 import Modal from '@/Components/Modal.vue';
@@ -683,6 +684,20 @@ const form = useForm({
     receipt_book_number: '',
     given_quantity: 0
 });
+
+watch([
+    // For given section
+    () => form.given_from_number,
+    () => form.given_quantity
+], ([ givenFrom, givenQty]) => {
+
+    // Calculate given_to_number
+    if (givenFrom && givenQty > 0) {
+        form.given_to_number = parseInt(givenFrom) + parseInt(givenQty) - 1;
+    } else {
+        form.given_to_number = null;
+    }
+}, { immediate: true });
 
 // Methods
 const handleFilterChange = debounce(() => {

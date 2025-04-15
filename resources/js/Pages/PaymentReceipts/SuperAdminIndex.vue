@@ -4,13 +4,24 @@
             <div class="mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
                 <!-- Header with Download -->
                 <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
-                    <div class="flex items-center justify-between p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between p-6 gap-4">
+                        <!-- Title -->
                         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                            All Branches Overview
+                            <span class="inline-flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 7h18M3 12h18M3 17h18" />
+                                </svg>
+                                All Branches Overview
+                            </span>
                         </h2>
-                        <div class="flex gap-2">
+
+                        <!-- Buttons -->
+                        <div class="flex flex-wrap gap-3">
+                            <!-- Generate Report -->
                             <button @click="openReportModal"
-                                class="inline-flex items-center px-4 py-2 font-semibold text-white transition-colors duration-200 bg-green-600 rounded-md dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                class="inline-flex items-center px-4 py-2 font-medium text-white transition-colors duration-200 bg-green-600 rounded-md dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -19,9 +30,9 @@
                                 Generate Report
                             </button>
 
-                            <!-- Add New Entry Button for Super Admin -->
+                            <!-- Add New Entry -->
                             <button @click="openNewEntryModal"
-                                class="inline-flex items-center px-4 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                class="inline-flex items-center px-4 py-2 font-medium text-white transition-colors duration-200 bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -29,13 +40,33 @@
                                 </svg>
                                 Add New Entry
                             </button>
+
+                            <!-- Stock Info -->
+                            <div
+                                class="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-md shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2h-5m-6 0H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4" />
+                                </svg>
+                                <span class="font-semibold">Stock:</span>
+                                <span class="font-bold">{{ currentStock }} pcs</span>
+                            </div>
+
+                            <!-- Add Stock -->
+                            <button @click="showAddStockModal = true"
+                                class="inline-flex items-center px-4 py-2 font-medium text-white transition-colors duration-200 bg-purple-600 rounded-md dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add Stock
+                            </button>
                         </div>
-
-
-
-
                     </div>
                 </div>
+
 
                 <!-- Filters -->
                 <div class="p-6 bg-white rounded-lg shadow-sm dark:bg-gray-800">
@@ -457,6 +488,32 @@
                             </div>
                         </Modal>
 
+                        <!-- Add Stock Modal -->
+                        <template v-if="showAddStockModal">
+                            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Stock to Head Office</h3>
+
+                                    <form @submit.prevent="submitStock">
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 font-medium mb-2">Quantity</label>
+                                            <input type="number" v-model="newStock" min="1"
+                                                class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                                required />
+                                        </div>
+
+                                        <div class="flex justify-end gap-2">
+                                            <button type="button" @click="showAddStockModal = false"
+                                                class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button>
+                                            <button type="submit"
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </template>
+
+
                         <!-- Delete Confirmation Modal (Separate from Transaction Modal) -->
                         <Modal :show="showDeleteModal" @close="closeDeleteModal" maxWidth="md">
                             <div class="overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-800">
@@ -572,7 +629,8 @@
                                             <svg v-if="reportForm.processing" class="w-4 h-4 mr-2 -ml-1 animate-spin"
                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                    stroke-width="4"></circle>
+                                                    stroke-width="4">
+                                                </circle>
                                                 <path class="opacity-75" fill="currentColor"
                                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                                 </path>
@@ -676,7 +734,8 @@
                                         <Input id="receipt_to_number" type="number" v-model="form.receipt_to_number"
                                             :error="form.errors.receipt_to_number"
                                             class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                                            min="1" />
+                                            min="1" readonly
+                                            :class="{ 'bg-gray-100 dark:bg-gray-600': form.receipt_from_number && form.receive_quantity > 0 }" />
                                     </div>
                                 </div>
                             </div>
@@ -843,8 +902,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted, reactive, watch } from 'vue';
+import { Head, router, useForm, } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Label from '@/Components/Label.vue';
@@ -861,7 +920,10 @@ const props = defineProps({
     receipts: Object,
     branchSummaries: Array,
     branches: Array,
-    filters: Object
+    filters: Object,
+
+    currentStock: Number
+
 });
 
 const showTransactionModal = ref(false);
@@ -873,6 +935,8 @@ const deleting = ref(false);
 const showNewEntryModal = ref(false);
 const showEditModal = ref(false);
 const selectedTransaction = ref(null);
+const showAddStockModal = ref(false)
+const newStock = ref(0)
 
 
 // Filters state
@@ -883,7 +947,7 @@ const filters = ref({
 });
 
 const form = useForm({
-    branch_id: '', // Add this for super admin
+    branch_id: '',
     transaction_date: new Date().toISOString().split('T')[0],
     receive_quantity: 0,
     receipt_from_number: null,
@@ -896,6 +960,15 @@ const form = useForm({
     receipt_book_number: '',
     given_quantity: 0
 });
+
+watch([() => form.receipt_from_number, () => form.receive_quantity], ([fromNumber, quantity]) => {
+    if (fromNumber && quantity > 0) {
+        // Calculate the to number as from_number + quantity - 1
+        form.receipt_to_number = parseInt(fromNumber) + parseInt(quantity) - 1;
+    } else {
+        form.receipt_to_number = null;
+    }
+}, { immediate: true });
 
 const isFormValid = computed(() => {
     return form.branch_id && form.receive_quantity > 0;
@@ -936,6 +1009,17 @@ const submitForm = () => {
         }
     });
 };
+
+function submitStock() {
+    router.post('/admin/stock-in', {
+        quantity: newStock.value
+    }, {
+        onSuccess: () => {
+            showAddStockModal.value = false
+            newStock.value = 0
+        }
+    })
+}
 
 
 const editForm = useForm({
@@ -1292,6 +1376,7 @@ const generateReport = async () => {
         reportForm.processing = false;
     }
 };
+
 
 
 

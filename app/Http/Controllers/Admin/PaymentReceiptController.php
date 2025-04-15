@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\HeadOfficeInventory;
 use Illuminate\Http\Request;
 use App\Models\PaymentReceipt;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -156,6 +157,7 @@ class PaymentReceiptController extends Controller
             ->orderBy('id', 'asc')
             ->paginate(50)
             ->withQueryString();
+        $currentStock = HeadOfficeInventory::latest()->value('total_stock') ?? 0;
 
         return Inertia::render('PaymentReceipts/SuperAdminIndex', [
             'receipts' => $receipts,
@@ -165,9 +167,34 @@ class PaymentReceiptController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'branch_id' => $selectedBranch,
-            ]
+            ],
+            'currentStock' => $currentStock,
+
         ]);
     }
+
+    public function stockIn(Request $request)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $inventory = HeadOfficeInventory::latest()->first();
+
+        if (!$inventory) {
+            $inventory = HeadOfficeInventory::create([
+                'total_stock' => 0,
+                'total_stock_in' => 0,
+                'total_stock_out' => 0,
+            ]);
+        }
+
+        $inventory->increment('total_stock', $request->quantity);
+        $inventory->increment('total_stock_in', $request->quantity);
+
+        return back()->with('success', 'Stock added successfully!');
+    }
+
 
     public function getBranchTransactions(Request $request, Branch $branch)
     {
@@ -302,7 +329,6 @@ class PaymentReceiptController extends Controller
     public function storeAdmin(Request $request)
     {
         try {
-
             DB::beginTransaction();
 
             // Get the latest record for calculations
@@ -320,6 +346,15 @@ class PaymentReceiptController extends Controller
 
             // Calculate new available receipts
             $newAvailableReceipts = $currentAvailable + $receiveQuantity;
+
+            // Update head office inventory - adding this part only
+            $headOfficeInventory = HeadOfficeInventory::firstOrCreate(
+                ['id' => 1],
+                ['total_stock' => 0, 'total_stock_in' => 0, 'total_stock_out' => 0]
+            );
+            $headOfficeInventory->total_stock -= $receiveQuantity; // Deduct from head office when giving to branch
+            $headOfficeInventory->total_stock_out += $receiveQuantity;
+            $headOfficeInventory->save();
 
             // Create the new record
             PaymentReceipt::create([
