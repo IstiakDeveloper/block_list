@@ -4,7 +4,7 @@
             <div class="mx-auto space-y-6 max-w-7xl sm:px-6 lg:px-8">
                 <!-- Header with Download -->
                 <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between p-6 gap-4">
+                    <div class="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                         <!-- Title -->
                         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
                             <span class="inline-flex items-center gap-2">
@@ -43,7 +43,7 @@
 
                             <!-- Stock Info -->
                             <div
-                                class="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-md shadow-sm">
+                                class="inline-flex items-center gap-2 px-4 py-2 text-gray-800 bg-gray-100 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -92,6 +92,7 @@
                                 class="block w-full mt-1 border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">All Branches</option>
                                 <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                                    {{ branch.branch_code }} -
                                     {{ branch.branch_name }}
                                 </option>
                             </select>
@@ -106,7 +107,7 @@
                         <!-- Branch Header -->
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                {{ summary.branch_name }}
+                                {{ summary.branch_code }}   - {{ summary.branch_name }}
                             </h3>
                             <button @click="viewBranchDetails(summary.branch_id)"
                                 class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
@@ -491,12 +492,12 @@
                         <!-- Add Stock Modal -->
                         <template v-if="showAddStockModal">
                             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Stock to Head Office</h3>
+                                <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+                                    <h3 class="mb-4 text-lg font-semibold text-gray-800">Add Stock to Head Office</h3>
 
                                     <form @submit.prevent="submitStock">
                                         <div class="mb-4">
-                                            <label class="block text-gray-700 font-medium mb-2">Quantity</label>
+                                            <label class="block mb-2 font-medium text-gray-700">Quantity</label>
                                             <input type="number" v-model="newStock" min="1"
                                                 class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                                 required />
@@ -504,9 +505,9 @@
 
                                         <div class="flex justify-end gap-2">
                                             <button type="button" @click="showAddStockModal = false"
-                                                class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button>
+                                                class="px-4 py-2 text-gray-800 bg-gray-300 rounded-md hover:bg-gray-400">Cancel</button>
                                             <button type="submit"
-                                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add</button>
+                                                class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">Add</button>
                                         </div>
                                     </form>
                                 </div>

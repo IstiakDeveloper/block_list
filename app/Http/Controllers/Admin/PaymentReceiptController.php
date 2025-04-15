@@ -92,7 +92,7 @@ class PaymentReceiptController extends Controller
         $selectedBranch = $request->input('branch_id');
 
         // Get all branches for dropdown
-        $branches = Branch::select('id', 'branch_name')->get();
+        $branches = Branch::all();
 
         // Prepare bindings array
         $bindings = [$startDate, $endDate];
@@ -103,7 +103,7 @@ class PaymentReceiptController extends Controller
         // Get branch summaries with historical totals
         $branchSummaries = Branch::select(
             'branches.id as branch_id',
-            'branches.branch_name',
+            'branches.branch_name','branches.branch_code',
             DB::raw('COALESCE(filtered.total_received, 0) as period_received'),
             DB::raw('COALESCE(filtered.total_distributed, 0) as period_distributed'),
             DB::raw('COALESCE(all_time.total_received, 0) as all_time_received'),
