@@ -5,9 +5,9 @@
             'bg-white dark:bg-gray-800 fixed inset-y-0 left-0 w-64 shadow-lg transition-transform transform lg:translate-x-0 z-50 md:z-10 overflow-y-auto',
             showSidebar ? 'translate-x-0' : '-translate-x-64'
         ]">
-            <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center justify-between p-4">
                 <h1 class="text-xl font-bold text-gray-800 dark:text-white">Mousumi NGO</h1>
-                <button @click="toggleSidebar" class="lg:hidden text-gray-500 dark:text-gray-100 hover:text-gray-600">
+                <button @click="toggleSidebar" class="text-gray-500 lg:hidden dark:text-gray-100 hover:text-gray-600">
                     <!-- Close Icon -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
@@ -20,9 +20,9 @@
                 <ul>
                     <li v-for="item in navItems" :key="item.name" class="relative">
                         <Link v-if="!item.children" :href="item.link"
-                            class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-900"
+                            class="flex items-center w-full gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-900"
                             :class="{ 'bg-gray-200 dark:bg-gray-900': isActive(item.link) }">
-                        <svg v-if="item.icon" class="w-5 h-5 text-gray-600 dark:text-gray-50 mr-2" fill="none"
+                        <svg v-if="item.icon" class="w-5 h-5 mr-2 text-gray-600 dark:text-gray-50" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path :d="item.icon"></path>
                         </svg>
@@ -30,9 +30,9 @@
                         </Link>
 
                         <button v-else @click="toggleDropdown(item)"
-                            class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-800"
+                            class="flex items-center w-full gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-800"
                             :class="{ 'bg-gray-200 dark:bg-gray-900': isActive(item.link) || hasActiveChild(item) }">
-                            <svg v-if="item.icon" class="w-5 h-5 text-gray-600 dark:text-gray-50 mr-2" fill="none"
+                            <svg v-if="item.icon" class="w-5 h-5 mr-2 text-gray-600 dark:text-gray-50" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path :d="item.icon"></path>
                             </svg>
@@ -48,9 +48,9 @@
                         <ul v-if="item.children && (item.isOpen || hasActiveChild(item))" class="pl-8">
                             <li v-for="child in item.children" :key="child.name">
                                 <Link :href="child.link"
-                                    class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-900 w-full rounded-md"
+                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-600 rounded-md dark:text-gray-50 hover:bg-gray-200 dark:hover:bg-gray-900"
                                     :class="{ 'bg-gray-200 dark:bg-gray-900': isActive(child.link) }">
-                                <svg v-if="child.icon" class="w-5 h-5 text-gray-600 dark:text-gray-50 mr-2" fill="none"
+                                <svg v-if="child.icon" class="w-5 h-5 mr-2 text-gray-600 dark:text-gray-50" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
                                 </svg>
@@ -64,7 +64,7 @@
                 <!-- Manual Links for Profile and Logout with Icons -->
                 <div class="mt-5">
                     <Link href="/profile"
-                        class="block flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
+                        class="flex items-center block gap-2 px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
                     <svg class="w-5 h-5 text-gray-700 dark:text-white" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -75,7 +75,7 @@
                     </Link>
 
                     <Link :href="route('logout')" method="post" as="button"
-                        class="block flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
+                        class="flex items-center block gap-2 px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
                     <svg class="w-5 h-5 text-gray-700 dark:text-white" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M16 12H4m8-8l-4 4m4-4l4 4m0 8l-4-4m4 4l4-4"></path>
@@ -86,7 +86,7 @@
             </nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 <a href="/mousumi-ngo-app.apk" download
-                    class="block flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200">
+                    class="flex items-center justify-center block gap-2 px-4 py-2 text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -99,10 +99,10 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col lg:ml-64">
-            <header class="fixed top-0 left-0 right-0 lg:left-64 shadow-md z-20 flex justify-between items-center p-4">
+        <div class="flex flex-col flex-1 lg:ml-64">
+            <header class="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 shadow-md lg:left-64">
                 <button @click="toggleSidebar"
-                    class="lg:hidden text-gray-500 dark:text-white hover:text-gray-600 dark:hover:text-gray-50">
+                    class="text-gray-500 lg:hidden dark:text-white hover:text-gray-600 dark:hover:text-gray-50">
                     <!-- Menu Icon -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
@@ -122,12 +122,12 @@
                         </svg>
                     </button>
                     <div v-if="showUserMenu"
-                        class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-600 border rounded-lg shadow-lg">
+                        class="absolute right-0 w-48 mt-2 bg-white border rounded-lg shadow-lg dark:bg-gray-600">
                         <Link href="/profile"
                             class="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
                         Profile</Link>
                         <Link :href="route('logout')" method="post" as="button"
-                            class="w-full text-left px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
+                            class="w-full px-4 py-2 text-left text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
                         Logout</Link>
                     </div>
                 </div>
@@ -145,11 +145,11 @@
 
                 <div class="mx-auto">
                     <div v-if="showFlashSuccess"
-                        class="mb-4 p-4 bg-green-100 text-green-700 rounded border-l-4 border-green-500 transition-transform transform duration-300 ease-in-out">
+                        class="p-4 mb-4 text-green-700 transition-transform duration-300 ease-in-out transform bg-green-100 border-l-4 border-green-500 rounded">
                         {{ flash.success }}
                     </div>
                     <div v-if="showFlashError"
-                        class="mb-4 p-4 bg-red-100 text-red-700 rounded border-l-4 border-red-500 transition-transform transform duration-300 ease-in-out">
+                        class="p-4 mb-4 text-red-700 transition-transform duration-300 ease-in-out transform bg-red-100 border-l-4 border-red-500 rounded">
                         {{ flash.error }}
                     </div>
                     <LoadingProgress />
@@ -227,8 +227,20 @@ const navItems = ref([
         icon: 'M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3',
         isActive: false,
     },
+    {
+        name: 'Voluntary Savings',
+        link: '/branch/voluntary-savings',
+        icon: 'M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819',
+        isActive: false,
+    },
 
     ...(user.name === 'Super Admin' ? [
+        {
+            name: 'Voluntary Savings',
+            link: '/admin/voluntary-savings',
+            icon: 'M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819',
+            isActive: false,
+        },
         {
             name: 'Branches',
             link: '/admin/branches',

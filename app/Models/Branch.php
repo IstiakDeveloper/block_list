@@ -63,4 +63,10 @@ class Branch extends Model
     {
         return $this->hasMany(OfficerReceiptDistribution::class);
     }
+
+    public function voluntarySavings()
+    {
+        return $this->hasMany(VoluntarySaving::class);
+    }
+
 }

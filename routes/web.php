@@ -109,4 +109,55 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
+
+Route::middleware(['auth'])->prefix('branch')->name('branch.')->group(function () {
+    Route::get('/voluntary-savings', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'index'])
+        ->name('voluntary-savings.index');
+
+    Route::get('/voluntary-savings/create', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'create'])
+        ->name('voluntary-savings.create');
+
+    Route::post('/voluntary-savings', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'store'])
+        ->name('voluntary-savings.store');
+
+    Route::get('/voluntary-savings/{id}', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'show'])
+        ->name('voluntary-savings.show');
+
+    Route::get('/voluntary-savings/{id}/edit', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'edit'])
+        ->name('voluntary-savings.edit');
+
+    Route::put('/voluntary-savings/{id}', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'update'])
+        ->name('voluntary-savings.update');
+
+    Route::delete('/voluntary-savings/{id}', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'destroy'])
+        ->name('voluntary-savings.destroy');
+
+    Route::get('/voluntary-savings/{id}/pdf', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'generatePdf'])
+        ->name('voluntary-savings.pdf');
+});
+
+// Admin routes (for super admin)
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/voluntary-savings', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'index'])
+        ->name('voluntary-savings.index');
+
+    Route::get('/voluntary-savings/{id}', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'show'])
+        ->name('voluntary-savings.show');
+
+    Route::put('/voluntary-savings/{id}/approve', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'approve'])
+        ->name('voluntary-savings.approve');
+
+    Route::put('/voluntary-savings/{id}/reject', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'reject'])
+        ->name('voluntary-savings.reject');
+
+    Route::get('/voluntary-savings/{id}/pdf', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'generatePdf'])
+        ->name('voluntary-savings.pdf');
+
+    Route::get('/voluntary-savings/{id}/approval-pdf', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'generateApprovalPdf'])
+        ->name('voluntary-savings.approval-pdf');
+
+    Route::get('/voluntary-savings/report/pdf', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'generateReportPdf'])
+        ->name('voluntary-savings.report-pdf');
+});
+
 require __DIR__ . '/auth.php';
