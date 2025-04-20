@@ -1,4 +1,5 @@
 <template>
+
     <Head title="Voluntary Savings" />
 
     <AdminLayout>
@@ -13,16 +14,13 @@
                         class="flex flex-col items-start w-full space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 sm:w-auto">
                         <!-- Search Input -->
                         <div class="relative w-full sm:w-64">
-                            <input
-                                type="text"
-                                v-model="search"
-                                placeholder="Search by member name, code..."
+                            <input type="text" v-model="search" placeholder="Search by member name, code..."
                                 @input="handleSearchInput"
-                                class="w-full px-4 py-2 pl-10 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-                            />
+                                class="w-full px-4 py-2 pl-10 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500" />
                             <div class="absolute left-3 top-2.5 text-gray-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                         </div>
@@ -50,7 +48,7 @@
                                 </th>
                                 <th
                                     class="p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-300">
-                                    Somiti & Member
+                                    Member & Somiti
                                 </th>
                                 <th
                                     class="hidden p-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase md:table-cell dark:text-gray-300">
@@ -79,10 +77,10 @@
                                 <td class="p-4 whitespace-nowrap">
                                     <div class="flex flex-col">
                                         <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ saving.somiti_name }} ({{ saving.somiti_code }})
+                                            {{ saving.member_name }} ({{ saving.member_code }})
                                         </span>
                                         <span class="mt-1 text-xs text-gray-500">
-                                            {{ saving.member_name }} ({{ saving.member_code }})
+                                            {{ saving.somiti_name }} ({{ saving.somiti_code }})
                                         </span>
                                     </div>
                                 </td>
@@ -92,7 +90,7 @@
                                 </td>
                                 <td
                                     class="hidden p-4 text-sm text-gray-900 lg:table-cell whitespace-nowrap dark:text-gray-100">
-                                    {{ calculateTotalDeposits(saving.deposits) }} BDT
+                                    ৳{{ calculateTotalDeposits(saving.deposits) }}
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
                                     <span :class="getStatusBadgeClass(saving.status)"
@@ -102,12 +100,14 @@
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
                                     <div
-                                        class="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                                        class="flex flex-wrap items-center justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                                         <Link :href="`/branch/voluntary-savings/${saving.id}`"
                                             class="w-full btn-action btn-show sm:w-auto">
                                         <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                            <path fill-rule="evenodd"
+                                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                         <span>View</span>
                                         </Link>
@@ -116,7 +116,8 @@
                                             :href="`/branch/voluntary-savings/${saving.id}/edit`"
                                             class="w-full btn-action btn-edit sm:w-auto">
                                         <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            <path
+                                                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                         </svg>
                                         <span>Edit</span>
                                         </Link>
@@ -125,7 +126,9 @@
                                             :href="`/branch/voluntary-savings/${saving.id}/pdf`"
                                             class="w-full btn-action btn-pdf sm:w-auto">
                                             <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd" />
+                                                <path fill-rule="evenodd"
+                                                    d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z"
+                                                    clip-rule="evenodd" />
                                             </svg>
                                             <span>PDF</span>
                                         </a>
@@ -133,24 +136,30 @@
                                         <button v-if="saving.status === 'pending'" @click="confirmDelete(saving.id)"
                                             class="w-full btn-action btn-delete sm:w-auto">
                                             <svg class="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                <path fill-rule="evenodd"
+                                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
                                             </svg>
                                             <span>Delete</span>
                                         </button>
                                     </div>
                                 </td>
+
                             </tr>
                             <!-- No applications found message -->
                             <tr v-if="voluntarySavings.data.length === 0">
                                 <td colspan="6" class="p-4 text-center text-gray-500 dark:text-gray-400">
                                     <div class="py-6">
-                                        <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <p class="mt-2 text-lg font-medium">No applications found</p>
                                         <p class="mt-1">Create a new voluntary saving application</p>
-                                        <Link href="/branch/voluntary-savings/create" class="inline-block mt-4 btn-primary">
-                                            Add New Application
+                                        <Link href="/branch/voluntary-savings/create"
+                                            class="inline-block mt-4 btn-primary">
+                                        Add New Application
                                         </Link>
                                     </div>
                                 </td>
@@ -163,15 +172,10 @@
             </div>
         </div>
 
-        <ConfirmationDialog
-            :show="isDialogVisible"
-            @update:show="isDialogVisible = $event"
-            @confirm="deleteApplication"
+        <ConfirmationDialog :show="isDialogVisible" @update:show="isDialogVisible = $event" @confirm="deleteApplication"
             title="Delete Voluntary Saving Application"
             message="Are you sure you want to delete this application? This action cannot be undone."
-            confirm-button-text="Delete"
-            cancel-button-text="Cancel"
-        />
+            confirm-button-text="Delete" cancel-button-text="Cancel" />
     </AdminLayout>
 </template>
 

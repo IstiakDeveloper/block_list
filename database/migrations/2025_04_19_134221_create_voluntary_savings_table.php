@@ -24,7 +24,6 @@ return new class extends Migration {
             $table->string('member_code');
 
             // Profit & contact info
-            $table->decimal('profit', 10, 2)->nullable();
             $table->string('member_mobile')->nullable();
 
             // Applicant info
@@ -32,10 +31,8 @@ return new class extends Migration {
             $table->string('designation')->nullable();
             $table->string('pin')->nullable();
             $table->string('signature')->nullable(); // Path to signature image/file
-
             // Status for approval
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-
             $table->timestamps();
         });
 
@@ -44,7 +41,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('voluntary_saving_id')->constrained('voluntary_savings')->onDelete('cascade');
             $table->date('deposit_date');
+            $table->string('account_name');
             $table->decimal('deposit_amount', 10, 2);
+            $table->decimal('profit', 10, 2)->nullable();
             $table->timestamps();
         });
     }

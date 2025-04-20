@@ -42,7 +42,7 @@ class AdminVoluntarySavingController extends Controller
         // Get all branches for filter dropdown
         $branches = Branch::all();
 
-        return Inertia::render('Admin/VoluntarySaving/Admin/Index', [
+        return Inertia::render('Admin/VoluntarySaving/Admin/Index', props: [
             'voluntarySavings' => $voluntarySavings,
             'branches' => $branches,
             'filters' => $request->only(['status', 'branch_id', 'from_date', 'to_date']),
@@ -110,11 +110,11 @@ class AdminVoluntarySavingController extends Controller
         $voluntarySaving = VoluntarySaving::with('deposits', 'branch')
             ->findOrFail($id);
 
-        $pdf = PDF::loadView('pdf.voluntary-saving-application', [
+        $pdf = PDF::loadView('pdf.voluntary-savings-withdrawal', [
             'voluntarySaving' => $voluntarySaving
         ]);
 
-        return $pdf->download('voluntary-saving-application-' . $voluntarySaving->id . '.pdf');
+        return $pdf->download('voluntary-savings-withdrawal-' . $voluntarySaving->id . '.pdf');
     }
 
     /**
@@ -130,11 +130,11 @@ class AdminVoluntarySavingController extends Controller
             return redirect()->back()->with('error', 'Only approved applications can generate approval letters.');
         }
 
-        $pdf = PDF::loadView('pdf.voluntary-saving-approval', [
+        $pdf = PDF::loadView('pdf.voluntary-savings-withdrawal', [
             'voluntarySaving' => $voluntarySaving
         ]);
 
-        return $pdf->download('voluntary-saving-approval-' . $voluntarySaving->id . '.pdf');
+        return $pdf->download('voluntary-savings-withdrawal-' . $voluntarySaving->id . '.pdf');
     }
 
     /**

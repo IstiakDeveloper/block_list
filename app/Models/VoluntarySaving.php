@@ -16,7 +16,6 @@ class VoluntarySaving extends Model
         'somiti_code',
         'member_name',
         'member_code',
-        'profit',
         'member_mobile',
         'applicant_name',
         'designation',

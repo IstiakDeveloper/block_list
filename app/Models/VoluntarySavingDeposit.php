@@ -12,7 +12,9 @@ class VoluntarySavingDeposit extends Model
     protected $fillable = [
         'voluntary_saving_id',
         'deposit_date',
+        'account_name',
         'deposit_amount',
+        'profit',
     ];
 
     public function voluntarySaving()

@@ -42,13 +42,13 @@ class BranchVoluntarySavingController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'application_date' => 'required|date',
             'somiti_name' => 'required|string|max:255',
             'somiti_code' => 'required|string|max:255',
             'member_name' => 'required|string|max:255',
             'member_code' => 'required|string|max:255',
-            'profit' => 'nullable|numeric',
             'member_mobile' => 'nullable|string|max:20',
             'applicant_name' => 'required|string|max:255',
             'designation' => 'nullable|string|max:255',
@@ -73,7 +73,6 @@ class BranchVoluntarySavingController extends Controller
             'somiti_code' => $request->somiti_code,
             'member_name' => $request->member_name,
             'member_code' => $request->member_code,
-            'profit' => $request->profit,
             'member_mobile' => $request->member_mobile,
             'applicant_name' => $request->applicant_name,
             'designation' => $request->designation,
@@ -87,7 +86,9 @@ class BranchVoluntarySavingController extends Controller
             VoluntarySavingDeposit::create([
                 'voluntary_saving_id' => $voluntarySaving->id,
                 'deposit_date' => $deposit['deposit_date'],
+                'account_name' => $deposit['account_name'],
                 'deposit_amount' => $deposit['deposit_amount'],
+                'profit' => $deposit['profit'],
             ]);
         }
 
@@ -225,12 +226,117 @@ class BranchVoluntarySavingController extends Controller
         if (Auth::user()->branch_id != $voluntarySaving->branch_id) {
             abort(403, 'Unauthorized action.');
         }
+        // Register the number to words converter as a singleton for this request
+        app()->singleton('numberConverter', function ($app) {
+            return new class {
+                public function convert($number)
+                {
+                    $hyphen = '-';
+                    $conjunction = ' and ';
+                    $separator = ', ';
+                    $negative = 'negative ';
+                    $decimal = ' point ';
+                    $dictionary = array(
+                        0 => 'zero',
+                        1 => 'one',
+                        2 => 'two',
+                        3 => 'three',
+                        4 => 'four',
+                        5 => 'five',
+                        6 => 'six',
+                        7 => 'seven',
+                        8 => 'eight',
+                        9 => 'nine',
+                        10 => 'ten',
+                        11 => 'eleven',
+                        12 => 'twelve',
+                        13 => 'thirteen',
+                        14 => 'fourteen',
+                        15 => 'fifteen',
+                        16 => 'sixteen',
+                        17 => 'seventeen',
+                        18 => 'eighteen',
+                        19 => 'nineteen',
+                        20 => 'twenty',
+                        30 => 'thirty',
+                        40 => 'forty',
+                        50 => 'fifty',
+                        60 => 'sixty',
+                        70 => 'seventy',
+                        80 => 'eighty',
+                        90 => 'ninety',
+                        100 => 'hundred',
+                        1000 => 'thousand',
+                        1000000 => 'million',
+                        1000000000 => 'billion',
+                        1000000000000 => 'trillion'
+                    );
 
-        $pdf = PDF::loadView('pdf.voluntary-saving-application', [
+                    if (!is_numeric($number)) {
+                        return false;
+                    }
+
+                    if ($number < 0) {
+                        return $negative . $this->convert(abs($number));
+                    }
+
+                    $string = $fraction = null;
+
+                    if (strpos($number, '.') !== false) {
+                        list($number, $fraction) = explode('.', $number);
+                    }
+
+                    switch (true) {
+                        case $number < 21:
+                            $string = $dictionary[$number];
+                            break;
+                        case $number < 100:
+                            $tens = ((int) ($number / 10)) * 10;
+                            $units = $number % 10;
+                            $string = $dictionary[$tens];
+                            if ($units) {
+                                $string .= $hyphen . $dictionary[$units];
+                            }
+                            break;
+                        case $number < 1000:
+                            $hundreds = floor($number / 100);
+                            $remainder = $number % 100;
+                            $string = $dictionary[$hundreds] . ' ' . $dictionary[100];
+                            if ($remainder) {
+                                $string .= $conjunction . $this->convert($remainder);
+                            }
+                            break;
+                        default:
+                            $baseUnit = pow(1000, floor(log($number, 1000)));
+                            $numBaseUnits = (int) ($number / $baseUnit);
+                            $remainder = $number % $baseUnit;
+                            $string = $this->convert($numBaseUnits) . ' ' . $dictionary[$baseUnit];
+                            if ($remainder) {
+                                $string .= $remainder < 100 ? $conjunction : $separator;
+                                $string .= $this->convert($remainder);
+                            }
+                            break;
+                    }
+
+                    if (null !== $fraction && is_numeric($fraction)) {
+                        $string .= $decimal;
+                        $words = array();
+                        foreach (str_split((string) $fraction) as $number) {
+                            $words[] = $dictionary[$number];
+                        }
+                        $string .= implode(' ', $words);
+                    }
+
+                    return ucfirst($string);
+                }
+            };
+        });
+
+        $pdf = PDF::loadView('pdf.voluntary-savings-withdrawal', [
             'voluntarySaving' => $voluntarySaving
         ]);
 
-        return $pdf->download('voluntary-saving-application-' . $voluntarySaving->id . '.pdf');
+        return $pdf->download('voluntary-saving-withdrawal-' . $voluntarySaving->id . '.pdf');
     }
 
     /**
