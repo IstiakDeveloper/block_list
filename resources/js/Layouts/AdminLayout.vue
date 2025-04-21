@@ -274,6 +274,6 @@ const hasActiveChild = (parent) => {
 };
 
 const logout = () => {
-    // Handle logout logic here
+
 };
 </script>
