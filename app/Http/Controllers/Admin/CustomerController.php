@@ -33,6 +33,14 @@ class CustomerController extends Controller
             $request->merge(['branch' => $userBranches->first()->id]);
         }
 
+        // Create base query for total count (before any filters)
+        $totalQuery = Customer::query();
+        if ($user->name !== 'Super Admin') {
+            $userBranchIds = $userBranches->pluck('id');
+            $totalQuery->whereIn('branch_id', $userBranchIds);
+        }
+        $totalCustomers = $totalQuery->count();
+
         // Apply branch filtering
         if ($request->has('branch') && $request->branch) {
             // For Super Admin, allow filtering by any branch
@@ -68,14 +76,26 @@ class CustomerController extends Controller
             });
         }
 
+        // Apply date filtering
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
         $customers = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Customer/Index', [
             'customers' => $customers,
             'branches' => $userBranches,
+            'totalCustomers' => $totalCustomers,
             'filters' => [
                 'branch' => $request->branch,
                 'search' => $request->search,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to,
             ],
         ]);
     }

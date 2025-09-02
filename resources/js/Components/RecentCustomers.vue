@@ -5,9 +5,37 @@ defineProps({
 </script>
 
 <template>
-    <div class="chart-card mt-8">
+    <div class="mt-8 chart-card">
         <h3 class="chart-title">Recent Customers</h3>
-        <div class="overflow-x-auto">
+
+        <!-- Mobile Card View -->
+        <div class="block sm:hidden">
+            <div class="space-y-3">
+                <div v-for="customer in customers" :key="customer.id"
+                     class="p-3 border border-gray-200 rounded-lg dark:border-gray-700">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-medium text-gray-900 truncate dark:text-white">
+                                {{ customer.name }}
+                            </h4>
+                            <p v-if="customer.name_bn" class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ customer.name_bn }}
+                            </p>
+                        </div>
+                        <span class="flex-shrink-0 ml-2 text-xs text-gray-500 dark:text-gray-400">
+                            {{ new Date(customer.created_at).toLocaleDateString() }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-300">{{ customer.branch.branch_name }}</span>
+                        <span class="text-gray-500 dark:text-gray-400">{{ customer.phone_number }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead>
                     <tr>
@@ -21,7 +49,7 @@ defineProps({
                     <tr v-for="customer in customers" :key="customer.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td class="table-cell">
                             {{ customer.name }}
-                            <span v-if="customer.name_bn" class="text-xs text-gray-500 dark:text-gray-400 block">
+                            <span v-if="customer.name_bn" class="block text-xs text-gray-500 dark:text-gray-400">
                                 {{ customer.name_bn }}
                             </span>
                         </td>
@@ -39,18 +67,18 @@ defineProps({
 
 <style scoped>
 .chart-card {
-    @apply bg-white dark:bg-gray-800 shadow rounded-lg p-6;
+    @apply bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6;
 }
 
 .chart-title {
-    @apply text-lg font-medium text-gray-900 dark:text-white mb-4;
+    @apply text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4;
 }
 
 .table-header {
-    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+    @apply px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
 }
 
 .table-cell {
-    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white;
+    @apply px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white;
 }
 </style>

@@ -40,8 +40,9 @@ const chartOptions = {
             position: 'bottom',
             labels: {
                 color: 'currentColor',
-                font: { size: 12 },
-                usePointStyle: true
+                font: { size: 10 },
+                usePointStyle: true,
+                padding: 15
             }
         },
         tooltip: {
@@ -54,13 +55,43 @@ const chartOptions = {
     },
     scales: {
         x: {
-            ticks: { color: 'currentColor' },
+            ticks: {
+                color: 'currentColor',
+                font: { size: 10 },
+                maxRotation: 45
+            },
             grid: { color: 'rgba(128, 128, 128, 0.2)' }
         },
         y: {
-            ticks: { color: 'currentColor' },
+            ticks: {
+                color: 'currentColor',
+                font: { size: 10 }
+            },
             grid: { color: 'rgba(128, 128, 128, 0.2)' },
             beginAtZero: true
+        }
+    }
+};
+
+const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom',
+            labels: {
+                color: 'currentColor',
+                font: { size: 10 },
+                usePointStyle: true,
+                padding: 10
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            padding: 10,
+            displayColors: false
         }
     }
 };
@@ -102,9 +133,9 @@ const ageChartData = computed(() => ({
 </script>
 
 <template>
-    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 mt-8 sm:gap-8 lg:grid-cols-2">
         <!-- Branch Distribution -->
-        <div class="chart-card">
+        <div class="chart-card lg:col-span-2">
             <h3 class="chart-title">Customers by Branch</h3>
             <div class="chart-container">
                 <Bar :data="branchChartData" :options="chartOptions" />
@@ -123,7 +154,7 @@ const ageChartData = computed(() => ({
         <div class="chart-card">
             <h3 class="chart-title">Age Distribution</h3>
             <div class="chart-container">
-                <Pie :data="ageChartData" :options="{ ...chartOptions, maintainAspectRatio: true }" />
+                <Pie :data="ageChartData" :options="pieChartOptions" />
             </div>
         </div>
     </div>
@@ -131,14 +162,14 @@ const ageChartData = computed(() => ({
 
 <style scoped>
 .chart-card {
-    @apply bg-white dark:bg-gray-800 shadow rounded-lg p-6;
+    @apply bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6;
 }
 
 .chart-title {
-    @apply text-lg font-medium text-gray-900 dark:text-white mb-4;
+    @apply text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4;
 }
 
 .chart-container {
-    @apply h-80;
+    @apply h-64 sm:h-80;
 }
 </style>
