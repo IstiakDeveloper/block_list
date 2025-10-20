@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PaymentReceipt extends Model
 {
     protected $fillable = [
+        'stock_transaction_id',
+        'lot_id',
         'branch_id',
         'transaction_date',
         'receive_quantity',
@@ -36,6 +38,16 @@ class PaymentReceipt extends Model
         'available_receipts' => 'integer'
     ];
 
+    public function stockTransaction(): BelongsTo
+    {
+        return $this->belongsTo(StockTransaction::class);
+    }
+
+    public function lot(): BelongsTo
+    {
+        return $this->belongsTo(Lot::class);
+    }
+
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
@@ -45,18 +57,6 @@ class PaymentReceipt extends Model
     public function calculateAvailableReceipts(): int
     {
         return $this->receive_quantity - $this->given_quantity;
-    }
-
-    // Helper method to validate receipt numbers
-    public function validateReceiptNumbers(): bool
-    {
-        if ($this->receive_quantity > 0) {
-            return ($this->receipt_to_number - $this->receipt_from_number + 1) === $this->receive_quantity;
-        }
-        if ($this->given_quantity > 0) {
-            return ($this->given_to_number - $this->given_from_number + 1) === $this->given_quantity;
-        }
-        return true;
     }
 
     // Scope to get latest record for a branch

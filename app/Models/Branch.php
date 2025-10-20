@@ -12,8 +12,6 @@ class Branch extends Model
 
     protected $fillable = ['branch_name', 'branch_code', 'address'];
 
-
-
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'branch_user', 'branch_id', 'user_id');

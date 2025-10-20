@@ -87,26 +87,61 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payment-receipts.index');
-    Route::post('/payment-receipts', [PaymentReceiptController::class, 'store'])->name('payment-receipts.store');
-    Route::put('/payment-receipts/{paymentReceipt}', [PaymentReceiptController::class, 'update'])->name('payment-receipts.update');
-    Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])->name('payment-receipts.export');
-    Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])->name('payment-receipts.summary');
+
+    // Main Pages
+    Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])
+        ->name('payment-receipts.index');
+
+    // Stock Management (Super Admin)
+    Route::post('/admin/stock-in', [PaymentReceiptController::class, 'stockIn'])
+        ->name('payment-receipts.stock-in');
+
     Route::post('/payment-receipts/store-admin', [PaymentReceiptController::class, 'storeAdmin'])
         ->name('payment-receipts.store-admin');
-    Route::post('/admin/stock-in', [PaymentReceiptController::class, 'stockIn']);
 
+    // Branch Distribution (Branch User)
+    Route::post('/payment-receipts', [PaymentReceiptController::class, 'store'])
+        ->name('payment-receipts.store');
 
+    // Update & Delete
     Route::put('/payment-receipts/{receipt}', [PaymentReceiptController::class, 'update'])
         ->name('payment-receipts.update');
 
-    Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
-        ->name('payment-receipts.branch-transactions');
     Route::delete('/payment-receipts/{receipt}', [PaymentReceiptController::class, 'destroy'])
         ->name('payment-receipts.destroy');
-    Route::get('payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
-        ->name('payment-receipts.report');
 
+    // API Endpoints for Data Fetching
+    Route::get('/payment-receipts/available-books', [PaymentReceiptController::class, 'getAvailableBooks'])
+        ->name('payment-receipts.available-books');
+
+    Route::get('/payment-receipts/lot/{lot}/books', [PaymentReceiptController::class, 'getLotBooks'])
+        ->name('payment-receipts.lot-books');
+
+    Route::get('/payment-receipts/branch/{branch}/transactions', [PaymentReceiptController::class, 'getBranchTransactions'])
+        ->name('payment-receipts.branch-transactions');
+
+    Route::get('/payment-receipts/transaction/{transaction}/details', [PaymentReceiptController::class, 'getTransactionDetails'])
+        ->name('payment-receipts.transaction-details');
+
+    Route::get('/payment-receipts/summary', [PaymentReceiptController::class, 'getBranchSummary'])
+        ->name('payment-receipts.summary');
+
+    // Lot Management
+    Route::get('/lots/active', [PaymentReceiptController::class, 'getActiveLots'])
+        ->name('payment-receipts.lots.active');
+
+    Route::post('/lots', [PaymentReceiptController::class, 'createLot'])
+        ->name('payment-receipts.lots.create');
+
+    Route::patch('/lots/{lot}/toggle-status', [PaymentReceiptController::class, 'toggleLotStatus'])
+        ->name('payment-receipts.lots.toggle-status');
+
+    // Reports & Export
+    Route::get('/payment-receipts/export', [PaymentReceiptController::class, 'export'])
+        ->name('payment-receipts.export');
+
+    Route::get('/payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
+        ->name('payment-receipts.report');
 });
 
 

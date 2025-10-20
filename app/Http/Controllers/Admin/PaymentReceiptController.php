@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\HeadOfficeInventory;
+use App\Models\Lot;
+use App\Models\ReceiptBook;
+use App\Models\StockTransaction;
+use App\Models\BookDistribution;
 use Illuminate\Http\Request;
 use App\Models\PaymentReceipt;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -12,560 +16,1027 @@ use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 
 class PaymentReceiptController extends Controller
 {
+    /**
+     * Main Dashboard - Branch or Super Admin
+     */
     public function index(Request $request)
     {
         $user = auth()->user();
         $isSuperAdmin = $user->name === "Super Admin";
 
-        // Set default date range to current month if not provided
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
-        $selectedBranch = $request->input('branch_id');
 
-        // Base query with date range
-        $query = PaymentReceipt::query()
-            ->whereBetween('transaction_date', [$startDate, $endDate]);
-
-        // Handle Super Admin vs Branch User
         if ($isSuperAdmin) {
             return $this->superAdminDashboard($request);
         } else {
-            $query->where('branch_id', $user->branch_id);
-            $branches = null;
-
-            // Get single branch summary with historical data - Fixed Query
-            $branchId = $user->branch_id;
-
-            // First get the current available receipts
-            $latestReceipt = PaymentReceipt::where('branch_id', $branchId)
-                ->orderBy('id', 'desc')
-                ->first();
-
-            // Then get the summary data
-            $summaryData = DB::table('payment_receipts')
-                ->where('branch_id', $branchId)
-                ->selectRaw('
-                    SUM(CASE WHEN transaction_date BETWEEN ? AND ? THEN receive_quantity ELSE 0 END) as period_received,
-                    SUM(CASE WHEN transaction_date BETWEEN ? AND ? THEN given_quantity ELSE 0 END) as period_distributed,
-                    SUM(receive_quantity) as all_time_received,
-                    SUM(given_quantity) as all_time_distributed
-                ', [$startDate, $endDate, $startDate, $endDate])
-                ->first();
-
-            // Combine the data
-            $branchSummaries = (object) [
-                'period_received' => $summaryData->period_received ?? 0,
-                'period_distributed' => $summaryData->period_distributed ?? 0,
-                'all_time_received' => $summaryData->all_time_received ?? 0,
-                'all_time_distributed' => $summaryData->all_time_distributed ?? 0,
-                'current_available' => $latestReceipt->available_receipts ?? 0
-            ];
+            return $this->branchUserDashboard($request);
         }
-
-        $receipts = $query->with('branch:id,branch_name,branch_code')
-            ->orderBy('transaction_date', 'asc')  // Changed to 'asc'
-            ->orderBy('id', 'asc')               // Changed to 'asc'
-            ->paginate(50)
-            ->withQueryString();
-
-        return Inertia::render('PaymentReceipts/Index', [
-            'receipts' => $receipts,
-            'branchSummaries' => $branchSummaries,
-            'branches' => $branches,
-            'filters' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'branch_id' => $selectedBranch,
-            ],
-            'isSuperAdmin' => $isSuperAdmin
-        ]);
     }
 
+    /**
+     * Super Admin Dashboard
+     */
     private function superAdminDashboard(Request $request)
     {
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
         $selectedBranch = $request->input('branch_id');
 
-        // Get all branches for dropdown
-        $branches = Branch::all();
+        // Get all branches
+        $branches = Branch::orderBy('branch_name')->get();
 
-        // Prepare bindings array
-        $bindings = [$startDate, $endDate];
-        if ($selectedBranch) {
-            $bindings[] = $selectedBranch;
-        }
+        // Get active lots with available books count
+        $activeLots = Lot::where('is_active', true)
+            ->withCount([
+                'receiptBooks as available_books_count' => function ($q) {
+                    $q->where('status', 'available')
+                        ->where('location_type', 'head_office');
+                }
+            ])
+            ->with(['receiptBooks' => function ($q) {
+                $q->where('status', 'available')
+                    ->where('location_type', 'head_office')
+                    ->orderBy('book_number')
+                    ->limit(10);
+            }])
+            ->get()
+            ->map(function ($lot) {
+                $books = $lot->receiptBooks;
+                return [
+                    'id' => $lot->id,
+                    'lot_number' => $lot->lot_number,
+                    'lot_name' => $lot->lot_name,
+                    'available_books_count' => $lot->available_books_count,
+                    'book_range' => $books->isNotEmpty()
+                        ? $books->first()->book_number . ' - ' . $books->last()->book_number
+                        : 'No books available',
+                    'total_receipts' => $books->sum(fn($b) => $b->getTotalReceipts())
+                ];
+            });
 
-        // Get branch summaries with historical totals
-        $branchSummaries = Branch::select(
-            'branches.id as branch_id',
-            'branches.branch_name','branches.branch_code',
-            DB::raw('COALESCE(filtered.total_received, 0) as period_received'),
-            DB::raw('COALESCE(filtered.total_distributed, 0) as period_distributed'),
-            DB::raw('COALESCE(all_time.total_received, 0) as all_time_received'),
-            DB::raw('COALESCE(all_time.total_distributed, 0) as all_time_distributed'),
-            DB::raw('COALESCE(latest.available_receipts, 0) as current_available')
-        )
-            ->leftJoin(DB::raw("(
-        SELECT
-            branch_id,
-            SUM(receive_quantity) as total_received,
-            SUM(given_quantity) as total_distributed
-        FROM payment_receipts
-        WHERE transaction_date BETWEEN ? AND ?
-        GROUP BY branch_id
-    ) as filtered"), 'branches.id', '=', 'filtered.branch_id')
-            ->leftJoin(DB::raw("(
-        SELECT
-            branch_id,
-            SUM(receive_quantity) as total_received,
-            SUM(given_quantity) as total_distributed
-        FROM payment_receipts
-        GROUP BY branch_id
-    ) as all_time"), 'branches.id', '=', 'all_time.branch_id')
-            ->leftJoin(DB::raw("(
-        SELECT
-            p1.branch_id,
-            p1.available_receipts
-        FROM payment_receipts p1
-        INNER JOIN (
-            SELECT branch_id, MAX(id) as max_id
-            FROM payment_receipts
-            GROUP BY branch_id
-        ) p2 ON p1.branch_id = p2.branch_id AND p1.id = p2.max_id
-    ) as latest"), 'branches.id', '=', 'latest.branch_id')
-            ->when($selectedBranch, function ($q) {
-                return $q->where('branches.id', '?');
-            })
-            ->setBindings($bindings)
-            ->get();
+        // Calculate current head office stock
+        $currentStock = ReceiptBook::where('status', 'available')
+            ->where('location_type', 'head_office')
+            ->sum(DB::raw('(to_number - from_number + 1)'));
 
-        // Get receipts for selected branch or all branches
-        $query = PaymentReceipt::query()
-            ->with('branch:id,branch_name,branch_code')
+        // Get branch summaries
+        $branchSummaries = Branch::select('branches.*')
+            ->when($selectedBranch, fn($q) => $q->where('branches.id', $selectedBranch))
+            ->get()
+            ->map(function ($branch) use ($startDate, $endDate) {
+                // Period data
+                $periodReceived = StockTransaction::where('branch_id', $branch->id)
+                    ->where('transaction_type', 'distribute_to_branch')
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
+                    ->sum('total_receipts');
+
+                $periodDistributed = StockTransaction::where('branch_id', $branch->id)
+                    ->where('transaction_type', 'distribute_to_person')
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
+                    ->sum('total_receipts');
+
+                // All time data
+                $allTimeReceived = StockTransaction::where('branch_id', $branch->id)
+                    ->where('transaction_type', 'distribute_to_branch')
+                    ->sum('total_receipts');
+
+                $allTimeDistributed = StockTransaction::where('branch_id', $branch->id)
+                    ->where('transaction_type', 'distribute_to_person')
+                    ->sum('total_receipts');
+
+                // Current available
+                $currentAvailable = ReceiptBook::where('location_type', 'branch')
+                    ->where('location_id', $branch->id)
+                    ->where('status', 'distributed')
+                    ->get()
+                    ->sum(fn($b) => $b->getTotalReceipts());
+
+                return [
+                    'branch_id' => $branch->id,
+                    'branch_name' => $branch->branch_name,
+                    'branch_code' => $branch->branch_code,
+                    'period_received' => $periodReceived,
+                    'period_distributed' => $periodDistributed,
+                    'all_time_received' => $allTimeReceived,
+                    'all_time_distributed' => $allTimeDistributed,
+                    'current_available' => $currentAvailable
+                ];
+            });
+
+        // Get transactions
+        $query = StockTransaction::with(['branch', 'lot'])
             ->whereBetween('transaction_date', [$startDate, $endDate]);
 
         if ($selectedBranch) {
             $query->where('branch_id', $selectedBranch);
         }
 
-        $receipts = $query->orderBy('transaction_date', 'asc')
-            ->orderBy('id', 'asc')
+        $receipts = $query->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
             ->paginate(50)
             ->withQueryString();
-        $currentStock = HeadOfficeInventory::latest()->value('total_stock') ?? 0;
 
         return Inertia::render('PaymentReceipts/SuperAdminIndex', [
             'receipts' => $receipts,
             'branchSummaries' => $branchSummaries,
             'branches' => $branches,
+            'activeLots' => $activeLots,
+            'currentStock' => $currentStock,
             'filters' => [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'branch_id' => $selectedBranch,
             ],
-            'currentStock' => $currentStock,
-
         ]);
     }
 
-    public function stockIn(Request $request)
+    /**
+     * Branch User Dashboard
+     */
+    private function branchUserDashboard(Request $request)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $inventory = HeadOfficeInventory::latest()->first();
-
-        if (!$inventory) {
-            $inventory = HeadOfficeInventory::create([
-                'total_stock' => 0,
-                'total_stock_in' => 0,
-                'total_stock_out' => 0,
-            ]);
-        }
-
-        $inventory->increment('total_stock', $request->quantity);
-        $inventory->increment('total_stock_in', $request->quantity);
-
-        return back()->with('success', 'Stock added successfully!');
-    }
-
-
-    public function getBranchTransactions(Request $request, Branch $branch)
-    {
-        // Get date filters from request or use defaults if not provided
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+        $branchId = auth()->user()->branch_id;
 
-        $transactions = PaymentReceipt::where('branch_id', $branch->id)
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->orderBy('transaction_date', 'asc')
-            ->orderBy('id', 'asc')
+        // Get available books for this branch grouped by lot
+        $availableBooks = ReceiptBook::where('location_type', 'branch')
+            ->where('location_id', $branchId)
+            ->where('status', 'distributed')
+            ->with('lot')
+            ->orderBy('lot_id')
+            ->orderBy('book_number')
             ->get()
-            ->map(function ($transaction) {
+            ->groupBy('lot.lot_number')
+            ->map(function ($lotBooks, $lotNumber) {
                 return [
-                    'id' => $transaction->id,
-                    'transaction_date' => $transaction->transaction_date,
-                    'receive_quantity' => $transaction->receive_quantity,
-                    'receipt_from_number' => $transaction->receipt_from_number,
-                    'receipt_to_number' => $transaction->receipt_to_number,
-                    'received_by' => $transaction->received_by,
-                    'given_quantity' => $transaction->given_quantity,
-                    'given_from_number' => $transaction->given_from_number,
-                    'given_to_number' => $transaction->given_to_number,
-                    'given_to' => $transaction->given_to,
-                    'available_receipts' => $transaction->available_receipts,
+                    'lot_number' => $lotNumber,
+                    'lot_id' => $lotBooks->first()->lot_id,
+                    'total_books' => $lotBooks->count(),
+                    'total_receipts' => $lotBooks->sum(fn($b) => $b->getTotalReceipts()),
+                    'book_range' => $lotBooks->first()->book_number . ' - ' . $lotBooks->last()->book_number,
+                    'receipt_range' => $lotBooks->first()->from_number . ' - ' . $lotBooks->last()->to_number,
+                    'books' => $lotBooks->map(fn($b) => [
+                        'book_number' => $b->book_number,
+                        'from_number' => $b->from_number,
+                        'to_number' => $b->to_number,
+                    ])
                 ];
-            });
+            })->values();
 
-        return response()->json(['transactions' => $transactions]);
-    }
+        // Calculate summary
+        $periodReceived = StockTransaction::where('branch_id', $branchId)
+            ->where('transaction_type', 'distribute_to_branch')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->sum('total_receipts');
 
-    public function destroy(PaymentReceipt $receipt)
-    {
-        try {
-            DB::beginTransaction();
+        $periodDistributed = StockTransaction::where('branch_id', $branchId)
+            ->where('transaction_type', 'distribute_to_person')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->sum('total_receipts');
 
-            // Get all subsequent receipts from the same branch
-            $subsequentReceipts = PaymentReceipt::where('branch_id', $receipt->branch_id)
-                ->where('id', '>', $receipt->id)
-                ->orderBy('id')
-                ->get();
+        $allTimeReceived = StockTransaction::where('branch_id', $branchId)
+            ->where('transaction_type', 'distribute_to_branch')
+            ->sum('total_receipts');
 
-            // Update the available_receipts and total_cumulative_quantity for all subsequent entries
-            foreach ($subsequentReceipts as $subsequentReceipt) {
-                $subsequentReceipt->total_cumulative_quantity -= $receipt->receive_quantity;
-                $subsequentReceipt->available_receipts = $subsequentReceipt->available_receipts
-                    - $receipt->receive_quantity
-                    + $receipt->given_quantity;
-                $subsequentReceipt->save();
-            }
+        $allTimeDistributed = StockTransaction::where('branch_id', $branchId)
+            ->where('transaction_type', 'distribute_to_person')
+            ->sum('total_receipts');
 
-            // Delete the receipt
-            $receipt->delete();
+        $currentAvailable = $availableBooks->sum('total_receipts');
 
-            DB::commit();
-            return back()->with('success', 'Receipt deleted successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Failed to delete receipt');
-        }
-    }
+        $branchSummaries = (object) [
+            'period_received' => $periodReceived,
+            'period_distributed' => $periodDistributed,
+            'all_time_received' => $allTimeReceived,
+            'all_time_distributed' => $allTimeDistributed,
+            'current_available' => $currentAvailable
+        ];
 
+        // Get transactions
+        $receipts = StockTransaction::with(['lot', 'branch'])
+            ->where('branch_id', $branchId)
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(50)
+            ->withQueryString();
 
-    public function store(Request $request)
-    {
-        try {
-            DB::beginTransaction();
-
-            // Get the latest record for calculations
-            $latestRecord = PaymentReceipt::where('branch_id', auth()->user()->branch_id)
-                ->latest()
-                ->first();
-
-            // Initialize values
-            $receiveQuantity = $request->receive_quantity ?? 0;
-            $givenQuantity = $request->given_quantity ?? 0;
-            $currentAvailable = $latestRecord?->available_receipts ?? 0;
-
-            // Calculate new totals
-            $totalCumulative = ($latestRecord?->total_cumulative_quantity ?? 0) + $receiveQuantity;
-
-            // Calculate new available receipts
-            $newAvailableReceipts = $currentAvailable + $receiveQuantity - $givenQuantity;
-
-            // Create the new record
-            PaymentReceipt::create([
-                'branch_id' => auth()->user()->branch_id,
-                'transaction_date' => $request->transaction_date,
-                'receive_quantity' => $receiveQuantity,
-                'receipt_from_number' => $request->receipt_from_number,
-                'receipt_to_number' => $request->receipt_to_number,
-                'total_cumulative_quantity' => $totalCumulative,
-                'received_by' => $request->received_by,
-                'given_to' => $request->given_to,
-                'pin_number' => $request->pin_number,
-                'given_from_number' => $request->given_from_number,
-                'given_to_number' => $request->given_to_number,
-                'receipt_book_number' => $request->receipt_book_number,
-                'given_quantity' => $givenQuantity,
-                'available_receipts' => $newAvailableReceipts
-            ]);
-
-            DB::commit();
-            return redirect()->back()->with('success', 'Receipt record created successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    private function validateRequest(Request $request)
-    {
-        return $request->validate([
-            'transaction_date' => 'nullable|date',
-
-            // Receiving section
-            'receive_quantity' => 'nullable|integer|min:0',
-            'receipt_from_number' => 'nullable|integer|min:1',
-            'receipt_to_number' => 'nullable|integer|min:1',
-            'received_by' => 'nullable|string|max:255',
-
-            // Distribution section
-            'given_quantity' => 'nullable|integer|min:0',
-            'given_to' => 'nullable|string|max:255',
-            'pin_number' => 'nullable|string|max:50',
-            'given_from_number' => 'nullable|integer|min:1',
-            'given_to_number' => 'nullable|integer|min:1',
-            'receipt_book_number' => 'nullable|string|max:50',
+        return Inertia::render('PaymentReceipts/Index', [
+            'receipts' => $receipts,
+            'branchSummaries' => $branchSummaries,
+            'availableBooks' => $availableBooks,
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+            'isSuperAdmin' => false
         ]);
     }
 
+    /**
+     * Stock Add - Super Admin adds stock with Lot and Book Numbers
+     * Entry: Lot selection + Book Number Range
+     * Auto Generate: Receipt Numbers
+     */
+    public function stockIn(Request $request)
+    {
+        $validated = $request->validate([
+            'lot_option' => 'required|in:existing,new',
+            'lot_id' => 'required_if:lot_option,existing|nullable|exists:lots,id',
+            'lot_name' => 'required_if:lot_option,new|nullable|string|max:255',
+            'book_from' => 'required|integer|min:1',
+            'book_to' => 'required|integer|gte:book_from',
+        ]);
 
+        try {
+            DB::beginTransaction();
+
+            // Create or get lot
+            if ($request->lot_option === 'new') {
+                $lot = Lot::create([
+                    'lot_number' => Lot::generateNextLotNumber(),
+                    'lot_name' => $request->lot_name,
+                    'is_active' => true
+                ]);
+            } else {
+                $lot = Lot::findOrFail($request->lot_id);
+            }
+
+            $bookFrom = (int) $request->book_from;
+            $bookTo = (int) $request->book_to;
+            $totalBooks = $bookTo - $bookFrom + 1;
+
+            // Check if books already exist in this lot
+            $existingBooks = ReceiptBook::where('lot_id', $lot->id)
+                ->whereBetween('book_number', [$bookFrom, $bookTo])
+                ->exists();
+
+            if ($existingBooks) {
+                throw new \Exception('Some books in this range already exist in the selected lot');
+            }
+
+            // Create individual books
+            $createdBooks = [];
+            for ($bookNum = $bookFrom; $bookNum <= $bookTo; $bookNum++) {
+                // Fixed formula: Book 1 → 1-100, Book 665 → 66401-66500
+                $fromReceipt = (($bookNum - 1) * 100) + 1;
+                $toReceipt = $bookNum * 100;
+
+                $book = ReceiptBook::create([
+                    'lot_id' => $lot->id,
+                    'book_number' => $bookNum,
+                    'from_number' => $fromReceipt,
+                    'to_number' => $toReceipt,
+                    'status' => 'available',
+                    'location_type' => 'head_office',
+                    'location_id' => null,
+                ]);
+
+                $createdBooks[] = $book;
+            }
+
+            // Calculate receipt numbers - Fixed formula
+            $receiptFrom = (($bookFrom - 1) * 100) + 1;
+            $receiptTo = $bookTo * 100;
+            $totalReceipts = $totalBooks * 100;
+
+            // Create stock transaction
+            $transaction = StockTransaction::create([
+                'lot_id' => $lot->id,
+                'transaction_type' => 'stock_in',
+                'transaction_date' => now(),
+                'book_from' => $bookFrom,
+                'book_to' => $bookTo,
+                'receipt_from' => $receiptFrom,
+                'receipt_to' => $receiptTo,
+                'total_books' => $totalBooks,
+                'total_receipts' => $totalReceipts,
+                'received_by' => auth()->user()->name,
+                'remarks' => 'Stock added to head office'
+            ]);
+
+            // Link books to transaction
+            foreach ($createdBooks as $book) {
+                BookDistribution::create([
+                    'stock_transaction_id' => $transaction->id,
+                    'receipt_book_id' => $book->id
+                ]);
+            }
+
+            // Update or create head office inventory
+            $inventory = HeadOfficeInventory::firstOrCreate(
+                ['lot_id' => $lot->id],
+                [
+                    'total_books' => 0,
+                    'total_stock' => 0,
+                    'total_stock_in' => 0,
+                    'total_stock_out' => 0
+                ]
+            );
+
+            $inventory->total_books += $totalBooks;
+            $inventory->total_stock_in += $totalReceipts;
+            $inventory->total_stock = $inventory->total_stock_in - $inventory->total_stock_out;
+            $inventory->save();
+
+            DB::commit();
+
+            Log::info('Stock added successfully', [
+                'lot' => $lot->lot_number,
+                'books' => "{$bookFrom}-{$bookTo}",
+                'receipts' => $totalReceipts
+            ]);
+
+            return back()->with('success', "Stock added: {$totalBooks} books (Book #{$bookFrom}-#{$bookTo}) = {$totalReceipts} receipts to {$lot->lot_number}");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Stock add failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to add stock: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Super Admin Distributes to Branch
+     * Entry: Branch + Lot + Book Range
+     * Auto Generate: Receipt Numbers
+     * Validation: Books must be available
+     */
     public function storeAdmin(Request $request)
     {
-        try {
-            DB::beginTransaction();
-
-            // Get the latest record for calculations
-            $latestRecord = PaymentReceipt::where('branch_id', $request->branch_id)
-                ->latest()
-                ->first();
-
-            // Initialize values
-            $receiveQuantity = $request->receive_quantity ?? 0;
-            $givenQuantity = 0; // For super admin, we only handle receives
-            $currentAvailable = $latestRecord?->available_receipts ?? 0;
-
-            // Calculate new totals
-            $totalCumulative = ($latestRecord?->total_cumulative_quantity ?? 0) + $receiveQuantity;
-
-            // Calculate new available receipts
-            $newAvailableReceipts = $currentAvailable + $receiveQuantity;
-
-            // Update head office inventory - adding this part only
-            $headOfficeInventory = HeadOfficeInventory::firstOrCreate(
-                ['id' => 1],
-                ['total_stock' => 0, 'total_stock_in' => 0, 'total_stock_out' => 0]
-            );
-            $headOfficeInventory->total_stock -= $receiveQuantity; // Deduct from head office when giving to branch
-            $headOfficeInventory->total_stock_out += $receiveQuantity;
-            $headOfficeInventory->save();
-
-            // Create the new record
-            PaymentReceipt::create([
-                'branch_id' => $request->branch_id,
-                'transaction_date' => $request->transaction_date,
-                'receive_quantity' => $receiveQuantity,
-                'receipt_from_number' => $request->receipt_from_number,
-                'receipt_to_number' => $request->receipt_to_number,
-                'total_cumulative_quantity' => $totalCumulative,
-                'received_by' => $request->received_by,
-                'given_quantity' => 0, // Super admin only handles receives
-                'available_receipts' => $newAvailableReceipts
-            ]);
-
-            DB::commit();
-            return redirect()->back()->with('success', 'Receipt record created successfully for the branch.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    private function validateSuperAdminRequest(Request $request)
-    {
-        return $request->validate([
+        $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
-            'transaction_date' => 'required|date',
-            'receive_quantity' => 'required|integer|min:1',
-            'receipt_from_number' => 'required|integer|min:1',
-            'receipt_to_number' => 'required|integer|min:1',
-            'received_by' => 'required|string|max:255',
+            'lot_id' => 'required|exists:lots,id',
+            'book_from' => 'required|integer|min:1',
+            'book_to' => 'required|integer|gte:book_from',
+            'transaction_date' => 'nullable|date',
+            'received_by' => 'nullable|string|max:255',
         ]);
-    }
 
-    public function update(Request $request, $receiptId)
-    {
         try {
-            // Find the receipt by ID
-            $receipt = PaymentReceipt::findOrFail($receiptId);
-
-            // Log for debugging
-            \Log::info('Updating receipt', [
-                'receipt_id' => $receipt->id,
-                'branch_id' => $receipt->branch_id,
-                'data' => $request->all()
-            ]);
-
             DB::beginTransaction();
 
-            // Calculate the change in receipt quantities
-            $receiveQuantityDiff = ($request->receive_quantity ?? 0) - $receipt->receive_quantity;
-            $givenQuantityDiff = ($request->given_quantity ?? 0) - $receipt->given_quantity;
+            $lotId = (int) $request->lot_id;
+            $branchId = (int) $request->branch_id;
+            $bookFrom = (int) $request->book_from;
+            $bookTo = (int) $request->book_to;
+            $transactionDate = $request->transaction_date ?? now();
 
-            // Get all subsequent receipts from the same branch (ordered by ID)
-            $subsequentReceipts = PaymentReceipt::where('branch_id', $receipt->branch_id)
-                ->where('id', '>', $receipt->id)
-                ->orderBy('id')
+            // Get branch details
+            $branch = Branch::findOrFail($branchId);
+
+            // Check if books are available at head office
+            $availableBooks = ReceiptBook::where('lot_id', $lotId)
+                ->where('status', 'available')
+                ->where('location_type', 'head_office')
+                ->whereBetween('book_number', [$bookFrom, $bookTo])
+                ->orderBy('book_number')
                 ->get();
 
-            // Update the current receipt
-            $receipt->transaction_date = $request->transaction_date;
-            $receipt->receive_quantity = $request->receive_quantity ?? 0;
-            $receipt->receipt_from_number = $request->receipt_from_number;
-            $receipt->receipt_to_number = $request->receipt_to_number;
-            $receipt->received_by = $request->received_by;
-            $receipt->given_quantity = $request->given_quantity ?? 0;
-            $receipt->given_to = $request->given_to;
-            $receipt->pin_number = $request->pin_number;
-            $receipt->given_from_number = $request->given_from_number;
-            $receipt->given_to_number = $request->given_to_number;
-            $receipt->receipt_book_number = $request->receipt_book_number;
+            $expectedCount = $bookTo - $bookFrom + 1;
 
-            // Update total_cumulative_quantity and available_receipts
-            if ($receiveQuantityDiff != 0) {
-                $receipt->total_cumulative_quantity += $receiveQuantityDiff;
+            if ($availableBooks->count() !== $expectedCount) {
+                $missingBooks = [];
+                for ($i = $bookFrom; $i <= $bookTo; $i++) {
+                    if (!$availableBooks->where('book_number', $i)->count()) {
+                        $missingBooks[] = $i;
+                    }
+                }
+                throw new \Exception("Books not available. Missing: " . implode(', ', $missingBooks));
             }
 
-            $receipt->available_receipts += $receiveQuantityDiff - $givenQuantityDiff;
-            $receipt->save();
+            $totalBooks = $availableBooks->count();
+            // Fixed formula: Book 1 → 1-100, Book 665 → 66401-66500
+            $receiptFrom = (($bookFrom - 1) * 100) + 1;
+            $receiptTo = $bookTo * 100;
+            $totalReceipts = $totalBooks * 100;
 
-            // Update all subsequent receipts
-            foreach ($subsequentReceipts as $subsequentReceipt) {
-                // Update cumulative quantity if receive quantity changed
-                if ($receiveQuantityDiff != 0) {
-                    $subsequentReceipt->total_cumulative_quantity += $receiveQuantityDiff;
-                }
+            // Create stock transaction
+            $transaction = StockTransaction::create([
+                'lot_id' => $lotId,
+                'transaction_type' => 'distribute_to_branch',
+                'branch_id' => $branchId,
+                'transaction_date' => $transactionDate,
+                'book_from' => $bookFrom,
+                'book_to' => $bookTo,
+                'receipt_from' => $receiptFrom,
+                'receipt_to' => $receiptTo,
+                'total_books' => $totalBooks,
+                'total_receipts' => $totalReceipts,
+                'received_by' => $request->received_by ?? $branch->branch_name,
+                'remarks' => "Distributed to {$branch->branch_name}"
+            ]);
 
-                // Update available_receipts
-                $subsequentReceipt->available_receipts += $receiveQuantityDiff - $givenQuantityDiff;
-                $subsequentReceipt->save();
+            // Update books location and status
+            foreach ($availableBooks as $book) {
+                $book->update([
+                    'status' => 'distributed',
+                    'location_type' => 'branch',
+                    'location_id' => $branchId,
+                    'parent_transaction_id' => $transaction->id
+                ]);
+
+                // Link book to transaction
+                BookDistribution::create([
+                    'stock_transaction_id' => $transaction->id,
+                    'receipt_book_id' => $book->id
+                ]);
+            }
+
+            // Update head office inventory
+            $inventory = HeadOfficeInventory::where('lot_id', $lotId)->first();
+            if ($inventory) {
+                $inventory->total_stock_out += $totalReceipts;
+                $inventory->total_stock = $inventory->total_stock_in - $inventory->total_stock_out;
+                $inventory->save();
             }
 
             DB::commit();
-            return back()->with('success', 'Receipt updated successfully');
+
+            Log::info('Books distributed to branch', [
+                'branch' => $branch->branch_name,
+                'books' => "{$bookFrom}-{$bookTo}",
+                'receipts' => $totalReceipts
+            ]);
+
+            return back()->with('success', "Distributed {$totalBooks} books (Book #{$bookFrom}-#{$bookTo}) = {$totalReceipts} receipts to {$branch->branch_name}");
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Failed to update receipt', [
-                'receipt_id' => $receiptId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->with('error', 'Failed to update receipt: ' . $e->getMessage());
+            Log::error('Branch distribution failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to distribute: ' . $e->getMessage());
         }
     }
 
-    public function getBranchSummary(Request $request)
+    /**
+     * Branch Distributes to Person
+     * Entry: Person name + PIN + Quantity
+     * Auto Select: Next available books from branch stock
+     * Auto Generate: Book numbers, Receipt numbers
+     * Validation: Enough stock available
+     */
+    public function store(Request $request)
     {
-        $user = auth()->user();
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $branchId = $user->name === "Super Admin" ? $request->input('branch_id') : $user->branch_id;
-
-        $query = PaymentReceipt::query();
-
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        if ($startDate && $endDate) {
-            $query->whereBetween('transaction_date', [$startDate, $endDate]);
-        }
-
-        return $query->select(
-            DB::raw('SUM(receive_quantity) as total_received'),
-            DB::raw('SUM(given_quantity) as total_distributed'),
-            DB::raw('MAX(total_cumulative_quantity) as cumulative_total'),
-            DB::raw('(SELECT available_receipts FROM payment_receipts WHERE branch_id = ' . $branchId . ' ORDER BY id DESC LIMIT 1) as current_available')
-        )->first();
-    }
-
-    public function export(Request $request)
-    {
-        $user = auth()->user();
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $selectedBranch = $request->input('branch_id');
-
-        // Base query for receipts with branch information
-        $query = PaymentReceipt::query()
-            ->with('branch:id,branch_name')
-            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('transaction_date', [$startDate, $endDate]);
-            });
-
-        // Apply branch filter based on user role
-        if ($user->name === "Super Admin") {
-            if ($selectedBranch) {
-                $query->where('branch_id', $selectedBranch);
-            }
-        } else {
-            $query->where('branch_id', $user->branch_id);
-        }
-
-        // Get the receipts for the report
-        $receipts = $query->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
-
-        // Get branch name for title
-        $branchName = $selectedBranch
-            ? Branch::find($selectedBranch)->branch_name
-            : ($user->name === "Super Admin" ? 'All Branches' : $user->branch->branch_name);
-
-        // Calculate period summary
-        $periodSummary = [
-            'received' => $receipts->sum('receive_quantity'),
-            'distributed' => $receipts->sum('given_quantity')
-        ];
-
-        // Calculate all-time summary
-        $allTimeQuery = PaymentReceipt::query();
-
-        // Apply branch filter for all-time calculations
-        if ($user->name === "Super Admin") {
-            if ($selectedBranch) {
-                $allTimeQuery->where('branch_id', $selectedBranch);
-            }
-        } else {
-            $allTimeQuery->where('branch_id', $user->branch_id);
-        }
-
-        $allTimeReceipts = $allTimeQuery->get();
-
-        $allTimeSummary = [
-            'received' => $allTimeReceipts->sum('receive_quantity'),
-            'distributed' => $allTimeReceipts->sum('given_quantity'),
-            'available' => $allTimeReceipts->sum('receive_quantity') - $allTimeReceipts->sum('given_quantity')
-        ];
-
-        // Format dates for filename
-        $formattedStartDate = date('Y-m-d', strtotime($startDate));
-        $formattedEndDate = date('Y-m-d', strtotime($endDate));
-
-        // Generate PDF
-        $pdf = PDF::loadView('pdf.payment-receipts', [
-            'receipts' => $receipts,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'branchName' => $branchName,
-            'periodSummary' => $periodSummary,
-            'allTimeSummary' => $allTimeSummary
+        $validated = $request->validate([
+            'given_to' => 'required|string|max:255',
+            'pin_number' => 'nullable|string|max:50',
+            'quantity' => 'required|integer|min:100',
+            'transaction_date' => 'nullable|date',
         ]);
 
-        // Sanitize branch name for filename
-        $sanitizedBranchName = str_replace(['/', '\\', ' '], '_', $branchName);
+        try {
+            DB::beginTransaction();
 
-        // Return the PDF for download
-        return $pdf->download("payment_receipts_{$sanitizedBranchName}_{$formattedStartDate}_to_{$formattedEndDate}.pdf");
+            $branchId = auth()->user()->branch_id;
+            $quantity = (int) $request->quantity;
+            $transactionDate = $request->transaction_date ?? now();
+
+            // Validate quantity is multiple of 100
+            if ($quantity % 100 !== 0) {
+                throw new \Exception('Quantity must be in multiples of 100 (each book contains 100 receipts)');
+            }
+
+            $booksNeeded = $quantity / 100;
+
+            // Get available books at branch (auto select from start)
+            $availableBooks = ReceiptBook::where('location_type', 'branch')
+                ->where('location_id', $branchId)
+                ->where('status', 'distributed')
+                ->orderBy('lot_id')
+                ->orderBy('book_number')
+                ->limit($booksNeeded)
+                ->get();
+
+            // Check if enough books available
+            if ($availableBooks->count() < $booksNeeded) {
+                $currentStock = ReceiptBook::where('location_type', 'branch')
+                    ->where('location_id', $branchId)
+                    ->where('status', 'distributed')
+                    ->get()
+                    ->sum(fn($b) => $b->getTotalReceipts());
+
+                throw new \Exception("Not enough stock! You need {$booksNeeded} books ({$quantity} receipts), but only " . ($availableBooks->count()) . " books ({$currentStock} receipts) available");
+            }
+
+            // Get transaction details (use actual book data, no calculation needed)
+            $lotId = $availableBooks->first()->lot_id;
+            $bookFrom = $availableBooks->first()->book_number;
+            $bookTo = $availableBooks->last()->book_number;
+            $receiptFrom = $availableBooks->first()->from_number; // Already correct from DB
+            $receiptTo = $availableBooks->last()->to_number;       // Already correct from DB
+
+            // Create stock transaction
+            $transaction = StockTransaction::create([
+                'lot_id' => $lotId,
+                'transaction_type' => 'distribute_to_person',
+                'branch_id' => $branchId,
+                'transaction_date' => $transactionDate,
+                'book_from' => $bookFrom,
+                'book_to' => $bookTo,
+                'receipt_from' => $receiptFrom,
+                'receipt_to' => $receiptTo,
+                'total_books' => $booksNeeded,
+                'total_receipts' => $quantity,
+                'given_to' => $request->given_to,
+                'pin_number' => $request->pin_number,
+                'remarks' => "Distributed to {$request->given_to}" . ($request->pin_number ? " (PIN: {$request->pin_number})" : '')
+            ]);
+
+            // Update books status
+            foreach ($availableBooks as $book) {
+                $book->update([
+                    'status' => 'used',
+                    'location_type' => 'person',
+                    'location_id' => $request->given_to . ($request->pin_number ? '-' . $request->pin_number : ''),
+                    'parent_transaction_id' => $transaction->id
+                ]);
+
+                // Link book to transaction
+                BookDistribution::create([
+                    'stock_transaction_id' => $transaction->id,
+                    'receipt_book_id' => $book->id
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Books distributed to person', [
+                'person' => $request->given_to,
+                'pin' => $request->pin_number,
+                'books' => "{$bookFrom}-{$bookTo}",
+                'receipts' => $quantity
+            ]);
+
+            $bookDetails = $booksNeeded > 1
+                ? "{$booksNeeded} books (Book #{$bookFrom}-#{$bookTo})"
+                : "1 book (Book #{$bookFrom})";
+
+            return back()->with('success', "Distributed {$bookDetails} = {$quantity} receipts to {$request->given_to}");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Person distribution failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to distribute: ' . $e->getMessage());
+        }
     }
 
+    /**
+     * Get Available Books at Branch (for Branch User)
+     * Returns: Book details, total available
+     */
+    public function getAvailableBooks(Request $request)
+    {
+        try {
+            $branchId = $request->branch_id ?? auth()->user()->branch_id;
 
+            $books = ReceiptBook::where('location_type', 'branch')
+                ->where('location_id', $branchId)
+                ->where('status', 'distributed')
+                ->with('lot')
+                ->orderBy('lot_id')
+                ->orderBy('book_number')
+                ->get()
+                ->map(function ($book) {
+                    return [
+                        'id' => $book->id,
+                        'lot_number' => $book->lot->lot_number,
+                        'lot_name' => $book->lot->lot_name,
+                        'book_number' => $book->book_number,
+                        'from_number' => $book->from_number,
+                        'to_number' => $book->to_number,
+                        'receipts' => $book->getTotalReceipts()
+                    ];
+                });
+
+            $totalAvailable = $books->sum('receipts');
+            $totalBooks = $books->count();
+
+            // Group by lot
+            $byLot = $books->groupBy('lot_number')->map(function ($lotBooks) {
+                return [
+                    'lot_number' => $lotBooks->first()['lot_number'],
+                    'lot_name' => $lotBooks->first()['lot_name'],
+                    'total_books' => $lotBooks->count(),
+                    'total_receipts' => $lotBooks->sum('receipts'),
+                    'books' => $lotBooks->values()
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'books' => $books,
+                'by_lot' => $byLot,
+                'summary' => [
+                    'total_books' => $totalBooks,
+                    'total_receipts' => $totalAvailable
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get available books', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Available Books in Lot (for Super Admin)
+     * Returns: Available books in head office for selected lot
+     */
+    public function getLotBooks(Request $request, $lotId)
+    {
+        try {
+            $lot = Lot::findOrFail($lotId);
+
+            $books = ReceiptBook::where('lot_id', $lotId)
+                ->where('status', 'available')
+                ->where('location_type', 'head_office')
+                ->orderBy('book_number')
+                ->get()
+                ->map(function ($book) {
+                    return [
+                        'id' => $book->id,
+                        'book_number' => $book->book_number,
+                        'from_number' => $book->from_number,
+                        'to_number' => $book->to_number,
+                        'receipts' => $book->getTotalReceipts()
+                    ];
+                });
+
+            if ($books->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No books available in this lot at head office'
+                ], 404);
+            }
+
+            $bookFrom = $books->first()['book_number'];
+            $bookTo = $books->last()['book_number'];
+            $totalBooks = $books->count();
+            $totalReceipts = $books->sum('receipts');
+
+            return response()->json([
+                'success' => true,
+                'lot' => [
+                    'id' => $lot->id,
+                    'lot_number' => $lot->lot_number,
+                    'lot_name' => $lot->lot_name
+                ],
+                'books' => $books,
+                'summary' => [
+                    'total_books' => $totalBooks,
+                    'total_receipts' => $totalReceipts,
+                    'book_range' => "{$bookFrom} - {$bookTo}",
+                    'receipt_range' => "{$books->first()['from_number']} - {$books->last()['to_number']}"
+                ],
+                'suggested_range' => [
+                    'book_from' => $bookFrom,
+                    'book_to' => $bookTo
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get lot books', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Branch Transactions (for modal/details view)
+     */
+    public function getBranchTransactions(Request $request, Branch $branch)
+    {
+        try {
+            $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+            $transactions = StockTransaction::where('branch_id', $branch->id)
+                ->with(['lot', 'bookDistributions.receiptBook'])
+                ->whereBetween('transaction_date', [$startDate, $endDate])
+                ->orderBy('transaction_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'transaction_date' => $transaction->transaction_date->format('Y-m-d'),
+                        'transaction_type' => $transaction->transaction_type,
+                        'lot_number' => $transaction->lot->lot_number,
+                        'book_from' => $transaction->book_from,
+                        'book_to' => $transaction->book_to,
+                        'receipt_from' => $transaction->receipt_from,
+                        'receipt_to' => $transaction->receipt_to,
+                        'total_books' => $transaction->total_books,
+                        'total_receipts' => $transaction->total_receipts,
+                        'given_to' => $transaction->given_to,
+                        'pin_number' => $transaction->pin_number,
+                        'received_by' => $transaction->received_by,
+                        'remarks' => $transaction->remarks,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'transactions' => $transactions
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get branch transactions', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update Transaction (for corrections)
+     */
+    public function update(Request $request, $transactionId)
+    {
+        $validated = $request->validate([
+            'transaction_date' => 'required|date',
+            'given_to' => 'nullable|string|max:255',
+            'pin_number' => 'nullable|string|max:50',
+            'received_by' => 'nullable|string|max:255',
+            'remarks' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $transaction = StockTransaction::findOrFail($transactionId);
+
+            // Only allow updating certain fields
+            $transaction->update([
+                'transaction_date' => $request->transaction_date,
+                'given_to' => $request->given_to ?? $transaction->given_to,
+                'pin_number' => $request->pin_number ?? $transaction->pin_number,
+                'received_by' => $request->received_by ?? $transaction->received_by,
+                'remarks' => $request->remarks ?? $transaction->remarks,
+            ]);
+
+            // If person info changed, update book locations
+            if (
+                $transaction->transaction_type === 'distribute_to_person' &&
+                ($request->given_to || $request->pin_number)
+            ) {
+
+                $newLocationId = ($request->given_to ?? $transaction->given_to) .
+                    ($request->pin_number ? '-' . $request->pin_number : '');
+
+                ReceiptBook::whereIn(
+                    'id',
+                    $transaction->bookDistributions->pluck('receipt_book_id')
+                )->update([
+                    'location_id' => $newLocationId
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Transaction updated', ['id' => $transaction->id]);
+
+            return back()->with('success', 'Transaction updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Transaction update failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to update: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete Transaction (with book restoration)
+     */
+    public function destroy($transactionId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $transaction = StockTransaction::findOrFail($transactionId);
+            $transactionType = $transaction->transaction_type;
+
+            // Get books from this transaction
+            $bookDistributions = BookDistribution::where('stock_transaction_id', $transaction->id)
+                ->with('receiptBook')
+                ->get();
+
+            // Restore books based on transaction type
+            foreach ($bookDistributions as $distribution) {
+                $book = $distribution->receiptBook;
+
+                if ($transactionType === 'stock_in') {
+                    // Delete books if stock was added
+                    $book->delete();
+                } elseif ($transactionType === 'distribute_to_branch') {
+                    // Return to head office
+                    $book->update([
+                        'status' => 'available',
+                        'location_type' => 'head_office',
+                        'location_id' => null,
+                        'parent_transaction_id' => null
+                    ]);
+                } elseif ($transactionType === 'distribute_to_person') {
+                    // Return to branch
+                    $book->update([
+                        'status' => 'distributed',
+                        'location_type' => 'branch',
+                        'location_id' => $transaction->branch_id,
+                        'parent_transaction_id' => null
+                    ]);
+                }
+            }
+
+            // Update inventory
+            if ($transactionType === 'stock_in') {
+                $inventory = HeadOfficeInventory::where('lot_id', $transaction->lot_id)->first();
+                if ($inventory) {
+                    $inventory->total_books -= $transaction->total_books;
+                    $inventory->total_stock_in -= $transaction->total_receipts;
+                    $inventory->total_stock = $inventory->total_stock_in - $inventory->total_stock_out;
+                    $inventory->save();
+                }
+            } elseif ($transactionType === 'distribute_to_branch') {
+                $inventory = HeadOfficeInventory::where('lot_id', $transaction->lot_id)->first();
+                if ($inventory) {
+                    $inventory->total_stock_out -= $transaction->total_receipts;
+                    $inventory->total_stock = $inventory->total_stock_in - $inventory->total_stock_out;
+                    $inventory->save();
+                }
+            }
+
+            // Delete book distributions
+            BookDistribution::where('stock_transaction_id', $transaction->id)->delete();
+
+            // Delete transaction
+            $transaction->delete();
+
+            DB::commit();
+
+            Log::info('Transaction deleted', [
+                'id' => $transactionId,
+                'type' => $transactionType
+            ]);
+
+            return back()->with('success', 'Transaction deleted and books restored successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Transaction delete failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to delete: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get Stock Summary (for dashboard widgets)
+     */
+    public function getBranchSummary(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+            $branchId = $user->name === "Super Admin" ? $request->input('branch_id') : $user->branch_id;
+
+            if (!$branchId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Branch ID required'
+                ], 400);
+            }
+
+            $query = StockTransaction::where('branch_id', $branchId);
+
+            if ($startDate && $endDate) {
+                $query->whereBetween('transaction_date', [$startDate, $endDate]);
+            }
+
+            $received = $query->clone()
+                ->where('transaction_type', 'distribute_to_branch')
+                ->sum('total_receipts');
+
+            $distributed = $query->clone()
+                ->where('transaction_type', 'distribute_to_person')
+                ->sum('total_receipts');
+
+            $currentAvailable = ReceiptBook::where('location_type', 'branch')
+                ->where('location_id', $branchId)
+                ->where('status', 'distributed')
+                ->get()
+                ->sum(fn($b) => $b->getTotalReceipts());
+
+            return response()->json([
+                'success' => true,
+                'summary' => [
+                    'total_received' => $received,
+                    'total_distributed' => $distributed,
+                    'current_available' => $currentAvailable,
+                    'period_start' => $startDate,
+                    'period_end' => $endDate
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get summary', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export to PDF - Branch wise report
+     */
+    public function export(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+            $selectedBranch = $request->input('branch_id');
+
+            // Base query for transactions
+            $query = StockTransaction::with(['branch', 'lot'])
+                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('transaction_date', [$startDate, $endDate]);
+                });
+
+            // Apply branch filter based on user role
+            if ($user->name === "Super Admin") {
+                if ($selectedBranch) {
+                    $query->where('branch_id', $selectedBranch);
+                }
+            } else {
+                $query->where('branch_id', $user->branch_id);
+            }
+
+            $transactions = $query->orderBy('transaction_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            // Get branch name
+            $branchName = $selectedBranch
+                ? Branch::find($selectedBranch)->branch_name
+                : ($user->name === "Super Admin" ? 'All Branches' : $user->branch->branch_name);
+
+            // Calculate summaries
+            $periodReceived = $transactions->where('transaction_type', 'distribute_to_branch')->sum('total_receipts');
+            $periodDistributed = $transactions->where('transaction_type', 'distribute_to_person')->sum('total_receipts');
+
+            // All time summary
+            $allTimeQuery = StockTransaction::query();
+            if ($user->name === "Super Admin") {
+                if ($selectedBranch) {
+                    $allTimeQuery->where('branch_id', $selectedBranch);
+                }
+            } else {
+                $allTimeQuery->where('branch_id', $user->branch_id);
+            }
+
+            $allTimeReceived = $allTimeQuery->clone()->where('transaction_type', 'distribute_to_branch')->sum('total_receipts');
+            $allTimeDistributed = $allTimeQuery->clone()->where('transaction_type', 'distribute_to_person')->sum('total_receipts');
+            $currentAvailable = $allTimeReceived - $allTimeDistributed;
+
+            $periodSummary = [
+                'received' => $periodReceived,
+                'distributed' => $periodDistributed
+            ];
+
+            $allTimeSummary = [
+                'received' => $allTimeReceived,
+                'distributed' => $allTimeDistributed,
+                'available' => $currentAvailable
+            ];
+
+            // Generate PDF
+            $pdf = PDF::loadView('pdf.payment-receipts', [
+                'transactions' => $transactions,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'branchName' => $branchName,
+                'periodSummary' => $periodSummary,
+                'allTimeSummary' => $allTimeSummary
+            ]);
+
+            $sanitizedBranchName = str_replace(['/', '\\', ' '], '_', $branchName);
+            $filename = "payment_receipts_{$sanitizedBranchName}_" .
+                Carbon::parse($startDate)->format('Y_m_d') . "_to_" .
+                Carbon::parse($endDate)->format('Y_m_d') . ".pdf";
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('PDF export failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate Detailed Report (Landscape format)
+     */
     public function generateReport(Request $request)
     {
         try {
@@ -579,65 +1050,94 @@ class PaymentReceiptController extends Controller
             $endDate = $request->end_date;
             $branchId = $request->branch_id;
 
-            // Build query bindings array first
-            $bindings = [$startDate, $endDate];
-            if ($branchId) {
-                $bindings[] = $branchId;
-            }
-
             // Get branch summaries
-            $branchQuery = Branch::select(
-                'branches.id',
-                'branches.branch_name',
-                DB::raw('COALESCE(filtered.total_received, 0) as period_received'),
-                DB::raw('COALESCE(filtered.total_distributed, 0) as period_distributed'),
-                DB::raw('COALESCE(all_time.total_received, 0) as all_time_received'),
-                DB::raw('COALESCE(all_time.total_distributed, 0) as all_time_distributed'),
-                DB::raw('COALESCE(latest.available_receipts, 0) as current_available')
-            )
-                ->leftJoin(DB::raw("(
-                SELECT
-                    branch_id,
-                    SUM(receive_quantity) as total_received,
-                    SUM(given_quantity) as total_distributed
-                FROM payment_receipts
-                WHERE transaction_date BETWEEN ? AND ?
-                GROUP BY branch_id
-            ) as filtered"), 'branches.id', '=', 'filtered.branch_id')
-                ->leftJoin(DB::raw("(
-                SELECT
-                    branch_id,
-                    SUM(receive_quantity) as total_received,
-                    SUM(given_quantity) as total_distributed
-                FROM payment_receipts
-                GROUP BY branch_id
-            ) as all_time"), 'branches.id', '=', 'all_time.branch_id')
-                ->leftJoin(DB::raw("(
-                SELECT p1.*
-                FROM payment_receipts p1
-                INNER JOIN (
-                    SELECT branch_id, MAX(id) as max_id
-                    FROM payment_receipts
-                    GROUP BY branch_id
-                ) p2 ON p1.branch_id = p2.branch_id AND p1.id = p2.max_id
-            ) as latest"), 'branches.id', '=', 'latest.branch_id');
+            $branches = Branch::select('branches.*')
+                ->when($branchId, fn($q) => $q->where('branches.id', $branchId))
+                ->get()
+                ->map(function ($branch) use ($startDate, $endDate) {
+                    $periodReceived = StockTransaction::where('branch_id', $branch->id)
+                        ->where('transaction_type', 'distribute_to_branch')
+                        ->whereBetween('transaction_date', [$startDate, $endDate])
+                        ->sum('total_receipts');
 
-            // Apply branch filter if specified
-            if ($branchId) {
-                $branchQuery->where('branches.id', $branchId);
-            }
+                    $periodDistributed = StockTransaction::where('branch_id', $branch->id)
+                        ->where('transaction_type', 'distribute_to_person')
+                        ->whereBetween('transaction_date', [$startDate, $endDate])
+                        ->sum('total_receipts');
 
-            // Now set all bindings at once
-            $branches = $branchQuery->setBindings($bindings)->get();
+                    $allTimeReceived = StockTransaction::where('branch_id', $branch->id)
+                        ->where('transaction_type', 'distribute_to_branch')
+                        ->sum('total_receipts');
 
-            // Get transactions
-            $transactions = PaymentReceipt::with('branch:id,branch_name')
+                    $allTimeDistributed = StockTransaction::where('branch_id', $branch->id)
+                        ->where('transaction_type', 'distribute_to_person')
+                        ->sum('total_receipts');
+
+                    $currentAvailable = ReceiptBook::where('location_type', 'branch')
+                        ->where('location_id', $branch->id)
+                        ->where('status', 'distributed')
+                        ->get()
+                        ->sum(fn($b) => $b->getTotalReceipts());
+
+                    return [
+                        'id' => $branch->id,
+                        'branch_name' => $branch->branch_name,
+                        'branch_code' => $branch->branch_code,
+                        'period_received' => $periodReceived,
+                        'period_distributed' => $periodDistributed,
+                        'all_time_received' => $allTimeReceived,
+                        'all_time_distributed' => $allTimeDistributed,
+                        'current_available' => $currentAvailable
+                    ];
+                });
+
+            // Get transactions ordered by date ascending first to calculate running balance
+            $transactions = StockTransaction::with(['branch', 'lot'])
                 ->whereBetween('transaction_date', [$startDate, $endDate])
-                ->when($branchId, function ($query) use ($branchId) {
-                    return $query->where('branch_id', $branchId);
-                })
-                ->orderBy('transaction_date', 'desc')
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->orderBy('transaction_date', 'asc')
+                ->orderBy('id', 'asc')
                 ->get();
+
+            // Calculate running balance for each branch
+            $branchBalances = [];
+            $formattedTransactions = $transactions->map(function ($transaction) use (&$branchBalances) {
+                $branchId = $transaction->branch_id;
+                if (!isset($branchBalances[$branchId])) {
+                    // Get initial balance at start date by calculating all previous transactions
+                    $previousBalance = StockTransaction::where('branch_id', $branchId)
+                        ->where('transaction_date', '<', $transaction->transaction_date)
+                        ->get()
+                        ->reduce(function ($balance, $tx) {
+                            if ($tx->transaction_type === 'distribute_to_branch') {
+                                return $balance + $tx->total_receipts;
+                            } elseif ($tx->transaction_type === 'distribute_to_person') {
+                                return $balance - $tx->total_receipts;
+                            }
+                            return $balance;
+                        }, 0);
+                    $branchBalances[$branchId] = $previousBalance;
+                }
+
+                // Update running balance
+                if ($transaction->transaction_type === 'distribute_to_branch') {
+                    $branchBalances[$branchId] += $transaction->total_receipts;
+                } elseif ($transaction->transaction_type === 'distribute_to_person') {
+                    $branchBalances[$branchId] -= $transaction->total_receipts;
+                }
+
+                return [
+                    'transaction_date' => $transaction->transaction_date,
+                    'branch_name' => optional($transaction->branch)->branch_name ?? 'N/A',
+                    'receive_quantity' => $transaction->transaction_type === 'distribute_to_branch' ? $transaction->total_receipts : null,
+                    'given_quantity' => $transaction->transaction_type === 'distribute_to_person' ? $transaction->total_receipts : null,
+                    'available_receipts' => $branchBalances[$branchId],
+                    'receipt_book_number' => $transaction->book_from . '-' . $transaction->book_to
+                ];
+            });
+
+            // Re-sort transactions to display in descending order
+            $transactions = $formattedTransactions->sortByDesc('transaction_date')->values();
 
             // Calculate totals
             $totals = [
@@ -652,7 +1152,7 @@ class PaymentReceiptController extends Controller
                     'start_date' => Carbon::parse($startDate)->format('d/m/Y'),
                     'end_date' => Carbon::parse($endDate)->format('d/m/Y'),
                     'generated_at' => now()->format('d/m/Y H:i:s'),
-                    'branch' => $branchId ? $branches->first()->branch_name : 'All Branches'
+                    'branch' => $branchId ? $branches->first()['branch_name'] : 'All Branches'
                 ],
                 'branches' => $branches,
                 'transactions' => $transactions,
@@ -661,16 +1161,180 @@ class PaymentReceiptController extends Controller
 
             $pdf = Pdf::loadView('reports.payment-receipts', $data);
 
-            // Generate filename
             $filename = 'payment_receipts_' .
-                ($branchId ? strtolower(str_replace(' ', '_', $branches->first()->branch_name)) : 'all_branches') . '_' .
+                ($branchId ? strtolower(str_replace(' ', '_', $branches->first()['branch_name'])) : 'all_branches') . '_' .
                 Carbon::parse($startDate)->format('Y_m_d') . '_to_' .
                 Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
 
             return $pdf->setPaper('a4', 'landscape')->download($filename);
         } catch (\Exception $e) {
-            \Log::error('Report Generation Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to generate report: ' . $e->getMessage()], 422);
+            Log::error('Report generation failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    /**
+     * Get All Active Lots (for dropdowns)
+     */
+    public function getActiveLots()
+    {
+        try {
+            $lots = Lot::where('is_active', true)
+                ->withCount([
+                    'receiptBooks as available_books' => function ($q) {
+                        $q->where('status', 'available')
+                            ->where('location_type', 'head_office');
+                    }
+                ])
+                ->get()
+                ->map(function ($lot) {
+                    $availableReceipts = ReceiptBook::where('lot_id', $lot->id)
+                        ->where('status', 'available')
+                        ->where('location_type', 'head_office')
+                        ->sum(DB::raw('(to_number - from_number + 1)'));
+
+                    return [
+                        'id' => $lot->id,
+                        'lot_number' => $lot->lot_number,
+                        'lot_name' => $lot->lot_name,
+                        'available_books' => $lot->available_books,
+                        'available_receipts' => $availableReceipts,
+                        'has_stock' => $lot->available_books > 0
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'lots' => $lots
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get lots', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create New Lot (for Super Admin)
+     */
+    public function createLot(Request $request)
+    {
+        $validated = $request->validate([
+            'lot_name' => 'required|string|max:255'
+        ]);
+
+        try {
+            $lot = Lot::create([
+                'lot_number' => Lot::generateNextLotNumber(),
+                'lot_name' => $request->lot_name,
+                'is_active' => true
+            ]);
+
+            Log::info('New lot created', ['lot' => $lot->lot_number]);
+
+            return response()->json([
+                'success' => true,
+                'lot' => [
+                    'id' => $lot->id,
+                    'lot_number' => $lot->lot_number,
+                    'lot_name' => $lot->lot_name
+                ],
+                'message' => "Lot {$lot->lot_number} created successfully"
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Lot creation failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create lot: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle Lot Status (activate/deactivate)
+     */
+    public function toggleLotStatus($lotId)
+    {
+        try {
+            $lot = Lot::findOrFail($lotId);
+            $lot->is_active = !$lot->is_active;
+            $lot->save();
+
+            Log::info('Lot status toggled', [
+                'lot' => $lot->lot_number,
+                'status' => $lot->is_active ? 'active' : 'inactive'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'lot' => $lot,
+                'message' => "Lot {$lot->lot_number} " . ($lot->is_active ? 'activated' : 'deactivated')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to toggle lot status', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Transaction Details (for modal view)
+     */
+    public function getTransactionDetails($transactionId)
+    {
+        try {
+            $transaction = StockTransaction::with([
+                'lot',
+                'branch',
+                'bookDistributions.receiptBook'
+            ])->findOrFail($transactionId);
+
+            $books = $transaction->bookDistributions->map(function ($dist) {
+                $book = $dist->receiptBook;
+                return [
+                    'book_number' => $book->book_number,
+                    'from_number' => $book->from_number,
+                    'to_number' => $book->to_number,
+                    'receipts' => $book->getTotalReceipts(),
+                    'status' => $book->status
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'transaction' => [
+                    'id' => $transaction->id,
+                    'transaction_type' => $transaction->transaction_type,
+                    'transaction_date' => $transaction->transaction_date->format('Y-m-d'),
+                    'lot_number' => $transaction->lot->lot_number,
+                    'lot_name' => $transaction->lot->lot_name,
+                    'branch_name' => $transaction->branch->branch_name ?? 'N/A',
+                    'book_from' => $transaction->book_from,
+                    'book_to' => $transaction->book_to,
+                    'receipt_from' => $transaction->receipt_from,
+                    'receipt_to' => $transaction->receipt_to,
+                    'total_books' => $transaction->total_books,
+                    'total_receipts' => $transaction->total_receipts,
+                    'given_to' => $transaction->given_to,
+                    'pin_number' => $transaction->pin_number,
+                    'received_by' => $transaction->received_by,
+                    'remarks' => $transaction->remarks,
+                    'books' => $books
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get transaction details', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
         }
     }
 }

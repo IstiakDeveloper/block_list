@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\BranchOfficer;
-use App\Models\ReceiptStock;
-use App\Models\ReceiptTransfer;
-use App\Models\OfficerReceiptDistribution;
+use App\Models\StockTransaction;
+use App\Models\BookDistribution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -63,9 +62,23 @@ class PaymentReceiptDashboardController extends Controller
             ->with([
                 'receiptStock' => function ($query) {
                     $query->select('branch_id', 'total_receipts', 'available_receipts', 'used_receipts');
+                },
+                'officers' => function ($query) {
+                    $query->where('is_active', true)
+                        ->select('id', 'branch_id', 'name', 'pin_number');
                 }
             ])
-            ->get(['id', 'branch_name']);
+            ->withCount(['officers' => function ($query) {
+                $query->where('is_active', true);
+            }])
+            ->orderBy('branch_code')
+            ->get([
+                'id',
+                'branch_name',
+                'branch_code',
+                'address',
+                'contact_number'
+            ]);
     }
 
     /**
@@ -93,7 +106,7 @@ class PaymentReceiptDashboardController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->count();
 
-        $receiptStats = ReceiptStock::whereIn('branch_id', $branchIds)
+        $receiptStats = StockTransaction::whereIn('branch_id', $branchIds)
             ->selectRaw('
             COALESCE(SUM(total_receipts), 0) as total,
             COALESCE(SUM(used_receipts), 0) as used,
@@ -106,7 +119,7 @@ class PaymentReceiptDashboardController extends Controller
 
         return [
             'branches' => [
-                'total' => $branchIds->count(),  // Removed is_active check
+                'total' => $branchIds->count(),
             ],
             'activeOfficers' => $activeOfficers,
             'receipts' => [
@@ -127,7 +140,7 @@ class PaymentReceiptDashboardController extends Controller
         $previousStart = $startDate->copy()->subDays($periodDays);
         $previousEnd = $endDate->copy()->subDays($periodDays);
 
-        return ReceiptStock::whereIn('branch_id', $branchIds)
+        return StockTransaction::whereIn('branch_id', $branchIds)
             ->whereBetween('created_at', [$previousStart, $previousEnd])
             ->selectRaw('
                 COALESCE(SUM(total_receipts), 0) as total,
@@ -136,6 +149,8 @@ class PaymentReceiptDashboardController extends Controller
             ')
             ->first();
     }
+
+
 
     /**
      * Calculate percentage changes from previous period.
@@ -160,7 +175,7 @@ class PaymentReceiptDashboardController extends Controller
      */
     private function getRecentActivities($branchIds, Carbon $startDate, Carbon $endDate): array
     {
-        $transfers = ReceiptTransfer::with(['fromBranch:id,branch_name', 'toBranch:id,branch_name', 'user:id,name'])
+        $transfers = BookDistribution::with(['fromBranch:id,branch_name', 'toBranch:id,branch_name', 'user:id,name'])
             ->where(function ($query) use ($branchIds) {
                 $query->whereIn('from_branch_id', $branchIds)
                     ->orWhereIn('to_branch_id', $branchIds);
@@ -170,7 +185,7 @@ class PaymentReceiptDashboardController extends Controller
             ->take(5)
             ->get();
 
-        $distributions = OfficerReceiptDistribution::with([
+        $distributions = BranchOfficer::with([
             'branch:id,branch_name',
             'officer:id,name,pin_number',
             'user:id,name'

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('receipt_stocks', function (Blueprint $table) {
+        Schema::create('lots', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
-            $table->integer('total_receipts')->default(0);
-            $table->integer('used_receipts')->default(0);
-            $table->integer('available_receipts')->default(0);
+            $table->string('lot_number')->unique()->comment('Lot-1, Lot-2, etc.');
+            $table->string('lot_name')->nullable()->comment('Optional descriptive name');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('receipt_stocks');
+        Schema::dropIfExists('lots');
     }
 };

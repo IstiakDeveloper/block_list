@@ -211,28 +211,28 @@
     <div class="section-title">Branch-wise Summary</div>
     @foreach($branches as $branch)
     <div class="branch-summary">
-        <div class="branch-header">{{ $branch->branch_name }}</div>
+        <div class="branch-header">{{ $branch['branch_name'] }}</div>
         <div class="stats-grid">
             <div class="stat-cell">
                 <div class="stat-label">PERIOD RECEIVED</div>
-                <div class="stat-value">{{ number_format($branch->period_received) }}</div>
+                <div class="stat-value">{{ number_format($branch['period_received']) }}</div>
             </div>
             <div class="stat-cell">
                 <div class="stat-label">PERIOD DISTRIBUTED</div>
-                <div class="stat-value">{{ number_format($branch->period_distributed) }}</div>
+                <div class="stat-value">{{ number_format($branch['period_distributed']) }}</div>
             </div>
             <div class="stat-cell">
                 <div class="stat-label">ALL TIME RECEIVED</div>
-                <div class="stat-value">{{ number_format($branch->all_time_received) }}</div>
+                <div class="stat-value">{{ number_format($branch['all_time_received']) }}</div>
             </div>
             <div class="stat-cell">
                 <div class="stat-label">AVAILABLE
                     <span class="status-indicator
-                        {{ $branch->current_available >= 500 ? 'status-good' :
-                           ($branch->current_available >= 100 ? 'status-warning' : 'status-danger') }}">
+                        {{ $branch['current_available'] >= 500 ? 'status-good' :
+                           ($branch['current_available'] >= 100 ? 'status-warning' : 'status-danger') }}">
                     </span>
                 </div>
-                <div class="stat-value">{{ number_format($branch->current_available) }}</div>
+                <div class="stat-value">{{ number_format($branch['current_available']) }}</div>
             </div>
         </div>
     </div>
@@ -254,12 +254,12 @@
         <tbody>
             @foreach($transactions as $transaction)
             <tr class="{{ $loop->even ? 'highlight' : '' }}">
-                <td>{{ \Carbon\Carbon::parse($transaction->transaction_date)->format('d/m/Y') }}</td>
-                <td>{{ $transaction->branch->branch_name }}</td>
-                <td style="color: #059669">{{ $transaction->receive_quantity ?: '-' }}</td>
-                <td style="color: #2563eb">{{ $transaction->given_quantity ?: '-' }}</td>
-                <td>{{ $transaction->available_receipts }}</td>
-                <td>{{ $transaction->receipt_book_number ?: '-' }}</td>
+                <td>{{ date('d/m/Y', strtotime($transaction['transaction_date'])) }}</td>
+                <td>{{ $transaction['branch_name'] }}</td>
+                <td style="color: #059669">{{ $transaction['receive_quantity'] ? number_format($transaction['receive_quantity']) : '-' }}</td>
+                <td style="color: #2563eb">{{ $transaction['given_quantity'] ? number_format($transaction['given_quantity']) : '-' }}</td>
+                <td>{{ number_format($transaction['available_receipts']) }}</td>
+                <td>{{ $transaction['receipt_book_number'] }}</td>
             </tr>
             @endforeach
         </tbody>
