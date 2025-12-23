@@ -45,21 +45,22 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|email|unique:users,email',
             'role' => 'required|string|in:admin,manager,user',
             'password' => 'required|string|min:8|confirmed',
-            'branch_ids' => 'nullable|array', // Expect an array of branch IDs
-            'branch_ids.*' => 'exists:branches,id', // Ensure each branch ID exists in the branches table
-            'branch_id' => 'required|exists:branches,id', // Ensure main branch exists
+            'branch_ids' => 'nullable|array',
+            'branch_ids.*' => 'exists:branches,id',
+            'branch_id' => 'required|exists:branches,id',
         ]);
 
-        // Create the user with role and branch_id
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
             'password' => Hash::make($request->password),
-            'branch_id' => $request->branch_id, // Set the main branch ID
+            'branch_id' => $request->branch_id,
         ]);
 
         // Attach the selected branches to the user
@@ -83,17 +84,18 @@ class UserController extends Controller
     // Update the specified user in storage
     public function update(Request $request, User $user)
     {
-        // $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'email' => 'required|email|unique:users,email,' . $user->id,
-        //     'password' => 'nullable|string|min:8|confirmed',
-        //     'branch_ids' => 'nullable|array',
-        //     'branch_ids.*' => 'exists:branches,id',
-        // ]);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'branch_ids' => 'nullable|array',
+            'branch_ids.*' => 'exists:branches,id',
+        ]);
 
-        // Update user data
         $user->update([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);

@@ -759,50 +759,275 @@ class PaymentReceiptController extends Controller
      */
     public function update(Request $request, $transactionId)
     {
-        $validated = $request->validate([
-            'transaction_date' => 'required|date',
-            'given_to' => 'nullable|string|max:255',
-            'pin_number' => 'nullable|string|max:50',
-            'received_by' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
-        ]);
-
         try {
             DB::beginTransaction();
 
             $transaction = StockTransaction::findOrFail($transactionId);
 
-            // Only allow updating certain fields
-            $transaction->update([
-                'transaction_date' => $request->transaction_date,
-                'given_to' => $request->given_to ?? $transaction->given_to,
-                'pin_number' => $request->pin_number ?? $transaction->pin_number,
-                'received_by' => $request->received_by ?? $transaction->received_by,
-                'remarks' => $request->remarks ?? $transaction->remarks,
-            ]);
-
-            // If person info changed, update book locations
-            if (
-                $transaction->transaction_type === 'distribute_to_person' &&
-                ($request->given_to || $request->pin_number)
-            ) {
-
-                $newLocationId = ($request->given_to ?? $transaction->given_to) .
-                    ($request->pin_number ? '-' . $request->pin_number : '');
-
-                ReceiptBook::whereIn(
-                    'id',
-                    $transaction->bookDistributions->pluck('receipt_book_id')
-                )->update([
-                    'location_id' => $newLocationId
+            // Stock In Transaction Update
+            if ($transaction->transaction_type === 'stock_in') {
+                $validated = $request->validate([
+                    'transaction_date' => 'required|date',
+                    'lot_id' => 'required|exists:lots,id',
+                    'book_from' => 'required|integer|min:1',
+                    'book_to' => 'required|integer|gte:book_from',
+                    'received_by' => 'nullable|string|max:255',
+                    'remarks' => 'nullable|string',
                 ]);
+
+                $oldLotId = $transaction->lot_id;
+                $oldBookFrom = $transaction->book_from;
+                $oldBookTo = $transaction->book_to;
+                $oldTotalBooks = $transaction->total_books;
+                $oldTotalReceipts = $transaction->total_receipts;
+
+                $newLotId = (int) $request->lot_id;
+                $newBookFrom = (int) $request->book_from;
+                $newBookTo = (int) $request->book_to;
+                $newTotalBooks = $newBookTo - $newBookFrom + 1;
+                $newTotalReceipts = $newTotalBooks * 100;
+
+                // Fixed formula: Book 1 → 1-100, Book 665 → 66401-66500
+                $newReceiptFrom = (($newBookFrom - 1) * 100) + 1;
+                $newReceiptTo = $newBookTo * 100;
+
+                // If lot or book range changed, we need to handle book records
+                if ($oldLotId !== $newLotId || $oldBookFrom !== $newBookFrom || $oldBookTo !== $newBookTo) {
+                    // Delete old books
+                    $oldBooks = $transaction->bookDistributions->pluck('receipt_book_id');
+                    ReceiptBook::whereIn('id', $oldBooks)->delete();
+                    BookDistribution::where('stock_transaction_id', $transaction->id)->delete();
+
+                    // Reverse old inventory changes
+                    $oldInventory = HeadOfficeInventory::where('lot_id', $oldLotId)->first();
+                    if ($oldInventory) {
+                        $oldInventory->total_books -= $oldTotalBooks;
+                        $oldInventory->total_stock_in -= $oldTotalReceipts;
+                        $oldInventory->total_stock = $oldInventory->total_stock_in - $oldInventory->total_stock_out;
+                        $oldInventory->save();
+                    }
+
+                    // Check if new books already exist in the new lot
+                    $existingBooks = ReceiptBook::where('lot_id', $newLotId)
+                        ->whereBetween('book_number', [$newBookFrom, $newBookTo])
+                        ->exists();
+
+                    if ($existingBooks) {
+                        throw new \Exception('Some books in this range already exist in the selected lot');
+                    }
+
+                    // Create new books
+                    $createdBooks = [];
+                    for ($bookNum = $newBookFrom; $bookNum <= $newBookTo; $bookNum++) {
+                        $fromReceipt = (($bookNum - 1) * 100) + 1;
+                        $toReceipt = $bookNum * 100;
+
+                        $book = ReceiptBook::create([
+                            'lot_id' => $newLotId,
+                            'book_number' => $bookNum,
+                            'from_number' => $fromReceipt,
+                            'to_number' => $toReceipt,
+                            'status' => 'available',
+                            'location_type' => 'head_office',
+                            'location_id' => null,
+                        ]);
+
+                        $createdBooks[] = $book;
+
+                        // Link book to transaction
+                        BookDistribution::create([
+                            'stock_transaction_id' => $transaction->id,
+                            'receipt_book_id' => $book->id
+                        ]);
+                    }
+
+                    // Update new inventory
+                    $newInventory = HeadOfficeInventory::firstOrCreate(
+                        ['lot_id' => $newLotId],
+                        [
+                            'total_books' => 0,
+                            'total_stock' => 0,
+                            'total_stock_in' => 0,
+                            'total_stock_out' => 0
+                        ]
+                    );
+
+                    $newInventory->total_books += $newTotalBooks;
+                    $newInventory->total_stock_in += $newTotalReceipts;
+                    $newInventory->total_stock = $newInventory->total_stock_in - $newInventory->total_stock_out;
+                    $newInventory->save();
+                }
+
+                // Update transaction record
+                $transaction->update([
+                    'transaction_date' => $request->transaction_date,
+                    'lot_id' => $newLotId,
+                    'book_from' => $newBookFrom,
+                    'book_to' => $newBookTo,
+                    'receipt_from' => $newReceiptFrom,
+                    'receipt_to' => $newReceiptTo,
+                    'total_books' => $newTotalBooks,
+                    'total_receipts' => $newTotalReceipts,
+                    'received_by' => $request->received_by ?? $transaction->received_by,
+                    'remarks' => $request->remarks ?? $transaction->remarks,
+                ]);
+
+                DB::commit();
+                Log::info('Stock In transaction updated', ['id' => $transaction->id]);
+                return back()->with('success', 'Stock In transaction updated successfully');
             }
+            // Distribute to Branch Transaction Update
+            elseif ($transaction->transaction_type === 'distribute_to_branch') {
+                $validated = $request->validate([
+                    'transaction_date' => 'required|date',
+                    'lot_id' => 'required|exists:lots,id',
+                    'book_from' => 'required|integer|min:1',
+                    'book_to' => 'required|integer|gte:book_from',
+                    'received_by' => 'nullable|string|max:255',
+                    'remarks' => 'nullable|string',
+                ]);
 
-            DB::commit();
+                $oldLotId = $transaction->lot_id;
+                $oldBranchId = $transaction->branch_id;
+                $oldBookFrom = $transaction->book_from;
+                $oldBookTo = $transaction->book_to;
+                $oldTotalBooks = $transaction->total_books;
+                $oldTotalReceipts = $transaction->total_receipts;
 
-            Log::info('Transaction updated', ['id' => $transaction->id]);
+                $newLotId = (int) $request->lot_id;
+                $newBookFrom = (int) $request->book_from;
+                $newBookTo = (int) $request->book_to;
+                $newTotalBooks = $newBookTo - $newBookFrom + 1;
+                $newTotalReceipts = $newTotalBooks * 100;
 
-            return back()->with('success', 'Transaction updated successfully');
+                // Fixed formula: Book 1 → 1-100, Book 665 → 66401-66500
+                $newReceiptFrom = (($newBookFrom - 1) * 100) + 1;
+                $newReceiptTo = $newBookTo * 100;
+
+                // If lot or book range changed, we need to handle book records
+                if ($oldLotId !== $newLotId || $oldBookFrom !== $newBookFrom || $oldBookTo !== $newBookTo) {
+                    // Return old books to head office
+                    $oldBooks = $transaction->bookDistributions->pluck('receipt_book_id');
+                    ReceiptBook::whereIn('id', $oldBooks)->update([
+                        'status' => 'available',
+                        'location_type' => 'head_office',
+                        'location_id' => null
+                    ]);
+
+                    // Reverse old inventory changes
+                    $oldHeadInventory = HeadOfficeInventory::where('lot_id', $oldLotId)->first();
+                    if ($oldHeadInventory) {
+                        $oldHeadInventory->total_stock_out -= $oldTotalReceipts;
+                        $oldHeadInventory->total_stock = $oldHeadInventory->total_stock_in - $oldHeadInventory->total_stock_out;
+                        $oldHeadInventory->save();
+                    }
+
+                    // Delete old book distributions
+                    BookDistribution::where('stock_transaction_id', $transaction->id)->delete();
+
+                    // Check if new books are available at head office
+                    $availableBooks = ReceiptBook::where('lot_id', $newLotId)
+                        ->where('status', 'available')
+                        ->where('location_type', 'head_office')
+                        ->whereBetween('book_number', [$newBookFrom, $newBookTo])
+                        ->orderBy('book_number')
+                        ->get();
+
+                    $expectedCount = $newBookTo - $newBookFrom + 1;
+
+                    if ($availableBooks->count() !== $expectedCount) {
+                        $missingBooks = [];
+                        for ($i = $newBookFrom; $i <= $newBookTo; $i++) {
+                            if (!$availableBooks->where('book_number', $i)->count()) {
+                                $missingBooks[] = $i;
+                            }
+                        }
+                        throw new \Exception("Books not available at head office. Missing: " . implode(', ', $missingBooks));
+                    }
+
+                    // Update books to distributed status
+                    foreach ($availableBooks as $book) {
+                        $book->update([
+                            'status' => 'distributed',
+                            'location_type' => 'branch',
+                            'location_id' => $oldBranchId,
+                            'parent_transaction_id' => $transaction->id
+                        ]);
+
+                        // Link book to transaction
+                        BookDistribution::create([
+                            'stock_transaction_id' => $transaction->id,
+                            'receipt_book_id' => $book->id
+                        ]);
+                    }
+
+                    // Update head office inventory
+                    $newHeadInventory = HeadOfficeInventory::where('lot_id', $newLotId)->first();
+                    if ($newHeadInventory) {
+                        $newHeadInventory->total_stock_out += $newTotalReceipts;
+                        $newHeadInventory->total_stock = $newHeadInventory->total_stock_in - $newHeadInventory->total_stock_out;
+                        $newHeadInventory->save();
+                    }
+                }
+
+                // Update transaction record
+                $transaction->update([
+                    'transaction_date' => $request->transaction_date,
+                    'lot_id' => $newLotId,
+                    'book_from' => $newBookFrom,
+                    'book_to' => $newBookTo,
+                    'receipt_from' => $newReceiptFrom,
+                    'receipt_to' => $newReceiptTo,
+                    'total_books' => $newTotalBooks,
+                    'total_receipts' => $newTotalReceipts,
+                    'received_by' => $request->received_by ?? $transaction->received_by,
+                    'remarks' => $request->remarks ?? $transaction->remarks,
+                ]);
+
+                DB::commit();
+                Log::info('Branch distribution transaction updated', ['id' => $transaction->id]);
+                return back()->with('success', 'Branch distribution transaction updated successfully');
+            }
+            // Distribute to Person Transaction Update
+            else {
+                $validated = $request->validate([
+                    'transaction_date' => 'required|date',
+                    'given_to' => 'nullable|string|max:255',
+                    'pin_number' => 'nullable|string|max:50',
+                    'received_by' => 'nullable|string|max:255',
+                    'remarks' => 'nullable|string',
+                ]);
+
+                // Only allow updating certain fields
+                $transaction->update([
+                    'transaction_date' => $request->transaction_date,
+                    'given_to' => $request->given_to ?? $transaction->given_to,
+                    'pin_number' => $request->pin_number ?? $transaction->pin_number,
+                    'received_by' => $request->received_by ?? $transaction->received_by,
+                    'remarks' => $request->remarks ?? $transaction->remarks,
+                ]);
+
+                // If person info changed, update book locations
+                if (
+                    $transaction->transaction_type === 'distribute_to_person' &&
+                    ($request->given_to || $request->pin_number)
+                ) {
+
+                    $newLocationId = ($request->given_to ?? $transaction->given_to) .
+                        ($request->pin_number ? '-' . $request->pin_number : '');
+
+                    ReceiptBook::whereIn(
+                        'id',
+                        $transaction->bookDistributions->pluck('receipt_book_id')
+                    )->update([
+                        'location_id' => $newLocationId
+                    ]);
+                }
+
+                DB::commit();
+                Log::info('Transaction updated', ['id' => $transaction->id]);
+                return back()->with('success', 'Transaction updated successfully');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Transaction update failed', ['error' => $e->getMessage()]);

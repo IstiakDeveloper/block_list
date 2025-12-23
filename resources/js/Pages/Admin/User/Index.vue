@@ -64,6 +64,14 @@
                                             :direction="filters.direction" />
                                     </div>
                                 </th>
+                                <th @click="sort('username')"
+                                    class="p-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
+                                    <div class="flex items-center">
+                                        Username
+                                        <SortIcon :field="'username'" :current-sort="filters.sort"
+                                            :direction="filters.direction" />
+                                    </div>
+                                </th>
                                 <th @click="sort('email')"
                                     class="p-4 hidden md:table-cell text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer">
                                     <div class="flex items-center">
@@ -95,8 +103,7 @@
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
                                     <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name
-                                            }}</span>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name }}</span>
                                         <!-- Mobile-only info -->
                                         <span class="text-xs text-gray-500 md:hidden mt-1">{{ user.email }}</span>
                                         <template class="md:hidden" v-if="getBranches(user).length > 0">
@@ -109,64 +116,10 @@
                                         </button>
                                     </template>
                                     <span v-else>No Branch</span>
-
-                                    <!-- Branch Modal -->
-                                    <div v-if="showBranchModal"
-                                        class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-                                        <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md relative">
-                                            <!-- Fixed Header -->
-                                            <div
-                                                class="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All
-                                                    Branches</h3>
-                                                <button @click="closeBranchModal"
-                                                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-
-                                            <!-- Scrollable Content -->
-                                            <div class="max-h-[60vh] overflow-y-auto p-4">
-                                                <div class="space-y-2">
-                                                    <div v-for="branch in selectedUserBranches"
-                                                        :key="branch.branch_name"
-                                                        class="p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                                                        <div class="flex items-center">
-                                                            <!-- Branch Icon -->
-                                                            <div class="mr-3 text-gray-400 dark:text-gray-500">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                                    viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                                </svg>
-                                                            </div>
-                                                            <!-- Branch Name -->
-                                                            <span
-                                                                class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                                {{ branch.branch_name }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Fixed Footer -->
-                                            <div
-                                                class="sticky bottom-0 bg-white dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700">
-                                                <button @click="closeBranchModal" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
-                       text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-lg
-                       transition-colors duration-150">
-                                                    Close
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
-                                    </div>
+                                </td>
+                                <td class="p-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    {{ user.username }}
                                 </td>
                                 <td
                                     class="p-4 hidden md:table-cell whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
@@ -182,63 +135,6 @@
                                         </button>
                                     </template>
                                     <span v-else>No Branch</span>
-
-                                    <!-- Branch Modal -->
-                                    <div v-if="showBranchModal"
-                                        class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-                                        <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md relative">
-                                            <!-- Fixed Header -->
-                                            <div
-                                                class="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All
-                                                    Branches</h3>
-                                                <button @click="closeBranchModal"
-                                                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-
-                                            <!-- Scrollable Content -->
-                                            <div class="max-h-[60vh] overflow-y-auto p-4">
-                                                <div class="space-y-2">
-                                                    <div v-for="branch in selectedUserBranches"
-                                                        :key="branch.branch_name"
-                                                        class="p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                                                        <div class="flex items-center">
-                                                            <!-- Branch Icon -->
-                                                            <div class="mr-3 text-gray-400 dark:text-gray-500">
-                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                                    viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                                </svg>
-                                                            </div>
-                                                            <!-- Branch Name -->
-                                                            <span
-                                                                class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                                {{ branch.branch_name }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Fixed Footer -->
-                                            <div
-                                                class="sticky bottom-0 bg-white dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700">
-                                                <button @click="closeBranchModal" class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
-                       text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-lg
-                       transition-colors duration-150">
-                                                    Close
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </td>
                                 <td class="p-4 whitespace-nowrap">
                                     <div

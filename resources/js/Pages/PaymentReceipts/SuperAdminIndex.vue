@@ -347,15 +347,12 @@
             @edit="handleEditTransaction"
             @delete="handleDeleteFromDetails" />
 
-        <EditTransactionModal :show="showEditModal" :transaction="selectedTransaction"
-            @close="showEditModal = false"
-            @success="handleEditSuccess" />
-
         <ReportModal :show="showReportModal" :branches="branches" :filters="filters" @close="showReportModal = false" />
 
         <EditTransactionModal
             :show="showEditModal"
             :transaction="selectedTransaction"
+            :active-lots="activeLots"
             @close="showEditModal = false"
             @success="handleEditSuccess"
         />

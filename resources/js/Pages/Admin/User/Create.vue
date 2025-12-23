@@ -14,6 +14,14 @@
                             required />
                         <InputError v-if="form.errors.name" :message="form.errors.name" class="mt-1" />
                     </div>
+                    <!-- Username -->
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Username</label>
+                        <TextInput type="text" v-model="form.username"
+                            class="block w-full mt-1 border border-gray-300 rounded-md shadow-sm dark:border-gray-600"
+                            required />
+                        <InputError v-if="form.errors.username" :message="form.errors.username" class="mt-1" />
+                    </div>
 
                     <!-- Email -->
                     <div class="mb-4">
@@ -112,6 +120,7 @@ const props = defineProps({
 // Set up the form with all required fields
 const form = useForm({
     name: '',
+    username: '',
     email: '',
     role: '',
     password: '',

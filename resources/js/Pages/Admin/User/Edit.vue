@@ -17,6 +17,16 @@
                 required
               />
             </div>
+            <!-- Username -->
+            <div class="mb-4">
+              <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Username</label>
+              <TextInput
+                type="text"
+                v-model="form.username"
+                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm"
+                required
+              />
+            </div>
 
             <!-- Email -->
             <div class="mb-4">
@@ -80,6 +90,7 @@
 
   const form = useForm({
     name: '',
+    username: '',
     email: '',
     password: '',
     branch_ids: [], // Array to handle multiple branch selection
@@ -90,6 +101,7 @@
 
   onMounted(() => {
     form.name = props.user.name;
+    form.username = props.user.username;
     form.email = props.user.email;
     form.branch_ids = props.user.branches.map(branch => branch.id); // Pre-fill with user's branches
   });

@@ -53,6 +53,13 @@
                     </div>
                 </div>
 
+                <!-- Transaction Date -->
+                <div class="mb-6">
+                    <Label value="Transaction Date" required class="text-gray-700 dark:text-gray-300" />
+                    <CustomDateInput v-model="form.transaction_date" required
+                        class="block w-full mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                </div>
+
                 <!-- Auto Selected Lot -->
                 <div class="mb-6">
                     <Label value="Active Lot" required class="text-gray-700 dark:text-gray-300" />
@@ -189,11 +196,12 @@ import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import Label from '@/Components/Label.vue';
 import Input from '@/Components/Input.vue';
+import CustomDateInput from '@/Components/CustomDateInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import {
     Loader2, X, AlertCircle, Package, Calculator, SendIcon,
-    CheckCircle, AlertTriangle, Search
+    CheckCircle, AlertTriangle, Search, Info
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -238,6 +246,7 @@ const availableLot = computed(() => {
 const form = useForm({
     branch_id: '',
     lot_id: '',
+    transaction_date: '',
     book_from: null,
     book_to: null,
     received_by: ''
@@ -260,6 +269,13 @@ const selectBranch = (branch) => {
 // Watch for lot changes and component mounting
 watch(() => props.show, (newVal) => {
     if (newVal) {
+        // Auto-set today's date
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        form.transaction_date = `${year}-${month}-${day}`;
+
         // When modal opens, auto-select the first available lot
         if (availableLot.value) {
             form.lot_id = availableLot.value.id;
@@ -304,6 +320,7 @@ const receiptTo = computed(() => {
 
 const isFormValid = computed(() => {
     if (!form.branch_id || !form.lot_id) return false;
+    if (!form.transaction_date) return false;
     if (!form.book_from || !form.book_to) return false;
     if (form.book_to < form.book_from) return false;
     if (availableBooks.value.length === 0) return false;

@@ -27,6 +27,20 @@ Route::get('/storage-link', function () {
     return response()->json(['message' => 'Storage link created successfully.']);
 })->name('storage.link');
 
+
+Route::get('/setup-storage', function () {
+    $source = storage_path('app/public');
+    $destination = public_path('storage');
+
+    if (!File::exists($destination)) {
+        File::makeDirectory($destination, 0755, true);
+    }
+
+    File::copyDirectory($source, $destination);
+
+    return 'Storage folder created and files copied!';
+});
+
 // Route for running migrations
 Route::get('/migrate', function () {
     Artisan::call('migrate');
@@ -43,7 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('admin/users', UserController::class)->names('admin.users');
     Route::resource('admin/customers', CustomerController::class)->names('admin.customers');
     Route::get('/admin/customers/{customer}/download-pdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-pdf');
-    Route::get('/admin/customers/{customer}/download-mpdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-pdf');
+    Route::get('/admin/customers/{customer}/download-mpdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-mpdf');
 
 
     Route::get('/customer-search', [CustomerSearchController::class, 'search'])->name('customer.search');
@@ -193,6 +207,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::get('/voluntary-savings/report/pdf', [App\Http\Controllers\Admin\VoluntarySaving\AdminVoluntarySavingController::class, 'generateReportPdf'])
         ->name('voluntary-savings.report-pdf');
+});
+
+// Super Admin Only Routes
+Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Receipt Transaction Report Routes (Super Admin Only)
+    Route::get('/receipt-transaction-report', [App\Http\Controllers\Admin\ReceiptTransactionReportController::class, 'index'])
+        ->name('receipt-transaction-report.index');
+
+    Route::get('/receipt-transaction-report/data', [App\Http\Controllers\Admin\ReceiptTransactionReportController::class, 'getFilteredData'])
+        ->name('receipt-transaction-report.data');
+
+    Route::get('/receipt-transaction-report/pdf', [App\Http\Controllers\Admin\ReceiptTransactionReportController::class, 'exportPdf'])
+        ->name('receipt-transaction-report.pdf');
+
+    Route::get('/receipt-transaction-report/datewise-summary', [App\Http\Controllers\Admin\ReceiptTransactionReportController::class, 'getDatewiseSummary'])
+        ->name('receipt-transaction-report.datewise-summary');
 });
 
 require __DIR__ . '/auth.php';
