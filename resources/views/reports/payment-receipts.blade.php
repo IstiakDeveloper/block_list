@@ -1,272 +1,210 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Receipts Payment Report</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Block Register — Payment receipts report</title>
     <style>
+        @font-face {
+            font-family: 'SolaimanLipi';
+            font-style: normal;
+            font-weight: normal;
+            src: url({{ public_path('fonts/SolaimanLipi.ttf') }}) format('truetype');
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 9px;
-            line-height: 1.3;
+            font-family: 'SolaimanLipi', 'DejaVu Sans', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 8px 10px;
+            font-size: 8px;
+            line-height: 1.3;
+            color: #000;
+            background: #fff;
+            text-align: center;
+        }
+
+        .doc {
+            max-width: 100%;
+            margin: 0 auto;
         }
 
         .header {
-            position: relative;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
+            border: 1px solid #000;
+            padding: 5px 6px 6px;
+            margin-bottom: 6px;
+            text-align: center;
         }
 
-        .company-info {
-            text-align: left;
-            float: left;
-            width: 40%;
-        }
-
-        .report-info {
-            text-align: right;
-            float: right;
-            width: 40%;
-        }
-
-        .company-name {
-            font-size: 20px;
+        .header-top {
+            font-size: 10px;
             font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 5px;
+            margin: 0 0 1px 0;
+            letter-spacing: 0.03em;
         }
 
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
-        }
-
-        .meta-grid {
-            display: table;
-            width: 100%;
-            margin-bottom: 15px;
-            border-collapse: collapse;
-        }
-
-        .meta-item {
-            display: table-cell;
-            padding: 8px;
-            background: #f8f9fa;
-            border: 1px solid #e5e7eb;
+        .header-sub {
             font-size: 8px;
-            text-align: center;
-        }
-
-        .meta-label {
             font-weight: bold;
-            color: #4b5563;
-            margin-bottom: 2px;
+            margin: 0 0 1px 0;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
-        .meta-value {
-            color: #1f2937;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
+        .header-title {
             font-size: 8px;
+            margin: 0 0 2px 0;
         }
 
-        th, td {
-            padding: 5px;
-            border: 1px solid #e5e7eb;
-            text-align: left;
-        }
-
-        th {
-            background: #f3f4f6;
-            font-weight: bold;
-            color: #4b5563;
-        }
-
-        .branch-summary {
-            margin-bottom: 15px;
-            page-break-inside: avoid;
-        }
-
-        .branch-header {
-            font-size: 11px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 5px;
-            padding: 5px;
-            background: #f0f9ff;
-        }
-
-        .stats-grid {
-            display: table;
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-
-        .stat-cell {
-            display: table-cell;
-            padding: 5px;
-            border: 1px solid #e5e7eb;
-            text-align: center;
-            width: 25%;
-        }
-
-        .stat-label {
+        .header-summary {
             font-size: 7px;
-            color: #6b7280;
-            margin-bottom: 2px;
+            margin: 0;
+            line-height: 1.4;
+            border-top: 1px solid #000;
+            padding-top: 3px;
         }
 
-        .stat-value {
-            font-size: 9px;
+        .header-summary strong {
             font-weight: bold;
-            color: #1f2937;
-        }
-
-        .transactions-table th {
-            white-space: nowrap;
-            font-size: 7px;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 3px;
-        }
-
-        .status-good { background: #059669; }
-        .status-warning { background: #d97706; }
-        .status-danger { background: #dc2626; }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 5px;
-            text-align: center;
-            font-size: 7px;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
         }
 
         .section-title {
-            font-size: 12px;
+            font-size: 8px;
             font-weight: bold;
-            color: #4b5563;
-            margin: 15px 0 10px 0;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #e5e7eb;
+            margin: 7px 0 4px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #000;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
-        .highlight {
-            background: #f0f9ff;
+        table.data {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 7px;
+            border: 1px solid #000;
+            table-layout: fixed;
+        }
+
+        table.data th,
+        table.data td {
+            border: 1px solid #000;
+            padding: 3px 2px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        table.data th {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            font-size: 8px;
+            padding: 4px 2px;
+        }
+
+        table.data td {
+            font-size: 7px;
+        }
+
+        .num {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .footer {
+            margin-top: 8px;
+            padding-top: 5px;
+            border-top: 1px solid #000;
+            font-size: 6px;
+            text-align: center;
+            line-height: 1.35;
+        }
+
+        .footer p {
+            margin: 2px 0;
         }
     </style>
 </head>
 <body>
-    <!-- Header Section -->
-    <div class="header clearfix">
-        <div class="company-info">
-            <div class="company-name">Mousumi NGO</div>
-            <div>Payment Receipts Report</div>
-        </div>
-        <div class="report-info">
-            <div><strong>Period:</strong> {{ $meta['start_date'] }} to {{ $meta['end_date'] }}</div>
-            <div><strong>Branch:</strong> {{ $meta['branch'] }}</div>
-            <div><strong>Generated:</strong> {{ $meta['generated_at'] }}</div>
-        </div>
+<div class="doc">
+    <div class="header">
+        <p class="header-top">MOUSUMI NGO</p>
+        <p class="header-sub">Block Register</p>
+        <p class="header-title">Payment receipts report</p>
+        <p class="header-summary">
+            <strong>Date:</strong> {{ $meta['start_date'] }} – {{ $meta['end_date'] }}
+            &nbsp;·&nbsp; <strong>Branch:</strong> {{ $meta['branch'] }}
+            &nbsp;·&nbsp; <strong>Generated:</strong> {{ $meta['generated_at'] }}
+        </p>
     </div>
 
-    <!-- Summary Statistics -->
-    <div class="meta-grid">
-        <div class="meta-item">
-            <div class="meta-label">TOTAL RECEIVED</div>
-            <div class="meta-value">{{ number_format($totals['total_period_received']) }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">TOTAL DISTRIBUTED</div>
-            <div class="meta-value">{{ number_format($totals['total_period_distributed']) }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">CURRENTLY AVAILABLE</div>
-            <div class="meta-value">{{ number_format($totals['total_available']) }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">ACTIVE BRANCHES</div>
-            <div class="meta-value">{{ $totals['total_branches'] }}</div>
-        </div>
-    </div>
-
-    <!-- Branch Summaries -->
-    <div class="section-title">Branch-wise Summary</div>
-    @foreach($branches as $branch)
-    <div class="branch-summary">
-        <div class="branch-header">{{ $branch['branch_name'] }}</div>
-        <div class="stats-grid">
-            <div class="stat-cell">
-                <div class="stat-label">PERIOD RECEIVED</div>
-                <div class="stat-value">{{ number_format($branch['period_received']) }}</div>
-            </div>
-            <div class="stat-cell">
-                <div class="stat-label">PERIOD DISTRIBUTED</div>
-                <div class="stat-value">{{ number_format($branch['period_distributed']) }}</div>
-            </div>
-            <div class="stat-cell">
-                <div class="stat-label">ALL TIME RECEIVED</div>
-                <div class="stat-value">{{ number_format($branch['all_time_received']) }}</div>
-            </div>
-            <div class="stat-cell">
-                <div class="stat-label">AVAILABLE
-                    <span class="status-indicator
-                        {{ $branch['current_available'] >= 500 ? 'status-good' :
-                           ($branch['current_available'] >= 100 ? 'status-warning' : 'status-danger') }}">
-                    </span>
-                </div>
-                <div class="stat-value">{{ number_format($branch['current_available']) }}</div>
-            </div>
-        </div>
-    </div>
-    @endforeach
-
-    <!-- Transactions Table -->
-    <div class="section-title">Recent Transactions</div>
-    <table class="transactions-table">
+    <p class="section-title">Branch-wise summary</p>
+    <table class="data">
         <thead>
             <tr>
-                <th>DATE</th>
-                <th>BRANCH</th>
-                <th>RECEIVED</th>
-                <th>DISTRIBUTED</th>
-                <th>AVAILABLE</th>
-                <th>BOOK #</th>
+                <th width="28%">Branch</th>
+                <th width="18%">Period received</th>
+                <th width="18%">Period distributed</th>
+                <th width="18%">All-time received</th>
+                <th width="18%">Available</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($transactions as $transaction)
-            <tr class="{{ $loop->even ? 'highlight' : '' }}">
-                <td>{{ date('d/m/Y', strtotime($transaction['transaction_date'])) }}</td>
-                <td>{{ $transaction['branch_name'] }}</td>
-                <td style="color: #059669">{{ $transaction['receive_quantity'] ? number_format($transaction['receive_quantity']) : '-' }}</td>
-                <td style="color: #2563eb">{{ $transaction['given_quantity'] ? number_format($transaction['given_quantity']) : '-' }}</td>
-                <td>{{ number_format($transaction['available_receipts']) }}</td>
-                <td>{{ $transaction['receipt_book_number'] }}</td>
-            </tr>
+            @foreach ($branches as $branch)
+                <tr>
+                    <td style="text-align: center;">
+                        <strong>{{ $branch['branch_name'] }}</strong>@if(!empty($branch['branch_code'])) ({{ $branch['branch_code'] }})@endif
+                    </td>
+                    <td class="num">{{ number_format($branch['period_received']) }}</td>
+                    <td class="num">{{ number_format($branch['period_distributed']) }}</td>
+                    <td class="num">{{ number_format($branch['all_time_received']) }}</td>
+                    <td class="num">{{ number_format($branch['current_available']) }}</td>
+                </tr>
             @endforeach
         </tbody>
     </table>
 
+    @if(!empty($includeTransactions))
+        <p class="section-title">Transactions</p>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th width="12%">Date</th>
+                    <th width="22%">Branch</th>
+                    <th width="14%">Received</th>
+                    <th width="14%">Distributed</th>
+                    <th width="14%">Available</th>
+                    <th width="18%">Book #</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($transactions as $transaction)
+                    <tr>
+                        <td>{{ date('d/m/Y', strtotime($transaction['transaction_date'])) }}</td>
+                        <td>{{ $transaction['branch_name'] }}</td>
+                        <td class="num">{{ $transaction['receive_quantity'] !== null ? number_format($transaction['receive_quantity']) : '—' }}</td>
+                        <td class="num">{{ $transaction['given_quantity'] !== null ? number_format($transaction['given_quantity']) : '—' }}</td>
+                        <td class="num">{{ number_format($transaction['available_receipts']) }}</td>
+                        <td>{{ $transaction['receipt_book_number'] }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6">No transactions in this date range.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    @endif
+
     <div class="footer">
-        Page <span class="page-number"></span> | Generated by {{ config('app.name') }}
+        <p>Block Register · MOUSUMI NGO · Payment receipts</p>
+        <p>© {{ date('Y') }} MOUSUMI NGO. All rights reserved.</p>
     </div>
+</div>
 </body>
 </html>

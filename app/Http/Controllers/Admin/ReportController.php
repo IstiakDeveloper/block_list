@@ -171,6 +171,62 @@ class ReportController extends Controller
         };
     }
 
+    /**
+     * Start/end of the "current period" for PDF summary columns (matches dashboard date filter).
+     * "Current Month" column = blocks within [start, end]; "Before Block" = strictly before start;
+     * "Total" = cumulative through end (created_at <= end).
+     */
+    private function resolveDownloadReportPeriod(Request $request): array
+    {
+        $dateRange = $request->input('dateRange', 'all');
+
+        if ($dateRange === 'custom') {
+            $start = $request->filled('startDate')
+                ? Carbon::parse($request->input('startDate'))->startOfDay()
+                : null;
+            $end = $request->filled('endDate')
+                ? Carbon::parse($request->input('endDate'))->endOfDay()
+                : null;
+
+            if (!$start) {
+                return ['start' => null, 'end' => null, 'label' => 'All time'];
+            }
+            if (!$end) {
+                $end = now()->copy()->endOfDay();
+            }
+
+            return [
+                'start' => $start,
+                'end' => $end,
+                'label' => $start->format('d/m/Y') . ' – ' . $end->format('d/m/Y'),
+            ];
+        }
+
+        if ($dateRange === 'month') {
+            $start = now()->copy()->startOfMonth();
+            $end = now()->copy()->endOfDay();
+
+            return [
+                'start' => $start,
+                'end' => $end,
+                'label' => $start->format('F Y'),
+            ];
+        }
+
+        if ($dateRange === 'week') {
+            $start = now()->copy()->subDays(7)->startOfDay();
+            $end = now()->copy()->endOfDay();
+
+            return [
+                'start' => $start,
+                'end' => $end,
+                'label' => $start->format('d/m/Y') . ' – ' . $end->format('d/m/Y'),
+            ];
+        }
+
+        return ['start' => null, 'end' => null, 'label' => 'All time'];
+    }
+
     private function getReportData($branchDetails, $dateRange, $startDate, $endDate, $user, $userBranches, $branchFilter = null)
     {
         $customerQuery = Customer::query();
@@ -276,8 +332,31 @@ class ReportController extends Controller
             $data['branch'] = $branch;
             $data['customers'] = $branch->customers;
         } else {
+            $period = $this->resolveDownloadReportPeriod($request);
+            $periodStart = $period['start'];
+            $periodEnd = $period['end'];
+            $hasReportPeriod = $periodStart !== null && $periodEnd !== null;
+
+            $data['hasReportPeriod'] = $hasReportPeriod;
+            $data['reportPeriodLabel'] = $period['label'];
+
             // Apply branch filtering for non-Super Admin users
-            $branchQuery = Branch::withCount('customers')->with('customers');
+            if ($hasReportPeriod) {
+                $branchQuery = Branch::withCount([
+                    'customers as before_current_month_count' => function ($query) use ($periodStart) {
+                        $query->where('created_at', '<', $periodStart);
+                    },
+                    'customers as current_month_count' => function ($query) use ($periodStart, $periodEnd) {
+                        $query->where('created_at', '>=', $periodStart)
+                            ->where('created_at', '<=', $periodEnd);
+                    },
+                    'customers as total_through_period_count' => function ($query) use ($periodEnd) {
+                        $query->where('created_at', '<=', $periodEnd);
+                    },
+                ]);
+            } else {
+                $branchQuery = Branch::withCount('customers');
+            }
 
             if ($user->name !== 'Super Admin') {
                 $userBranchIds = $userBranches->pluck('id');
@@ -294,64 +373,10 @@ class ReportController extends Controller
             }
 
             $data['totalCustomers'] = $customerQuery->count();
-
-            $monthlyTrendQuery = Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as count')
-                ->groupBy('month')
-                ->orderBy('month', 'desc')
-                ->take(12);
-
-            if ($user->name !== 'Super Admin') {
-                $userBranchIds = $userBranches->pluck('id');
-                $monthlyTrendQuery->whereIn('branch_id', $userBranchIds);
-            }
-
-            $data['monthlyTrend'] = $monthlyTrendQuery->get();
         }
 
-        // Create the PDF instance with specific configuration
         $pdf = app('dompdf.wrapper');
-
-        // Configure DOMPDF
-        $config = array(
-            'fontDir' => storage_path('fonts/'), // directory
-            'fontCache' => storage_path('fonts/'), // directory
-            'defaultFont' => 'bangla',
-            'isRemoteEnabled' => true,
-            'isPhpEnabled' => true,
-            'isHtml5ParserEnabled' => true,
-            'isFontSubsettingEnabled' => true,
-            'defaultMediaType' => 'screen',
-            'defaultPaperSize' => 'a4',
-            'defaultPaperOrientation' => 'portrait',
-            'dpi' => 96,
-        );
-
-        // Get the DomPDF instance
-        $dompdf = $pdf->getDomPDF();
-
-        // Set options
-        foreach ($config as $key => $value) {
-            $dompdf->set_option($key, $value);
-        }
-
-        // Ensure font directories exist
-        if (!file_exists(storage_path('fonts'))) {
-            mkdir(storage_path('fonts'), 0755, true);
-        }
-
-        // Font paths
-        $fontFile = public_path('fonts/SolaimanLipi.ttf');
-        $fontFamily = 'bangla';
-
-        // Register the font
-        $dompdf->getFontMetrics()->registerFont(
-            [
-                'family' => $fontFamily,
-                'style' => 'normal',
-                'weight' => 'normal'
-            ],
-            $fontFile
-        );
+        $this->configureDompdfBangla($pdf);
 
         // Load view
         $view = view('reports.pdf', $data)->render();
@@ -366,24 +391,109 @@ class ReportController extends Controller
         return $pdf->download('block-list-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
+    /**
+     * Shared DomPDF options + Bangla font (SolaimanLipi registered as family "bangla").
+     */
+    private function configureDompdfBangla($pdf): void
+    {
+        $config = [
+            'fontDir' => storage_path('fonts/'),
+            'fontCache' => storage_path('fonts/'),
+            'defaultFont' => 'bangla',
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'isFontSubsettingEnabled' => true,
+            'defaultMediaType' => 'screen',
+            'defaultPaperSize' => 'a4',
+            'defaultPaperOrientation' => 'portrait',
+            'dpi' => 96,
+        ];
+
+        $dompdf = $pdf->getDomPDF();
+
+        foreach ($config as $key => $value) {
+            $dompdf->set_option($key, $value);
+        }
+
+        if (!file_exists(storage_path('fonts'))) {
+            mkdir(storage_path('fonts'), 0755, true);
+        }
+
+        $dompdf->getFontMetrics()->registerFont(
+            [
+                'family' => 'bangla',
+                'style' => 'normal',
+                'weight' => 'normal',
+            ],
+            public_path('fonts/SolaimanLipi.ttf')
+        );
+    }
+
+    /**
+     * Normalize user.role for branch user report columns (BM / RM / ZM / DMF).
+     * Missing or blank role is treated as BM for reporting.
+     */
+    private function canonicalBranchReportRole(?string $role): ?string
+    {
+        if ($role === null || trim((string) $role) === '') {
+            return 'BM';
+        }
+
+        $r = strtoupper(trim((string) $role));
+
+        return in_array($r, ['BM', 'RM', 'ZM', 'DMF'], true) ? $r : null;
+    }
+
+    /**
+     * Merge all users per role (multiple BMs etc.). Unknown roles count under BM with a label.
+     *
+     * @param  \Illuminate\Support\Collection<int, array{name: string, entries: int, role: ?string}>  $rows
+     * @return array{0: array<string, array{total: int, lines: array<int, array<string, mixed>>}>, 1: int}
+     */
+    private function aggregateBranchUserRowsByRole($rows): array
+    {
+        $buckets = [
+            'BM' => ['total' => 0, 'lines' => []],
+            'RM' => ['total' => 0, 'lines' => []],
+            'ZM' => ['total' => 0, 'lines' => []],
+            'DMF' => ['total' => 0, 'lines' => []],
+        ];
+
+        foreach ($rows as $u) {
+            $entries = (int) ($u['entries'] ?? 0);
+            $canonical = $this->canonicalBranchReportRole($u['role'] ?? null);
+            $key = $canonical ?? 'BM';
+            $buckets[$key]['total'] += $entries;
+            $line = ['name' => $u['name'], 'entries' => $entries];
+            $rawTrim = trim((string) ($u['role'] ?? ''));
+            if ($key === 'BM' && $rawTrim !== '') {
+                $rUpper = strtoupper($rawTrim);
+                if (! in_array($rUpper, ['BM', 'RM', 'ZM', 'DMF'], true)) {
+                    $line['role_label'] = $rawTrim;
+                }
+            }
+            $buckets[$key]['lines'][] = $line;
+        }
+
+        $total = $buckets['BM']['total'] + $buckets['RM']['total'] + $buckets['ZM']['total'] + $buckets['DMF']['total'];
+
+        return [$buckets, $total];
+    }
+
     public function branchUsersPdf(Request $request)
     {
         $user = auth()->user();
         $userBranches = $this->getUserBranches($user);
 
-        $dateRange = $request->dateRange ?? 'all';
-        $startDate = $this->getStartDate($dateRange);
-        $endDate = $request->endDate ? Carbon::parse($request->endDate)->endOfDay() : null;
-
-        if ($dateRange === 'custom') {
-            $startDate = $request->startDate ? Carbon::parse($request->startDate)->startOfDay() : null;
-        }
+        $period = $this->resolveDownloadReportPeriod($request);
+        $periodStart = $period['start'];
+        $periodEnd = $period['end'];
+        $hasReportPeriod = $periodStart !== null && $periodEnd !== null;
 
         $query = Branch::with(['users']);
 
-        // Apply branch filtering based on user permissions
         if ($request->branch_id) {
-            // Check if user has access to this specific branch
             if ($user->name !== 'Super Admin') {
                 $userBranchIds = $userBranches->pluck('id');
                 if (!$userBranchIds->contains($request->branch_id)) {
@@ -392,44 +502,49 @@ class ReportController extends Controller
             }
             $query->where('id', $request->branch_id);
         } else {
-            // Apply general branch filtering
-            $this->applyBranchFilter($query, $user, $userBranches);
+            $this->applyBranchFilter($query, $user, $userBranches, $request->input('branch_filter'));
         }
 
-        $branches = $query->get()->map(function ($branch) use ($startDate, $endDate) {
+        $branches = $query->get()->map(function ($branch) use ($periodStart, $periodEnd, $hasReportPeriod) {
             $userEntriesQuery = Customer::where('branch_id', $branch->id)
                 ->select('user_id', DB::raw('COUNT(*) as entry_count'));
 
-            $this->applyDateFilter($userEntriesQuery, $startDate, $endDate);
+            if ($hasReportPeriod) {
+                $this->applyDateFilter($userEntriesQuery, $periodStart, $periodEnd);
+            }
 
-            $userEntries = $userEntriesQuery->groupBy('user_id')
+            $userRows = $userEntriesQuery->groupBy('user_id')
                 ->with('user:id,name,role')
                 ->get()
+                ->filter(fn ($entry) => $entry->user !== null)
                 ->map(function ($entry) {
                     return [
                         'user_id' => $entry->user->id,
                         'name' => $entry->user->name,
-                        'entries' => $entry->entry_count,
-                        'role' => $entry->user->role
+                        'entries' => (int) $entry->entry_count,
+                        'role' => $entry->user->role,
                     ];
-                });
+                })
+                ->values();
+
+            [$roleBuckets, $branchTotal] = $this->aggregateBranchUserRowsByRole($userRows);
 
             return [
                 'name' => $branch->branch_name,
                 'code' => $branch->branch_code,
-                'users' => $userEntries,
-                'total' => $userEntries->sum('entries')
+                'users' => $userRows,
+                'role_buckets' => $roleBuckets,
+                'total' => $branchTotal,
             ];
         });
 
         $data = [
             'branches' => $branches,
-            'dateRange' => $dateRange,
-            'startDate' => $startDate ? $startDate->format('Y-m-d') : null,
-            'endDate' => $endDate ? $endDate->format('Y-m-d') : null,
+            'reportPeriodLabel' => $period['label'],
         ];
 
         $pdf = app('dompdf.wrapper');
+        $this->configureDompdfBangla($pdf);
         $pdf->loadView('reports.branch-users-pdf', $data);
         $pdf->setPaper('A4', 'portrait');
 

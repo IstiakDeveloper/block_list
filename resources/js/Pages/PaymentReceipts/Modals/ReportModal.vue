@@ -42,6 +42,21 @@
                         </p>
                     </div>
 
+                    <div class="flex items-start gap-3">
+                        <input
+                            id="report-include-transactions"
+                            v-model="reportForm.include_transactions"
+                            type="checkbox"
+                            class="mt-1 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                        />
+                        <label for="report-include-transactions" class="text-sm text-left text-gray-700 dark:text-gray-300">
+                            <span class="font-medium">Include transaction list</span>
+                            <span class="block mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                Adds a detailed transactions table to the PDF. Leave off for branch summary only (smaller, faster).
+                            </span>
+                        </label>
+                    </div>
+
                     <!-- Error Display -->
                     <div v-if="reportForm.error"
                         class="flex items-start gap-2 p-3 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/50 dark:border-red-800">
@@ -65,7 +80,7 @@
                     <div class="flex items-start gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
                         <Info class="w-5 h-5 mt-0.5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                            The report will include all transactions within the selected date range and will be downloaded as a PDF file.
+                            PDF includes branch-wise totals for the selected dates. Turn on “Include transaction list” if you also need each movement line-by-line.
                         </p>
                     </div>
                 </div>
@@ -112,6 +127,7 @@ const reportForm = reactive({
     start_date: props.filters?.start_date || '',
     end_date: props.filters?.end_date || '',
     branch_id: props.filters?.branch_id || '',
+    include_transactions: false,
     processing: false,
     error: null
 });
@@ -122,6 +138,7 @@ watch(() => props.show, (newVal) => {
         reportForm.start_date = props.filters?.start_date || '';
         reportForm.end_date = props.filters?.end_date || '';
         reportForm.branch_id = props.filters?.branch_id || '';
+        reportForm.include_transactions = false;
         reportForm.error = null;
     }
 });
@@ -147,7 +164,8 @@ const generateReport = async () => {
         const params = new URLSearchParams({
             start_date: reportForm.start_date,
             end_date: reportForm.end_date,
-            ...(reportForm.branch_id && { branch_id: reportForm.branch_id })
+            ...(reportForm.branch_id && { branch_id: reportForm.branch_id }),
+            ...(reportForm.include_transactions && { include_transactions: '1' }),
         });
 
         // Check if report can be generated

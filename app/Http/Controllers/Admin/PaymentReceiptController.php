@@ -1260,20 +1260,23 @@ class PaymentReceiptController extends Controller
     }
 
     /**
-     * Generate Detailed Report (Landscape format)
+     * Generate detailed payment receipts report (A4 portrait PDF).
      */
     public function generateReport(Request $request)
     {
+
         try {
             $request->validate([
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'branch_id' => 'nullable|exists:branches,id'
+                'branch_id' => 'nullable|exists:branches,id',
+                'include_transactions' => 'sometimes|boolean',
             ]);
 
             $startDate = $request->start_date;
             $endDate = $request->end_date;
             $branchId = $request->branch_id;
+            $includeTransactions = $request->boolean('include_transactions');
 
             // Get branch summaries
             $branches = Branch::select('branches.*')
@@ -1316,82 +1319,77 @@ class PaymentReceiptController extends Controller
                     ];
                 });
 
-            // Get transactions ordered by date ascending first to calculate running balance
-            $transactions = StockTransaction::with(['branch', 'lot'])
-                ->whereBetween('transaction_date', [$startDate, $endDate])
-                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-                ->orderBy('transaction_date', 'asc')
-                ->orderBy('id', 'asc')
-                ->get();
+            $transactions = collect();
 
-            // Calculate running balance for each branch
-            $branchBalances = [];
-            $formattedTransactions = $transactions->map(function ($transaction) use (&$branchBalances) {
-                $branchId = $transaction->branch_id;
-                if (!isset($branchBalances[$branchId])) {
-                    // Get initial balance at start date by calculating all previous transactions
-                    $previousBalance = StockTransaction::where('branch_id', $branchId)
-                        ->where('transaction_date', '<', $transaction->transaction_date)
-                        ->get()
-                        ->reduce(function ($balance, $tx) {
-                            if ($tx->transaction_type === 'distribute_to_branch') {
-                                return $balance + $tx->total_receipts;
-                            } elseif ($tx->transaction_type === 'distribute_to_person') {
-                                return $balance - $tx->total_receipts;
-                            }
-                            return $balance;
-                        }, 0);
-                    $branchBalances[$branchId] = $previousBalance;
-                }
+            if ($includeTransactions) {
+                $txRows = StockTransaction::with(['branch', 'lot'])
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
+                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                    ->orderBy('transaction_date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
 
-                // Update running balance
-                if ($transaction->transaction_type === 'distribute_to_branch') {
-                    $branchBalances[$branchId] += $transaction->total_receipts;
-                } elseif ($transaction->transaction_type === 'distribute_to_person') {
-                    $branchBalances[$branchId] -= $transaction->total_receipts;
-                }
+                $branchBalances = [];
+                $formattedTransactions = $txRows->map(function ($transaction) use (&$branchBalances) {
+                    $txBranchId = $transaction->branch_id;
+                    if (!isset($branchBalances[$txBranchId])) {
+                        $previousBalance = StockTransaction::where('branch_id', $txBranchId)
+                            ->where('transaction_date', '<', $transaction->transaction_date)
+                            ->get()
+                            ->reduce(function ($balance, $tx) {
+                                if ($tx->transaction_type === 'distribute_to_branch') {
+                                    return $balance + $tx->total_receipts;
+                                }
+                                if ($tx->transaction_type === 'distribute_to_person') {
+                                    return $balance - $tx->total_receipts;
+                                }
 
-                return [
-                    'transaction_date' => $transaction->transaction_date,
-                    'branch_name' => optional($transaction->branch)->branch_name ?? 'N/A',
-                    'receive_quantity' => $transaction->transaction_type === 'distribute_to_branch' ? $transaction->total_receipts : null,
-                    'given_quantity' => $transaction->transaction_type === 'distribute_to_person' ? $transaction->total_receipts : null,
-                    'available_receipts' => $branchBalances[$branchId],
-                    'receipt_book_number' => $transaction->book_from . '-' . $transaction->book_to
-                ];
-            });
+                                return $balance;
+                            }, 0);
+                        $branchBalances[$txBranchId] = $previousBalance;
+                    }
 
-            // Re-sort transactions to display in descending order
-            $transactions = $formattedTransactions->sortByDesc('transaction_date')->values();
+                    if ($transaction->transaction_type === 'distribute_to_branch') {
+                        $branchBalances[$txBranchId] += $transaction->total_receipts;
+                    } elseif ($transaction->transaction_type === 'distribute_to_person') {
+                        $branchBalances[$txBranchId] -= $transaction->total_receipts;
+                    }
 
-            // Calculate totals
-            $totals = [
-                'total_period_received' => $branches->sum('period_received'),
-                'total_period_distributed' => $branches->sum('period_distributed'),
-                'total_available' => $branches->sum('current_available'),
-                'total_branches' => $branches->count(),
-            ];
+                    return [
+                        'transaction_date' => $transaction->transaction_date,
+                        'branch_name' => optional($transaction->branch)->branch_name ?? 'N/A',
+                        'receive_quantity' => $transaction->transaction_type === 'distribute_to_branch' ? $transaction->total_receipts : null,
+                        'given_quantity' => $transaction->transaction_type === 'distribute_to_person' ? $transaction->total_receipts : null,
+                        'available_receipts' => $branchBalances[$txBranchId],
+                        'receipt_book_number' => $transaction->book_from . '-' . $transaction->book_to,
+                    ];
+                });
+
+                $transactions = $formattedTransactions->sortByDesc('transaction_date')->values();
+            }
 
             $data = [
                 'meta' => [
                     'start_date' => Carbon::parse($startDate)->format('d/m/Y'),
                     'end_date' => Carbon::parse($endDate)->format('d/m/Y'),
-                    'generated_at' => now()->format('d/m/Y H:i:s'),
-                    'branch' => $branchId ? $branches->first()['branch_name'] : 'All Branches'
+                    'generated_at' => now()->format('d/m/Y H:i'),
+                    'branch' => $branchId ? $branches->first()['branch_name'] : 'All Branches',
                 ],
                 'branches' => $branches,
                 'transactions' => $transactions,
-                'totals' => $totals
+                'includeTransactions' => $includeTransactions,
             ];
 
-            $pdf = Pdf::loadView('reports.payment-receipts', $data);
+            $pdf = app('dompdf.wrapper');
+            $this->configureDompdfBangla($pdf);
+            $pdf->loadHTML(view('reports.payment-receipts', $data)->render());
 
             $filename = 'payment_receipts_' .
                 ($branchId ? strtolower(str_replace(' ', '_', $branches->first()['branch_name'])) : 'all_branches') . '_' .
                 Carbon::parse($startDate)->format('Y_m_d') . '_to_' .
                 Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
 
-            return $pdf->setPaper('a4', 'landscape')->download($filename);
+            return $pdf->setPaper('a4', 'portrait')->download($filename);
         } catch (\Exception $e) {
             Log::error('Report generation failed', ['error' => $e->getMessage()]);
             return response()->json([
@@ -1561,5 +1559,44 @@ class PaymentReceiptController extends Controller
                 'message' => $e->getMessage()
             ], 404);
         }
+    }
+
+    /**
+     * DomPDF options + SolaimanLipi as "bangla" (aligned with Block Register PDFs).
+     */
+    private function configureDompdfBangla($pdf): void
+    {
+        $config = [
+            'fontDir' => storage_path('fonts/'),
+            'fontCache' => storage_path('fonts/'),
+            'defaultFont' => 'bangla',
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'isFontSubsettingEnabled' => true,
+            'defaultMediaType' => 'screen',
+            'defaultPaperSize' => 'a4',
+            'defaultPaperOrientation' => 'portrait',
+            'dpi' => 96,
+        ];
+
+        $dompdf = $pdf->getDomPDF();
+
+        foreach ($config as $key => $value) {
+            $dompdf->set_option($key, $value);
+        }
+
+        if (!file_exists(storage_path('fonts'))) {
+            mkdir(storage_path('fonts'), 0755, true);
+        }
+
+        $dompdf->getFontMetrics()->registerFont(
+            [
+                'family' => 'bangla',
+                'style' => 'normal',
+                'weight' => 'normal',
+            ],
+            public_path('fonts/SolaimanLipi.ttf')
+        );
     }
 }

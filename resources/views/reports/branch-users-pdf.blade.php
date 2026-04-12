@@ -1,287 +1,258 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Branch Users Report</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Block Register — Branch Users Report</title>
     <style>
+        @font-face {
+            font-family: 'SolaimanLipi';
+            font-style: normal;
+            font-weight: normal;
+            src: url({{ public_path('fonts/SolaimanLipi.ttf') }}) format('truetype');
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: bangla, sans-serif;
-            font-size: 11px;
-            line-height: 1.2;
+            font-family: 'SolaimanLipi', 'DejaVu Sans', sans-serif;
             margin: 0;
-            padding: 20px;
-            color: #1a1a1a;
+            padding: 12px 14px;
+            font-size: 10px;
+            line-height: 1.35;
+            color: #000;
+            background: #fff;
+            text-align: center;
+        }
+
+        .doc {
+            max-width: 100%;
+            margin: 0 auto;
         }
 
         .header {
+            border: 1px solid #000;
+            padding: 6px 8px 7px;
+            margin-bottom: 10px;
             text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 15px;
         }
 
-        .company-name {
-            font-size: 24px;
+        .header-top {
+            font-size: 11px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin: 0 0 2px 0;
+            letter-spacing: 0.03em;
         }
 
-
-        .title {
-            font-size: 18px;
+        .header-sub {
+            font-size: 9px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin: 0 0 1px 0;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .date-range {
-            font-size: 12px;
-            color: #333;
-            font-weight: 500;
-            margin: 4px 0;
+        .header-title {
+            font-size: 9px;
+            margin: 0 0 3px 0;
         }
 
-        table {
+        .header-summary {
+            font-size: 8px;
+            margin: 0;
+            line-height: 1.4;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+        }
+
+        .header-summary strong {
+            font-weight: bold;
+        }
+
+        table.data {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
-            margin-bottom: 40px;
+            margin-bottom: 12px;
+            font-size: 8px;
+            border: 1px solid #000;
         }
 
-        th,
-        td {
-            border: 1.5px solid #000;
-            padding: 6px;
+        table.data th,
+        table.data td {
+            border: 1px solid #000;
+            padding: 4px 3px;
             text-align: center;
+            vertical-align: top;
+        }
+
+        table.data th {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            font-size: 9px;
+            padding: 5px 3px;
             vertical-align: middle;
         }
 
-        th {
-            background-color: #f8f9fa;
+        .branch-line {
             font-weight: bold;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .branch-name {
-            font-weight: bold;
-            font-size: 11px;
-            color: #000;
-            display: block;
-        }
-
-        .branch-code {
-            color: #444;
-            font-size: 9px;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .user-name {
-            font-weight: 500;
-            display: block;
-        }
-
-        .user-entries {
-            color: #000;
-            display: block;
-            margin-top: 2px;
-            font-weight: bold;
-        }
-
-        .user-percentage {
-            color: #555;
-            font-size: 9px;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .total-entries {
-            font-weight: bold;
-            color: #000;
-        }
-
-        .grand-total-row {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-
-        .grand-total-row td {
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 9px;
-            color: #333;
-            padding: 8px 0;
-            border-top: 2px solid #000;
-            background-color: #fff;
-        }
-
-        .branch-info {
-            white-space: nowrap;
-        }
-
-        .branch-name {
-            font-weight: bold;
-            font-size: 11px;
-            color: #000;
-            display: inline;
-        }
-
-        .branch-code {
-            color: #444;
-            font-size: 11px;
-            display: inline;
-            margin-left: 5px;
+            vertical-align: middle;
         }
 
         .user-cell {
-            white-space: nowrap;
+            font-size: 8px;
+            line-height: 1.35;
         }
 
-        .user-id {
-            color: #666;
-            margin-right: 3px;
+        .user-line {
+            margin: 2px 0;
+            font-size: 7px;
         }
 
         .user-name {
-            font-weight: 500;
-            display: inline;
+            font-weight: 600;
         }
 
         .user-entries {
-            color: #000;
-            display: inline;
             font-weight: bold;
-            margin-left: 5px;
         }
 
-        .user-percentage {
-            color: #555;
-            font-size: 9px;
-            display: inline;
-            margin-left: 3px;
+        .user-pct {
+            font-size: 7px;
+            color: #000;
+        }
+
+        .role-tag {
+            font-size: 6px;
+            color: #333;
+        }
+
+        .grand-total-row td {
+            font-weight: bold;
+            border-top: 2px solid #000;
+            vertical-align: middle;
+        }
+
+        .footer {
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #000;
+            font-size: 7px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .footer p {
+            margin: 2px 0;
         }
     </style>
 </head>
-
 <body>
+@php
+    $roleKeys = ['BM', 'RM', 'ZM', 'DMF'];
+    $grandTotals = ['BM' => 0, 'RM' => 0, 'ZM' => 0, 'DMF' => 0, 'total' => 0];
+@endphp
+
+<div class="doc">
     <div class="header">
-        <div class="company-name">Mousumi NGO</div>
-        <div class="title">Branch Users Report</div>
-        <div class="date-range">
-            Period:
-            @if ($dateRange === 'all')
-                All Time
-            @elseif($dateRange === 'month')
-                This Month
-            @elseif($dateRange === 'week')
-                Last 7 Days
-            @else
-                {{ Carbon\Carbon::parse($startDate)->format('d-m-Y') }} to
-                {{ Carbon\Carbon::parse($endDate)->format('d-m-Y') }}
-            @endif
-        </div>
+        <p class="header-top">MOUSUMI NGO</p>
+        <p class="header-sub">Block Register</p>
+        <p class="header-title">Branch users report</p>
+        <p class="header-summary">
+            <strong>Date:</strong> {{ $reportPeriodLabel ?? 'All time' }}
+            &nbsp;·&nbsp; <strong>Branches:</strong> {{ $branches->count() }}
+            &nbsp;·&nbsp; <strong>Total entries:</strong> {{ $branches->sum('total') }}
+        </p>
+    </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Branch</th>
-                    <th>BM</th>
-                    <th>RM</th>
-                    <th>ZM</th>
-                    <th>DMF</th>
-                    <th>Total Entries</th>
-                </tr>
-            </thead>
-            <tbody>
+    <table class="data">
+        <thead>
+            <tr>
+                <th width="18%">Branch</th>
+                <th width="20%">BM</th>
+                <th width="16%">RM</th>
+                <th width="16%">ZM</th>
+                <th width="16%">DMF</th>
+                <th width="12%">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($branches as $branch)
                 @php
-                    // Initialize grand totals for each role and overall total
-                    $grandTotals = [
-                        'BM' => 0,
-                        'RM' => 0,
-                        'ZM' => 0,
-                        'DMF' => 0,
-                        'total' => 0,
-                    ];
+                    $branchTotal = (int) $branch['total'];
+                    $buckets = $branch['role_buckets'] ?? [];
                 @endphp
-
-                @foreach ($branches as $branch)
-                    <tr>
-                        <td>
-                            <div class="branch-info">
-                                <span class="branch-name">{{ $branch['name'] }}</span>
-                                <span class="branch-code">({{ $branch['code'] }})</span>
-                            </div>
-                        </td>
+                <tr>
+                    <td class="branch-line">
+                        {{ $branch['name'] }}@if(!empty($branch['code'])) ({{ $branch['code'] }})@endif
+                    </td>
+                    @foreach ($roleKeys as $role)
                         @php
-                            // Define the order of user roles
-                            $roles = ['BM', 'RM', 'ZM', 'DMF'];
-                            $usersByRole = [];
-
-                            // Group users by their roles
-                            foreach ($branch['users'] as $user) {
-                                $usersByRole[$user['role']] = $user;
+                            $bucket = $buckets[$role] ?? ['total' => 0, 'lines' => []];
+                            $bt = (int) ($bucket['total'] ?? 0);
+                            if ($bt > 0) {
+                                $grandTotals[$role] += $bt;
                             }
+                            $pct = $branchTotal > 0 && $bt > 0 ? round(($bt / $branchTotal) * 100, 1) : null;
                         @endphp
-                        @foreach ($roles as $role)
-                            @if (isset($usersByRole[$role]))
-                                @php
-                                    $user = $usersByRole[$role];
-                                    // Add to the grand total for this role
-                                    $grandTotals[$role] += $user['entries'];
-                                @endphp
-                                <td class="user-cell">
-                                    <span class="user-name">{{ $user['name'] }}</span>
-                                    <span class="user-entries">{{ number_format($user['entries']) }}</span>
-                                    <span class="user-percentage">
-                                        ({{ round(($user['entries'] / $branch['total']) * 100, 1) }}%)
-                                    </span>
-                                </td>
+                        <td class="user-cell">
+                            @if ($bt === 0)
+                                —
                             @else
-                                <td>-</td>
+                                @foreach ($bucket['lines'] ?? [] as $line)
+                                    <div class="user-line">
+                                        <span class="user-name">{{ $line['name'] }}</span>
+                                        @if ($role === 'BM' && !empty($line['role_label']))
+                                            <span class="role-tag"> ({{ $line['role_label'] }})</span>
+                                        @endif
+                                        <br>
+                                        <span class="user-entries">{{ number_format($line['entries']) }}</span>
+                                    </div>
+                                @endforeach
+                                @if (count($bucket['lines'] ?? []) > 1)
+                                    <div class="user-line" style="margin-top:4px;border-top:1px solid #ccc;padding-top:3px;">
+                                        <span class="user-entries">{{ number_format($bt) }}</span>
+                                        @if ($pct !== null)
+                                            <span class="user-pct"> ({{ $pct }}%)</span>
+                                        @endif
+                                    </div>
+                                @elseif ($pct !== null)
+                                    <span class="user-pct">({{ $pct }}%)</span>
+                                @endif
                             @endif
-                        @endforeach
-                        <td class="total-entries">{{ number_format($branch['total']) }}</td>
-                    </tr>
-                    @php
-                        // Add to the overall grand total
-                        $grandTotals['total'] += $branch['total'];
-                    @endphp
-                @endforeach
-
-                <!-- Grand Total Row -->
-                <tr class="grand-total-row">
-                    <td style="text-align: right;">Grand Total</td>
-                    @foreach ($roles as $role)
-                        <td class="total-entries">
-                            {{ number_format($grandTotals[$role]) }}
-                            <span class="user-percentage">
-                                ({{ round(($grandTotals[$role] / $grandTotals['total']) * 100, 1) }}%)
-                            </span>
                         </td>
                     @endforeach
-                    <td class="total-entries">
-                        {{ number_format($grandTotals['total']) }}
-                    </td>
+                    <td class="user-entries">{{ number_format($branchTotal) }}</td>
                 </tr>
+                @php
+                    $grandTotals['total'] += $branchTotal;
+                @endphp
+            @endforeach
 
-            </tbody>
-        </table>
+            <tr class="grand-total-row">
+                <td>Grand total</td>
+                @foreach ($roleKeys as $role)
+                    @php
+                        $gt = (int) $grandTotals[$role];
+                        $grandPct = $grandTotals['total'] > 0 ? round(($gt / $grandTotals['total']) * 100, 1) : null;
+                    @endphp
+                    <td>
+                        {{ number_format($gt) }}
+                        @if ($grandPct !== null && $gt > 0)
+                            <span class="user-pct">({{ $grandPct }}%)</span>
+                        @endif
+                    </td>
+                @endforeach
+                <td class="user-entries">{{ number_format($grandTotals['total']) }}</td>
+            </tr>
+        </tbody>
+    </table>
 
-        <div class="footer">
-            Generated: {{ now()->format('d-m-Y H:i:s') }}
-        </div>
+    <div class="footer">
+        <p>Generated {{ now()->format('d/m/Y H:i') }} · Block Register · MOUSUMI NGO</p>
+        <p>© {{ date('Y') }} MOUSUMI NGO. All rights reserved.</p>
+    </div>
+</div>
 </body>
-
 </html>

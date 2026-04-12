@@ -50,6 +50,16 @@
               <small class="text-gray-500 dark:text-gray-400">Leave blank to keep the current password</small>
             </div>
 
+            <!-- Password Confirmation -->
+            <div class="mb-4">
+              <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Confirm Password</label>
+              <TextInput
+                type="password"
+                v-model="form.password_confirmation"
+                class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm"
+              />
+            </div>
+
             <!-- Branch Selection -->
             <div class="mb-4">
               <label for="branch_ids" class="block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -93,6 +103,7 @@
     username: '',
     email: '',
     password: '',
+    password_confirmation: '',
     branch_ids: [], // Array to handle multiple branch selection
   });
 

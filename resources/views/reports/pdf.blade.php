@@ -2,128 +2,153 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Block List Report - Mousumi NGO</title>
+    <title>Block Register — Block List Report</title>
     <style>
-         @font-face {
+        @font-face {
             font-family: 'SolaimanLipi';
             font-style: normal;
             font-weight: normal;
             src: url({{ public_path('fonts/SolaimanLipi.ttf') }}) format('truetype');
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'SolaimanLipi', sans-serif;
+            font-family: 'SolaimanLipi', 'DejaVu Sans', sans-serif;
             margin: 0;
-            padding: 15px;
-            font-size: 12px;
-            line-height: 1.4;
+            padding: 12px 14px;
+            font-size: 10px;
+            line-height: 1.35;
+            color: #000;
+            background: #fff;
+            text-align: center;
         }
-        .bangla-text {
-            font-family: 'SolaimanLipi', sans-serif;
+
+        .doc {
+            max-width: 100%;
+            margin: 0 auto;
         }
+
         .header {
-            border-bottom: 2px solid #1f4e79;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
-        .logo-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .report-title {
-            color: #1f4e79;
-            font-size: 20px;
-            margin: 0;
+            border: 1px solid #000;
+            padding: 6px 8px 7px;
+            margin-bottom: 10px;
             text-align: center;
         }
-        .subtitle {
-            color: #666;
+
+        .header-top {
             font-size: 11px;
-            margin: 5px 0;
-            text-align: center;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+            letter-spacing: 0.03em;
         }
-        table {
+
+        .header-sub {
+            font-size: 9px;
+            font-weight: bold;
+            margin: 0 0 1px 0;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .header-title {
+            font-size: 9px;
+            margin: 0 0 3px 0;
+            color: #000;
+        }
+
+        .header-summary {
+            font-size: 8px;
+            margin: 0;
+            line-height: 1.4;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+        }
+
+        .header-summary strong {
+            font-weight: bold;
+        }
+
+        table.data {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 10px;
-        }
-        th, td {
-            border: 0.5px solid #ccc;
-            padding: 5px;
-            text-align: left;
-        }
-        th {
-            background-color: #1f4e79;
-            color: white;
-            font-weight: normal;
-        }
-        .summary-box {
-            background: #f5f5f5;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-left: 3px solid #1f4e79;
-        }
-        .summary-box h3 {
-            color: #1f4e79;
-            margin: 0 0 5px 0;
-            font-size: 13px;
-        }
-        .summary-item {
-            display: inline-block;
-            margin-right: 20px;
-            color: #333;
-        }
-        .footer {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ccc;
+            margin-bottom: 12px;
             font-size: 9px;
+            border: 1px solid #000;
+        }
+
+        table.data th,
+        table.data td {
+            border: 1px solid #000;
+            padding: 5px 4px;
             text-align: center;
-            color: #666;
+            vertical-align: middle;
         }
-        .page-break {
-            page-break-after: always;
+
+        table.data th {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 6px 4px;
         }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .confidential {
-            color: #cc0000;
-            font-size: 8px;
-            text-transform: uppercase;
+
+        table.data td.text-wrap {
             text-align: center;
-            margin: 5px 0;
+        }
+
+        .footer {
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #000;
+            font-size: 7px;
+            color: #000;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .footer p {
+            margin: 2px 0;
+        }
+
+        tr.total-row td {
+            font-weight: bold;
+            border-top: 2px solid #000;
         }
     </style>
 </head>
 <body>
+<div class="doc">
     <div class="header">
-        <div class="logo-title">
-            <h1 class="report-title">MOUSUMI NGO</h1>
-        </div>
-        <p class="subtitle">Block List Report</p>
-        <p class="confidential">Confidential Document</p>
+        <p class="header-top">MOUSUMI NGO</p>
+        <p class="header-sub">Block Register</p>
+        <p class="header-title">Block List Report</p>
+        @if(isset($branch))
+            <p class="header-summary">
+                <strong>Branch:</strong> {{ $branch->branch_name }}@if($branch->branch_code) ({{ $branch->branch_code }})@endif
+                &nbsp;·&nbsp; <strong>Total blocked:</strong> {{ $customers->count() }}
+                &nbsp;·&nbsp; <strong>Date:</strong> {{ now()->format('d/m/Y') }}
+            </p>
+        @else
+            <p class="header-summary">
+                <strong>Date:</strong> {{ $reportPeriodLabel ?? 'All time' }}
+                &nbsp;·&nbsp; <strong>Branches:</strong> {{ $branches->count() }}
+                &nbsp;·&nbsp; <strong>Total blocked:</strong> {{ $totalCustomers }}
+            </p>
+        @endif
     </div>
 
     @if(isset($branch))
-        <!-- Single Branch Block List Report -->
-        <div class="summary-box">
-            <h3>Branch Information</h3>
-            <div class="summary-item">Branch: {{ $branch->branch_name }} ({{ $branch->branch_code }})</div>
-            <div class="summary-item">Total Blocked: {{ $customers->count() }}</div>
-            <div class="summary-item">Report Date: {{ now()->format('d/m/Y') }}</div>
-        </div>
-
-        <table>
+        <table class="data">
             <thead>
                 <tr>
-                    <th width="5%">SL</th>
-                    <th width="25%">Customer Details</th>
-                    <th width="20%">Contact</th>
-                    <th width="25%">Location</th>
-                    <th width="15%">Block Date</th>
+                    <th width="6%">SL</th>
+                    <th width="24%">Customer details</th>
+                    <th width="14%">Contact</th>
+                    <th width="24%">Location</th>
+                    <th width="14%">Block date</th>
                     <th width="10%">Status</th>
                 </tr>
             </thead>
@@ -131,17 +156,15 @@
                 @foreach($customers as $index => $customer)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>
+                    <td class="text-wrap">
                         <strong>{{ $customer->name }}</strong>
                         @if($customer->name_bn)
-                        <br><small>{{ $customer->name_bn }}</small>
+                            <br><span style="font-size:8px;">{{ $customer->name_bn }}</span>
                         @endif
-                        <br><small>NID: {{ $customer->nid_number }}</small>
+                        <br><span style="font-size:8px;">NID: {{ $customer->nid_number }}</span>
                     </td>
-                    <td>
-                        {{ $customer->phone_number }}
-                    </td>
-                    <td>{{ Str::limit($customer->address, 40) }}</td>
+                    <td>{{ $customer->phone_number }}</td>
+                    <td class="text-wrap">{{ Str::limit($customer->address, 48) }}</td>
                     <td>{{ $customer->created_at->format('d/m/Y') }}</td>
                     <td>Blocked</td>
                 </tr>
@@ -149,23 +172,14 @@
             </tbody>
         </table>
     @else
-        <!-- Overall Block List Summary -->
-        <div class="summary-box">
-            <h3>Block List Summary</h3>
-            <div class="summary-item">Total Branches: {{ $branches->count() }}</div>
-            <div class="summary-item">Total Blocked: {{ $totalCustomers }}</div>
-            <div class="summary-item">Report Period: Last 30 Days</div>
-        </div>
-
-        <table>
+        <table class="data">
             <thead>
                 <tr>
-                    <th width="5%">SL</th>
-                    <th width="20%">Branch</th>
-                    <th width="15%">Total Blocked</th>
-                    <th width="15%">Last 30 Days</th>
-                    <th width="15%">Last 7 Days</th>
-                    <th width="30%">Remarks</th>
+                    <th width="8%">SL</th>
+                    <th width="32%">Branch name</th>
+                    <th width="18%">Before block</th>
+                    <th width="20%">Current month</th>
+                    <th width="18%">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -173,46 +187,51 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $branch->branch_name }}</strong>
-                        <small>{{ $branch->branch_code }}</small>
+                        <strong>{{ $branch->branch_name }}@if($branch->branch_code) ({{ $branch->branch_code }})@endif</strong>
                     </td>
-                    <td>{{ $branch->customers_count }}</td>
-                    <td>{{ $branch->customers->where('created_at', '>=', now()->subDays(30))->count() }}</td>
-                    <td>{{ $branch->customers->where('created_at', '>=', now()->subDays(7))->count() }}</td>
-                    <td>{{ $branch->customers_count > 0 ? 'Active' : 'No Records' }}</td>
+                    <td>
+                        @if(!empty($hasReportPeriod))
+                            {{ $branch->before_current_month_count }}
+                        @else
+                            0
+                        @endif
+                    </td>
+                    <td>
+                        @if(!empty($hasReportPeriod))
+                            {{ $branch->current_month_count }}
+                        @else
+                            {{ $branch->customers_count }}
+                        @endif
+                    </td>
+                    <td>
+                        @if(!empty($hasReportPeriod))
+                            {{ $branch->total_through_period_count }}
+                        @else
+                            {{ $branch->customers_count }}
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
+                @php
+                    $sumBefore = $branches->sum(fn ($b) => !empty($hasReportPeriod) ? (int) $b->before_current_month_count : 0);
+                    $sumCurrent = $branches->sum(fn ($b) => !empty($hasReportPeriod) ? (int) $b->current_month_count : (int) $b->customers_count);
+                    $sumTotalCol = $branches->sum(fn ($b) => !empty($hasReportPeriod) ? (int) $b->total_through_period_count : (int) $b->customers_count);
+                @endphp
+                <tr class="total-row">
+                    <td></td>
+                    <td>Total</td>
+                    <td>{{ $sumBefore }}</td>
+                    <td>{{ $sumCurrent }}</td>
+                    <td>{{ $sumTotalCol }}</td>
+                </tr>
             </tbody>
         </table>
-
-        @if(isset($monthlyTrend) && $monthlyTrend->count() > 0)
-        <div class="summary-box">
-            <h3>Monthly Blocking Trend (Last 6 Months)</h3>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Month</th>
-                    <th>New Blocks</th>
-                    <th>Trend</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($monthlyTrend->take(6) as $trend)
-                <tr>
-                    <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('M Y') }}</td>
-                    <td>{{ $trend->count }}</td>
-                    <td>{{ $trend->count > ($monthlyTrend->skip(1)->first()->count ?? 0) ? '↑' : '↓' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        @endif
     @endif
 
     <div class="footer">
-        <p>This is a confidential document of Mousumi NGO. Generated on {{ now()->format('d/m/Y H:i') }}</p>
-        <p>© {{ date('Y') }} Mousumi NGO. All rights reserved.</p>
+        <p>Generated {{ now()->format('d/m/Y H:i') }} · Block Register · MOUSUMI NGO</p>
+        <p>© {{ date('Y') }} MOUSUMI NGO. All rights reserved.</p>
     </div>
+</div>
 </body>
 </html>

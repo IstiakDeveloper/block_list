@@ -84,56 +84,57 @@
                     </Link>
                 </div>
             </nav>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                <a href="/mousumi-ngo-app.apk" download
-                    class="flex items-center justify-center block gap-2 px-4 py-2 text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    <span>Download App</span>
-                </a>
-            </div>
 
         </aside>
 
         <!-- Main Content -->
         <div class="flex flex-col flex-1 lg:ml-64">
-            <header class="fixed top-0 left-0 right-0 z-20 flex items-center justify-between p-4 shadow-md lg:left-64">
-                <button @click="toggleSidebar"
-                    class="text-gray-500 lg:hidden dark:text-white hover:text-gray-600 dark:hover:text-gray-50">
-                    <!-- Menu Icon -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-                <div class="relative">
-                    <button @click="toggleUserMenu" class="flex items-center space-x-2 focus:outline-none">
-                        <img v-if="user.photo" :src="'/storage/' + user.photo" alt="Profile Photo"
-                            class="w-8 h-8 rounded-full" />
-                        <span class="text-gray-600 dark:text-gray-50">{{ user.name }}</span>
-                        <svg class="w-4 h-4 text-gray-600 dark:text-gray-50" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                            </path>
+            <header
+                class="fixed top-0 left-0 right-0 z-20 flex items-center justify-between gap-2 px-3 py-2.5 shadow-md bg-white dark:bg-gray-800 sm:px-4 sm:py-3 lg:left-64">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <button type="button" @click="toggleSidebar"
+                        class="shrink-0 p-1.5 -ml-1 text-gray-500 rounded-md lg:hidden dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
-                    <div v-if="showUserMenu"
-                        class="absolute right-0 w-48 mt-2 bg-white border rounded-lg shadow-lg dark:bg-gray-600">
-                        <Link href="/profile"
-                            class="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
-                        Profile</Link>
-                        <Link :href="route('logout')" method="post" as="button"
-                            class="w-full px-4 py-2 text-left text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
-                        Logout</Link>
-                    </div>
+                    <a href="https://mis.mousumibd.org/login" target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center justify-center gap-1.5 min-w-0 max-w-[calc(100vw-8.5rem)] sm:max-w-none rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 hover:shadow-lg ring-2 ring-amber-400/85 dark:from-amber-600 dark:to-orange-600 dark:ring-amber-500/65 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-gray-800">
+                        <svg class="w-4 h-4 shrink-0 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        <span class="truncate">MIS Loan</span>
+                    </a>
                 </div>
-
-                <div>
-                    <button @click="switchTheme">
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <div class="relative">
+                        <button type="button" @click="toggleUserMenu"
+                            class="flex items-center max-w-[9rem] sm:max-w-none gap-1.5 sm:space-x-2 focus:outline-none">
+                            <img v-if="user.photo" :src="'/storage/' + user.photo" alt=""
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0" />
+                            <span class="text-sm text-gray-600 truncate dark:text-gray-50">{{ user.name }}</span>
+                            <svg class="w-4 h-4 shrink-0 text-gray-600 dark:text-gray-50" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div v-if="showUserMenu"
+                            class="absolute right-0 z-30 w-48 mt-2 bg-white border rounded-lg shadow-lg dark:bg-gray-600">
+                            <Link href="/profile"
+                                class="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
+                            Profile</Link>
+                            <Link :href="route('logout')" method="post" as="button"
+                                class="w-full px-4 py-2 text-left text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900">
+                            Logout</Link>
+                        </div>
+                    </div>
+                    <button type="button" @click="switchTheme"
+                        class="p-1.5 text-gray-600 rounded-md dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <i class="fa-solid fa-circle-half-stroke"></i>
                     </button>
                 </div>

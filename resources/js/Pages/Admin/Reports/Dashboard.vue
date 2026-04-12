@@ -70,7 +70,16 @@ const applyFilters = () => {
 };
 
 const downloadReport = (branchId = null) => {
-    window.location.href = route('admin.reports.download', { branch_id: branchId });
+    const params = {
+        dateRange: selectedDateRange.value,
+        startDate: startDate.value || undefined,
+        endDate: endDate.value || undefined,
+        branch_filter: selectedBranch.value || undefined,
+    };
+    if (branchId != null) {
+        params.branch_id = branchId;
+    }
+    window.location.href = route('admin.reports.download', params);
 };
 
 const downloadBranchUsersReport = () => {
