@@ -39,6 +39,19 @@
               />
             </div>
 
+            <!-- Role -->
+            <div class="mb-4">
+              <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Role</label>
+              <select
+                id="role"
+                v-model="form.role"
+                class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                <option v-for="r in props.roleOptions" :key="r" :value="r">{{ r }}</option>
+              </select>
+              <InputError v-if="form.errors.role" :message="form.errors.role" class="mt-1" />
+            </div>
+
             <!-- Password -->
             <div class="mb-4">
               <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-400">Password</label>
@@ -91,17 +104,23 @@
   import { useForm, Link, Head } from '@inertiajs/vue3';
   import AdminLayout from '@/Layouts/AdminLayout.vue';
   import TextInput from '@/Components/TextInput.vue';
+  import InputError from '@/Components/InputError.vue';
   import BranchSelect from '@/Components/BranchSelect.vue';
 
   const props = defineProps({
     user: Object,
     branches: Array,
+    roleOptions: {
+      type: Array,
+      default: () => [],
+    },
   });
 
   const form = useForm({
     name: '',
     username: '',
     email: '',
+    role: '',
     password: '',
     password_confirmation: '',
     branch_ids: [], // Array to handle multiple branch selection
@@ -114,6 +133,11 @@
     form.name = props.user.name;
     form.username = props.user.username;
     form.email = props.user.email;
+    const current = props.user.role;
+    form.role =
+      current && props.roleOptions.includes(current)
+        ? current
+        : (props.roleOptions[0] ?? '');
     form.branch_ids = props.user.branches.map(branch => branch.id); // Pre-fill with user's branches
   });
 

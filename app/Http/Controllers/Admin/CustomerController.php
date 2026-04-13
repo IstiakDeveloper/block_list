@@ -8,9 +8,9 @@ use App\Models\Customer;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
@@ -21,12 +21,7 @@ class CustomerController extends Controller
         $user = auth()->user();
         $query = Customer::with('branch');
 
-        // Get user's branches
-        $userBranches = match (true) {
-            $user->name === 'Super Admin' => Branch::all(),
-            $user->branches()->exists() => $user->branches,
-            default => Branch::where('id', $user->branch_id)->get()
-        };
+        $userBranches = $this->authorizedBranchesForUser($user);
 
         // If user has only one branch and no branch filter is set, automatically set it
         if ($userBranches->count() === 1 && !$request->has('branch')) {
@@ -104,14 +99,7 @@ class CustomerController extends Controller
 
     public function create()
     {
-        // For single branch user
-        if (auth()->user()->branch_id) {
-            $branches = [Branch::find(auth()->user()->branch_id)];
-        }
-        // For multiple branch user
-        else {
-            $branches = auth()->user()->branches;
-        }
+        $branches = $this->authorizedBranchesForUser(auth()->user())->values()->all();
 
         return Inertia::render('Admin/Customer/Create', [
             'branches' => $branches,
@@ -121,8 +109,10 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        $allowedBranchIds = $this->authorizedBranchesForUser(auth()->user())->pluck('id')->all();
+
         $validated = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
+            'branch_id' => ['required', 'exists:branches,id', Rule::in($allowedBranchIds)],
             'nid_part_1' => 'nullable|image|max:2048',
             'nid_part_2' => 'nullable|image|max:2048',
             'name' => 'required|string|max:255',
@@ -306,5 +296,21 @@ class CustomerController extends Controller
         $customer->delete();
 
         return redirect()->route('admin.customers.index')->with('success', 'Customer deleted successfully!');
+    }
+
+    /**
+     * Branches the authenticated user may use for customers (aligned with customer index visibility).
+     *
+     * @return \Illuminate\Support\Collection<int, Branch>
+     */
+    private function authorizedBranchesForUser(User $user): \Illuminate\Support\Collection
+    {
+        return match (true) {
+            $user->name === 'Super Admin' => Branch::query()->orderBy('branch_name')->get(),
+            $user->branches()->exists() => $user->branches()->orderBy('branch_name')->get(),
+            default => $user->branch_id
+                ? Branch::query()->where('id', $user->branch_id)->get()
+                : collect(),
+        };
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -37,17 +38,21 @@ class UserController extends Controller
     public function create()
     {
         $branches = Branch::all(); // Fetch all branches to populate the dropdown
-        return inertia('Admin/User/Create', compact('branches'));
+        $roleOptions = User::distinctRolesFromDatabase();
+
+        return inertia('Admin/User/Create', compact('branches', 'roleOptions'));
     }
 
     // Store a newly created user in storage
     public function store(Request $request)
     {
+        $allowedRoles = User::distinctRolesFromDatabase();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|email|unique:users,email',
-            'role' => 'required|string|in:admin,manager,user',
+            'role' => ['required', 'string', 'max:255', Rule::in($allowedRoles)],
             'password' => 'required|string|min:8|confirmed',
             'branch_ids' => 'nullable|array',
             'branch_ids.*' => 'exists:branches,id',
@@ -77,17 +82,29 @@ class UserController extends Controller
     {
         $branches = Branch::all(); // Fetch all branches for dropdown
         $userBranches = $user->branches->pluck('id')->toArray(); // Get the branch IDs the user belongs to
+        $roleOptions = User::distinctRolesFromDatabase();
+        if ($user->role !== null && $user->role !== '' && ! in_array($user->role, $roleOptions, true)) {
+            $roleOptions[] = $user->role;
+            natcasesort($roleOptions);
+            $roleOptions = array_values($roleOptions);
+        }
 
-        return inertia('Admin/User/Edit', compact('user', 'branches', 'userBranches'));
+        return inertia('Admin/User/Edit', compact('user', 'branches', 'userBranches', 'roleOptions'));
     }
 
     // Update the specified user in storage
     public function update(Request $request, User $user)
     {
+        $allowedRoles = User::distinctRolesFromDatabase();
+        if ($user->role !== null && $user->role !== '' && ! in_array($user->role, $allowedRoles, true)) {
+            $allowedRoles[] = $user->role;
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'role' => ['required', 'string', 'max:255', Rule::in($allowedRoles)],
             'password' => 'nullable|string|min:8|confirmed',
             'branch_ids' => 'nullable|array',
             'branch_ids.*' => 'exists:branches,id',
@@ -97,6 +114,7 @@ class UserController extends Controller
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
+            'role' => $request->role,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 

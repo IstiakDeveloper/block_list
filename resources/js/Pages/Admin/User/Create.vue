@@ -38,9 +38,7 @@
                         <select v-model="form.role"
                             class="block w-full px-3 py-2 mt-1 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">-- Select Role --</option>
-                            <option value="admin">Admin</option>
-                            <option value="manager">Manager</option>
-                            <option value="user">User</option>
+                            <option v-for="r in props.roleOptions" :key="r" :value="r">{{ r }}</option>
                         </select>
                         <InputError v-if="form.errors.role" :message="form.errors.role" class="mt-1" />
                     </div>
@@ -105,16 +103,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useForm, Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import BranchSelect from '@/Components/BranchSelect.vue';
 
-// Define props for branches
 const props = defineProps({
     branches: Array,
+    roleOptions: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // Set up the form with all required fields

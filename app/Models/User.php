@@ -23,6 +23,7 @@ class User extends Authenticatable
         'username',
         'photo',
         'email',
+        'role',
         'branch_id',
         'password',
     ];
@@ -93,5 +94,22 @@ class User extends Authenticatable
         }
 
         return $query;
+    }
+
+    /**
+     * Distinct non-empty role values currently stored in the users table.
+     *
+     * @return array<int, string>
+     */
+    public static function distinctRolesFromDatabase(): array
+    {
+        return static::query()
+            ->whereNotNull('role')
+            ->where('role', '!=', '')
+            ->distinct()
+            ->orderBy('role')
+            ->pluck('role')
+            ->values()
+            ->all();
     }
 }
