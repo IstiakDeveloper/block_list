@@ -2,7 +2,7 @@
     <div class="flex flex-col min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-800 dark:to-purple-900">
       <!-- Header -->
       <header class="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow-md">
-        <Link href="/customer-search">
+        <Link href="/">
             <h1 class="text-xl font-bold text-gray-800 dark:text-white">Mousumi</h1>
         </Link>
         <div class="flex items-center">

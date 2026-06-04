@@ -14,10 +14,7 @@
             @input="handleManualInput"
             @blur="validateAndFormat"
             :class="[
-                'block w-full rounded-md shadow-sm',
-                'dark:bg-gray-700 dark:text-gray-300',
-                'border-gray-300 dark:border-gray-600',
-                'focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50',
+                'block w-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 rounded-xl dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500/20 text-sm font-semibold py-2',
                 inputClass
             ]"
         />

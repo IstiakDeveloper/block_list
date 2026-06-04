@@ -95,8 +95,17 @@
                             available)
                         </option>
                     </select>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Select from existing lots that already have books
+                    <p
+                        v-if="selectedLot"
+                        class="mt-1 text-xs text-blue-600 dark:text-blue-400"
+                    >
+                        Highest book in lot: #{{ selectedLot.max_book_number || 0 }}.
+                        Suggested next range: {{ selectedLot.next_book_number }} –
+                        {{ selectedLot.next_book_number + 9 }}
+                        (book numbers must not already exist in this lot).
+                    </p>
+                    <p v-else class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Pick a lot, then enter book numbers that are not already in that lot.
                     </p>
                 </div>
 
@@ -252,7 +261,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from "vue";
+import { computed, watch } from 'vue';
 import { useForm } from "@inertiajs/vue3";
 import Modal from "@/Components/Modal.vue";
 import Label from "@/Components/Label.vue";
@@ -316,25 +325,53 @@ const receiptTo = computed(() => {
     return form.book_to * 100;
 });
 
+const selectedLot = computed(() => {
+    if (form.lot_option !== "existing" || !form.lot_id) return null;
+    return props.activeLots.find(
+        (lot) => String(lot.id) === String(form.lot_id)
+    );
+});
+
 const isFormValid = computed(() => {
     if (form.lot_option === "existing" && !form.lot_id) return false;
-    if (form.lot_option === "new" && !form.lot_name) return false;
     if (!form.book_from || !form.book_to) return false;
     if (form.book_to < form.book_from) return false;
     return true;
 });
 
+const applySuggestedBookRange = () => {
+    const lot = selectedLot.value;
+    if (!lot?.next_book_number) return;
+    form.book_from = lot.next_book_number;
+    form.book_to = lot.next_book_number + 9;
+};
+
+watch(
+    () => [form.lot_id, form.lot_option],
+    () => {
+        if (form.lot_option === "existing" && form.lot_id) {
+            applySuggestedBookRange();
+        }
+    }
+);
+
 const submitForm = () => {
-    form.post(route("payment-receipts.stock-in"), {
+    form.transform((data) => ({
+        lot_option: data.lot_option,
+        lot_id:
+            data.lot_option === "existing" && data.lot_id
+                ? Number(data.lot_id)
+                : null,
+        lot_name: data.lot_option === "new" ? data.lot_name || null : null,
+        book_from: data.book_from,
+        book_to: data.book_to,
+    })).post(route("payment-receipts.stock-in"), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
             form.lot_option = "existing";
             emit("success");
             emit("close");
-        },
-        onError: (errors) => {
-            console.error("Stock add failed:", errors);
         },
     });
 };

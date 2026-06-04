@@ -7,9 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -20,12 +18,13 @@ class AuthenticatedSessionController extends Controller
     {
         // Check if the user is already authenticated
         if (Auth::check()) {
-            return redirect()->route('customer.search');
+            return redirect()->route('home');
         }
 
         // Show the login form if not authenticated
         return Inertia::render('Auth/Login');
     }
+
     /**
      * Handle an incoming authentication request.
      */
@@ -35,7 +34,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('customer.search', absolute: false));
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**

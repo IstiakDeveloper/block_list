@@ -266,9 +266,20 @@ const selectBranch = (branch) => {
     }
 };
 
+const resetModalState = () => {
+    form.reset();
+    form.clearErrors();
+    availableBooks.value = [];
+    branchSearch.value = '';
+    selectedBranch.value = null;
+    showBranchDropdown.value = false;
+};
+
 // Watch for lot changes and component mounting
 watch(() => props.show, (newVal) => {
     if (newVal) {
+        resetModalState();
+
         // Auto-set today's date
         const today = new Date();
         const year = today.getFullYear();
@@ -337,7 +348,9 @@ const loadLotBooks = async () => {
     loadingBooks.value = true;
 
     try {
-        const response = await fetch(route('payment-receipts.lot-books', { lot: form.lot_id }));
+        const response = await fetch(
+            `${route('payment-receipts.lot-books', { lot: form.lot_id })}?_t=${Date.now()}`
+        );
         const data = await response.json();
 
         if (data.success) {
@@ -363,8 +376,7 @@ const submitForm = () => {
     form.post(route('payment-receipts.store-admin'), {
         preserveScroll: true,
         onSuccess: () => {
-            form.reset();
-            availableBooks.value = [];
+            resetModalState();
             emit('success');
             emit('close');
         },
@@ -376,12 +388,7 @@ const submitForm = () => {
 
 const handleClose = () => {
     if (!form.processing) {
-        form.reset();
-        form.clearErrors();
-        availableBooks.value = [];
-        branchSearch.value = '';
-        selectedBranch.value = null;
-        showBranchDropdown.value = false;
+        resetModalState();
         emit('close');
     }
 };

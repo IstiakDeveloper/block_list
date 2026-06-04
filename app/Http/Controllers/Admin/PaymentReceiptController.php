@@ -67,14 +67,20 @@ class PaymentReceiptController extends Controller
             ->get()
             ->map(function ($lot) {
                 $books = $lot->receiptBooks;
+                $maxBookNumber = (int) ReceiptBook::where('lot_id', $lot->id)->max('book_number');
+
                 return [
                     'id' => $lot->id,
                     'lot_number' => $lot->lot_number,
                     'lot_name' => $lot->lot_name,
                     'available_books_count' => $lot->available_books_count,
+                    'max_book_number' => $maxBookNumber,
+                    'next_book_number' => $maxBookNumber + 1,
                     'book_range' => $books->isNotEmpty()
                         ? $books->first()->book_number . ' - ' . $books->last()->book_number
-                        : 'No books available',
+                        : ($maxBookNumber > 0
+                            ? "HO available: none (lot has books up to #{$maxBookNumber})"
+                            : 'No books in lot yet'),
                     'total_receipts' => $books->sum(fn($b) => $b->getTotalReceipts())
                 ];
             });
@@ -248,8 +254,8 @@ class PaymentReceiptController extends Controller
     {
         $validated = $request->validate([
             'lot_option' => 'required|in:existing,new',
-            'lot_id' => 'required_if:lot_option,existing|nullable|exists:lots,id',
-            'lot_name' => 'required_if:lot_option,new|nullable|string|max:255',
+            'lot_id' => 'required_if:lot_option,existing|nullable|integer|exists:lots,id',
+            'lot_name' => 'nullable|string|max:255',
             'book_from' => 'required|integer|min:1',
             'book_to' => 'required|integer|gte:book_from',
         ]);
@@ -272,13 +278,18 @@ class PaymentReceiptController extends Controller
             $bookTo = (int) $request->book_to;
             $totalBooks = $bookTo - $bookFrom + 1;
 
-            // Check if books already exist in this lot
-            $existingBooks = ReceiptBook::where('lot_id', $lot->id)
+            // Check if any book numbers in this range already exist in the lot
+            $conflictingBooks = ReceiptBook::where('lot_id', $lot->id)
                 ->whereBetween('book_number', [$bookFrom, $bookTo])
-                ->exists();
+                ->orderBy('book_number')
+                ->pluck('book_number');
 
-            if ($existingBooks) {
-                throw new \Exception('Some books in this range already exist in the selected lot');
+            if ($conflictingBooks->isNotEmpty()) {
+                $numbers = $conflictingBooks->implode(', ');
+                throw new \Exception(
+                    "Book number(s) already exist in {$lot->lot_number}: {$numbers}. " .
+                    'Choose a range that does not overlap existing books in this lot.'
+                );
             }
 
             // Create individual books
@@ -357,7 +368,10 @@ class PaymentReceiptController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Stock add failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to add stock: ' . $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->withErrors(['book_from' => $e->getMessage()]);
         }
     }
 
@@ -1598,5 +1612,215 @@ class PaymentReceiptController extends Controller
             ],
             public_path('fonts/SolaimanLipi.ttf')
         );
+    }
+
+    /**
+     * Search receipt book by book number or receipt number
+     */
+    public function search(Request $request)
+    {
+        $searchType = $request->input('search_type', 'book');
+        $query = trim((string) $request->input('query', ''));
+
+        $filters = [
+            'search_type' => in_array($searchType, ['book', 'receipt'], true) ? $searchType : 'book',
+            'query' => $query,
+        ];
+
+        $results = [];
+        $error = null;
+
+        if ($query !== '') {
+            if (!ctype_digit($query)) {
+                $error = 'Please enter a valid number.';
+            } else {
+                $value = (int) $query;
+                if ($value < 1) {
+                    $error = 'Please enter a valid positive number.';
+                } else {
+                    $booksQuery = ReceiptBook::with('lot');
+
+                    if ($filters['search_type'] === 'receipt') {
+                        $books = $booksQuery
+                            ->where('from_number', '<=', $value)
+                            ->where('to_number', '>=', $value)
+                            ->orderBy('lot_id')
+                            ->orderBy('book_number')
+                            ->get();
+                    } else {
+                        $books = $booksQuery
+                            ->where('book_number', $value)
+                            ->orderBy('lot_id')
+                            ->orderBy('book_number')
+                            ->get();
+                    }
+
+                    if ($books->isEmpty()) {
+                        $error = $filters['search_type'] === 'receipt'
+                            ? "Receipt number {$value} was not found in any book."
+                            : "Book number {$value} was not found.";
+                    } else {
+                        $results = $books
+                            ->map(fn (ReceiptBook $book) => $this->formatReceiptBookSearchResult(
+                                $book,
+                                $filters['search_type'] === 'receipt' ? $value : null
+                            ))
+                            ->values()
+                            ->all();
+                    }
+                }
+            }
+        }
+
+        return Inertia::render('PaymentReceipts/ReceiptSearch', [
+            'filters' => $filters,
+            'results' => $results,
+            'error' => $error,
+        ]);
+    }
+
+    private function formatReceiptBookSearchResult(ReceiptBook $book, ?int $receiptNumber = null): array
+    {
+        $location = $this->resolveReceiptBookLocation($book);
+
+        $history = StockTransaction::whereHas('bookDistributions', function ($q) use ($book) {
+            $q->where('receipt_book_id', $book->id);
+        })
+            ->with(['branch', 'lot'])
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($tx) {
+                return [
+                    'id' => $tx->id,
+                    'transaction_type' => $tx->transaction_type,
+                    'transaction_type_label' => $this->getTransactionTypeLabel($tx->transaction_type),
+                    'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                    'branch_name' => $tx->branch?->branch_name,
+                    'lot_number' => $tx->lot->lot_number,
+                    'lot_name' => $tx->lot->lot_name,
+                    'book_from' => $tx->book_from,
+                    'book_to' => $tx->book_to,
+                    'receipt_from' => $tx->receipt_from,
+                    'receipt_to' => $tx->receipt_to,
+                    'total_books' => $tx->total_books,
+                    'total_receipts' => $tx->total_receipts,
+                    'given_to' => $tx->given_to,
+                    'pin_number' => $tx->pin_number,
+                    'received_by' => $tx->received_by,
+                    'remarks' => $tx->remarks,
+                ];
+            });
+
+        $branchTx = $history->firstWhere('transaction_type', 'distribute_to_branch');
+        $personTx = $history->firstWhere('transaction_type', 'distribute_to_person');
+
+        $branchName = $branchTx['branch_name'] ?? null;
+        if (!$branchName && $book->location_type === 'branch') {
+            $branchName = $location['branch_name'] ?? null;
+        }
+        if (!$branchName && $book->location_type === 'person') {
+            $branchName = $location['branch_name'] ?? null;
+        }
+
+        return [
+            'book_id' => $book->id,
+            'book_number' => $book->book_number,
+            'receipt_from' => $book->from_number,
+            'receipt_to' => $book->to_number,
+            'searched_receipt_number' => $receiptNumber,
+            'status' => $book->status,
+            'status_label' => $this->getBookStatusLabel($book->status, $book->location_type),
+            'lot' => [
+                'id' => $book->lot->id,
+                'lot_number' => $book->lot->lot_number,
+                'lot_name' => $book->lot->lot_name,
+            ],
+            'current_location' => $location,
+            'distribution_summary' => [
+                'at_head_office' => $book->location_type === 'head_office',
+                'distributed_to_branch' => in_array($book->location_type, ['branch', 'person'], true),
+                'branch_name' => $branchName,
+                'branch_distributed_date' => $branchTx['transaction_date'] ?? null,
+                'distributed_to_person' => $book->location_type === 'person',
+                'given_to' => $personTx['given_to'] ?? ($location['person_name'] ?? null),
+                'pin_number' => $personTx['pin_number'] ?? ($location['pin_number'] ?? null),
+                'person_distributed_date' => $personTx['transaction_date'] ?? null,
+            ],
+            'history' => $history->values()->all(),
+        ];
+    }
+
+    private function resolveReceiptBookLocation(ReceiptBook $book): array
+    {
+        if ($book->location_type === 'head_office') {
+            return [
+                'type' => 'head_office',
+                'label' => 'Head Office',
+                'description' => 'This receipt book is at Head Office and has not been distributed to any branch yet.',
+            ];
+        }
+
+        if ($book->location_type === 'branch') {
+            $branch = Branch::find($book->location_id);
+
+            return [
+                'type' => 'branch',
+                'label' => $branch?->branch_name ?? 'Unknown Branch',
+                'branch_id' => $book->location_id,
+                'branch_name' => $branch?->branch_name,
+                'description' => 'This book is at the branch and available for distribution to a person.',
+            ];
+        }
+
+        $personName = $book->location_id;
+        $pinNumber = null;
+        if ($book->location_id && str_contains($book->location_id, '-')) {
+            [$personName, $pinNumber] = explode('-', $book->location_id, 2);
+        }
+
+        $parentTx = $book->parent_transaction_id
+            ? StockTransaction::with('branch')->find($book->parent_transaction_id)
+            : null;
+
+        return [
+            'type' => 'person',
+            'label' => $personName . ($pinNumber ? " (PIN: {$pinNumber})" : ''),
+            'person_name' => $personName,
+            'pin_number' => $pinNumber,
+            'branch_name' => $parentTx?->branch?->branch_name,
+            'description' => 'This book was distributed to a person'
+                . ($parentTx?->branch ? " from {$parentTx->branch->branch_name}" : ''),
+        ];
+    }
+
+    private function getTransactionTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'stock_in' => 'Stock In (Head Office)',
+            'distribute_to_branch' => 'Distributed to Branch',
+            'distribute_to_person' => 'Distributed to Person',
+            default => ucfirst(str_replace('_', ' ', $type)),
+        };
+    }
+
+    private function getBookStatusLabel(string $status, string $locationType): string
+    {
+        if ($locationType === 'head_office') {
+            return 'At Head Office';
+        }
+        if ($locationType === 'branch') {
+            return 'At Branch';
+        }
+        if ($locationType === 'person') {
+            return 'With Person';
+        }
+
+        return match ($status) {
+            'available' => 'Available',
+            'distributed' => 'Distributed',
+            'used' => 'Used',
+            default => ucfirst($status),
+        };
     }
 }

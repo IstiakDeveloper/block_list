@@ -1,25 +1,26 @@
 <?php
 
+use App\Http\Controllers\Admin\BranchOfficerController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerSearchController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\BranchController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\BranchOfficerController;
 use App\Http\Controllers\Admin\PaymentReceiptController;
 use App\Http\Controllers\Admin\PaymentReceiptDashboardController;
-use App\Http\Controllers\Admin\ReceiptStockController;
 use App\Http\Controllers\Admin\ReceiptDistributionController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\Admin\ReceiptStockController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AppsHubController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/', AppsHubController::class)->name('home');
 
-Route::get('/', [AuthenticatedSessionController::class, 'create'])
-    ->name('login');
+Route::get('/apps', function () {
+    return redirect()->route('home');
+})->name('apps.hub');
 
 Route::get('/storage-link', function () {
     Artisan::call('storage:link');
@@ -27,12 +28,11 @@ Route::get('/storage-link', function () {
     return response()->json(['message' => 'Storage link created successfully.']);
 })->name('storage.link');
 
-
 Route::get('/setup-storage', function () {
     $source = storage_path('app/public');
     $destination = public_path('storage');
 
-    if (!File::exists($destination)) {
+    if (! File::exists($destination)) {
         File::makeDirectory($destination, 0755, true);
     }
 
@@ -59,7 +59,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/customers/{customer}/download-pdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-pdf');
     Route::get('/admin/customers/{customer}/download-mpdf', [CustomerController::class, 'downloadPdf'])->name('admin.customers.download-mpdf');
 
-
     Route::get('/customer-search', [CustomerSearchController::class, 'search'])->name('customer.search');
 
     Route::get('/admin/reports', [ReportController::class, 'index'])->name('admin.reports');
@@ -68,7 +67,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/reports/branch-users-pdf', [ReportController::class, 'branchUsersPdf'])
         ->name('admin.reports.branch-users-pdf');
 });
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -96,7 +94,6 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('receipt-stocks/{branch}/distributions', [ReceiptStockController::class, 'distributions'])
         ->name('receipt-stocks.distributions');
 
-
     Route::get('/payment-receipt/dashboard', [PaymentReceiptDashboardController::class, 'index'])->name('payment-receipt-dashboard');
 });
 
@@ -105,6 +102,9 @@ Route::middleware(['auth'])->group(function () {
     // Main Pages
     Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])
         ->name('payment-receipts.index');
+
+    Route::get('/payment-receipts/search', [PaymentReceiptController::class, 'search'])
+        ->name('payment-receipts.search');
 
     // Stock Management (Super Admin)
     Route::post('/admin/stock-in', [PaymentReceiptController::class, 'stockIn'])
@@ -157,7 +157,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment-receipts/report', [PaymentReceiptController::class, 'generateReport'])
         ->name('payment-receipts.report');
 });
-
 
 Route::middleware(['auth'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/voluntary-savings', [App\Http\Controllers\Admin\VoluntarySaving\BranchVoluntarySavingController::class, 'index'])
@@ -225,4 +224,4 @@ Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->gro
         ->name('receipt-transaction-report.datewise-summary');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
