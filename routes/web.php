@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApiDocumentationController;
 use App\Http\Controllers\Admin\BranchOfficerController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerSearchController;
@@ -210,6 +211,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
 // Super Admin Only Routes
 Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/api-documentation', [ApiDocumentationController::class, 'index'])->name('api-documentation.index');
+    Route::post('/api-documentation/generate-token', [ApiDocumentationController::class, 'generateToken'])->name('api-documentation.generate-token');
+    Route::post('/api-documentation/revoke-token', [ApiDocumentationController::class, 'revokeToken'])->name('api-documentation.revoke-token');
+    Route::post('/api-documentation/test-connection', [ApiDocumentationController::class, 'testConnection'])->name('api-documentation.test-connection');
+    Route::post('/api-documentation/clear-token-display', [ApiDocumentationController::class, 'clearDisplayedToken'])->name('api-documentation.clear-token-display');
+
     // Receipt Transaction Report Routes (Super Admin Only)
     Route::get('/receipt-transaction-report', [App\Http\Controllers\Admin\ReceiptTransactionReportController::class, 'index'])
         ->name('receipt-transaction-report.index');

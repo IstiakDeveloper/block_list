@@ -110,6 +110,10 @@
   const props = defineProps({
     user: Object,
     branches: Array,
+    userBranches: {
+      type: Array,
+      default: () => [],
+    },
     roleOptions: {
       type: Array,
       default: () => [],
@@ -138,7 +142,9 @@
       current && props.roleOptions.includes(current)
         ? current
         : (props.roleOptions[0] ?? '');
-    form.branch_ids = props.user.branches.map(branch => branch.id); // Pre-fill with user's branches
+    form.branch_ids = props.userBranches.length > 0
+      ? [...props.userBranches]
+      : (props.user.branch_id ? [props.user.branch_id] : (props.user.branches ?? []).map(branch => branch.id));
   });
 
   function updateUser() {

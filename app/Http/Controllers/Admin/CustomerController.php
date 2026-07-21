@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Customer;
-use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +20,7 @@ class CustomerController extends Controller
         $user = auth()->user();
         $query = Customer::with('branch');
 
-        $userBranches = $this->authorizedBranchesForUser($user);
+        $userBranches = $user->authorizedBranches();
 
         // If user has only one branch and no branch filter is set, automatically set it
         if ($userBranches->count() === 1 && !$request->has('branch')) {
@@ -99,7 +98,7 @@ class CustomerController extends Controller
 
     public function create()
     {
-        $branches = $this->authorizedBranchesForUser(auth()->user())->values()->all();
+        $branches = auth()->user()->authorizedBranches()->values()->all();
 
         return Inertia::render('Admin/Customer/Create', [
             'branches' => $branches,
@@ -109,7 +108,7 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $allowedBranchIds = $this->authorizedBranchesForUser(auth()->user())->pluck('id')->all();
+        $allowedBranchIds = auth()->user()->authorizedBranches()->pluck('id')->all();
 
         $validated = $request->validate([
             'branch_id' => ['required', 'exists:branches,id', Rule::in($allowedBranchIds)],
@@ -190,9 +189,7 @@ class CustomerController extends Controller
     public function edit($id)
     {
         $customer = Customer::findOrFail($id);
-        $branches = Branch::whereHas('users', function ($query) {
-            $query->where('users.id', auth()->id());
-        })->get();
+        $branches = auth()->user()->authorizedBranches()->values()->all();
 
         return Inertia::render('Admin/Customer/Edit', [
             'customer' => $customer,
@@ -298,19 +295,4 @@ class CustomerController extends Controller
         return redirect()->route('admin.customers.index')->with('success', 'Customer deleted successfully!');
     }
 
-    /**
-     * Branches the authenticated user may use for customers (aligned with customer index visibility).
-     *
-     * @return \Illuminate\Support\Collection<int, Branch>
-     */
-    private function authorizedBranchesForUser(User $user): \Illuminate\Support\Collection
-    {
-        return match (true) {
-            $user->name === 'Super Admin' => Branch::query()->orderBy('branch_name')->get(),
-            $user->branches()->exists() => $user->branches()->orderBy('branch_name')->get(),
-            default => $user->branch_id
-                ? Branch::query()->where('id', $user->branch_id)->get()
-                : collect(),
-        };
-    }
 }

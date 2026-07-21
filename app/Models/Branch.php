@@ -27,6 +27,29 @@ class Branch extends Model
         return $this->belongsToMany(User::class, 'branch_user');
     }
 
+    /**
+     * Match branch_code across formats (e.g. MisLoan "0003" vs block_list "003").
+     */
+    public static function findByFlexibleCode(string $branchCode): ?self
+    {
+        $code = trim($branchCode);
+        if ($code === '') {
+            return null;
+        }
+
+        $normalized = ltrim($code, '0') ?: '0';
+        $candidates = array_values(array_unique([
+            $code,
+            $normalized,
+            str_pad($normalized, 3, '0', STR_PAD_LEFT),
+            str_pad($normalized, 4, '0', STR_PAD_LEFT),
+        ]));
+
+        return static::query()
+            ->whereIn('branch_code', $candidates)
+            ->first();
+    }
+
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {

@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -66,6 +67,48 @@ class User extends Authenticatable
     public function branches(): BelongsToMany
     {
         return $this->belongsToMany(Branch::class, 'branch_user', 'user_id', 'branch_id');
+    }
+
+    /**
+     * Branches this user may access (pivot assignments + main branch).
+     *
+     * @return \Illuminate\Support\Collection<int, Branch>
+     */
+    public function authorizedBranches(): \Illuminate\Support\Collection
+    {
+        if ($this->name === 'Super Admin') {
+            return Branch::query()->orderBy('branch_name')->get();
+        }
+
+        $branchIds = $this->branches()->pluck('branches.id');
+
+        if ($this->branch_id) {
+            $branchIds->push($this->branch_id);
+        }
+
+        $uniqueIds = $branchIds->unique()->filter()->values();
+
+        if ($uniqueIds->isEmpty()) {
+            return collect();
+        }
+
+        return Branch::query()
+            ->whereIn('id', $uniqueIds)
+            ->orderBy('branch_name')
+            ->get();
+    }
+
+    public function canAccessBranch(int $branchId): bool
+    {
+        if ($this->name === 'Super Admin') {
+            return true;
+        }
+
+        if ($this->branches()->where('branches.id', $branchId)->exists()) {
+            return true;
+        }
+
+        return (int) $this->branch_id === $branchId;
     }
     public function scopeSearch($query, $search)
     {

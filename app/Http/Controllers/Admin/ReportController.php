@@ -100,11 +100,7 @@ class ReportController extends Controller
      */
     private function getUserBranches($user)
     {
-        return match (true) {
-            $user->name === 'Super Admin' => Branch::all(),
-            $user->branches()->exists() => $user->branches,
-            default => Branch::where('id', $user->branch_id)->get()
-        };
+        return $user->authorizedBranches();
     }
 
     /**

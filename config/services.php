@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'misloan' => [
+        'app_url' => env('MISLOAN_APP_URL', 'https://mis.mousumibd.org'),
+        'integration_username' => env('MISLOAN_INTEGRATION_USERNAME', 'superadmin'),
+    ],
+
 ];

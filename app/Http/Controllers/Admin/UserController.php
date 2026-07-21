@@ -59,6 +59,13 @@ class UserController extends Controller
             'branch_id' => 'required|exists:branches,id',
         ]);
 
+        $branchIds = collect($request->branch_ids ?? [])
+            ->push($request->branch_id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
@@ -68,10 +75,7 @@ class UserController extends Controller
             'branch_id' => $request->branch_id,
         ]);
 
-        // Attach the selected branches to the user
-        if ($request->branch_ids) {
-            $user->branches()->sync($request->branch_ids); // Sync with multiple branch IDs
-        }
+        $user->branches()->sync($branchIds);
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully!');
     }
@@ -80,8 +84,9 @@ class UserController extends Controller
     // Show the form for editing the specified user
     public function edit(User $user)
     {
+        $user->load(['branches', 'branch']);
         $branches = Branch::all(); // Fetch all branches for dropdown
-        $userBranches = $user->branches->pluck('id')->toArray(); // Get the branch IDs the user belongs to
+        $userBranches = $user->authorizedBranches()->pluck('id')->all();
         $roleOptions = User::distinctRolesFromDatabase();
         if ($user->role !== null && $user->role !== '' && ! in_array($user->role, $roleOptions, true)) {
             $roleOptions[] = $user->role;
@@ -110,16 +115,34 @@ class UserController extends Controller
             'branch_ids.*' => 'exists:branches,id',
         ]);
 
+        $branchIds = collect($request->branch_ids ?? [])
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($branchIds->isEmpty()) {
+            $branchIds = collect($user->authorizedBranches()->pluck('id')->all());
+        }
+
+        $branchId = $branchIds->first() ?: $user->branch_id;
+
         $user->update([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
+            'branch_id' => $branchId,
         ]);
 
-        // Sync the selected branches with the user
-        $user->branches()->sync($request->branch_ids ?? []); // Handle no branches as empty array
+        $user->branches()->sync(
+            $branchIds
+                ->when($branchId, fn ($ids) => $ids->push($branchId))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all()
+        );
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
     }

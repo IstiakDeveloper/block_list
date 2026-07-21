@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,4 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Branch routes
     Route::apiResource('branches', BranchController::class);
+
+    // Username / branch verification (external systems e.g. MisLoan)
+    Route::get('users/verify', [UserController::class, 'verify']);
+
+    // Block list customer entry (external systems e.g. MisLoan)
+    Route::post('customers', [CustomerController::class, 'store']);
 });
