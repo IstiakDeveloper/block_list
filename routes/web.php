@@ -10,17 +10,16 @@ use App\Http\Controllers\Admin\ReceiptDistributionController;
 use App\Http\Controllers\Admin\ReceiptStockController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\AppsHubController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', AppsHubController::class)->name('home');
+Route::redirect('/', '/login')->name('home');
 
 Route::get('/apps', function () {
-    return redirect()->route('home');
+    return redirect()->route('login');
 })->name('apps.hub');
 
 Route::get('/storage-link', function () {
